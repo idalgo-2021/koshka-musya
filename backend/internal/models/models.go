@@ -21,20 +21,20 @@ type User struct {
 
 // Listing - объект размещения
 type Listing struct {
-	ID            uuid.UUID   `db:"id"`
-	Code          uuid.UUID   `db:"code"` // UUID код объекта размещения во внешней платформе (Островок)
-	Title         string      `db:"title"`
-	Description   string      `db:"description"`
-	MainPicture   *string     `db:"main_picture"`
-	ListingTypeID int         `db:"listing_type_id"`
-	Address       string      `db:"address"`
-	City          string      `db:"city"`
-	Country       string      `db:"country"`
-	Latitude      float64     `db:"latitude"`
-	Longitude     float64     `db:"longitude"`
-	CreatedAt     time.Time   `db:"created_at"`
-	IsActive      bool        `db:"is_active"`
-	ListingType   ListingType `db:"-"`
+	ID            uuid.UUID `db:"id"`
+	Code          uuid.UUID `db:"code"` // UUID код объекта размещения во внешней платформе (Островок)
+	Title         string    `db:"title"`
+	Description   string    `db:"description"`
+	MainPicture   *string   `db:"main_picture"`
+	ListingTypeID int       `db:"listing_type_id"`
+	Address       string    `db:"address"`
+	City          string    `db:"city"`
+	Country       string    `db:"country"`
+	Latitude      float64   `db:"latitude"`
+	Longitude     float64   `db:"longitude"`
+	CreatedAt     time.Time `db:"created_at"`
+	// IsActive      bool        `db:"is_active"`
+	ListingType ListingType `db:"-"`
 }
 
 // ListingType - тип объекта размещения

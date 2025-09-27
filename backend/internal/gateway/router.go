@@ -42,6 +42,7 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	protectedRouter.Use(authHandlers.AuthMiddleware)
 
 	protectedRouter.HandleFunc("/hellouser", secretGuestHandler.HelloUser).Methods(http.MethodGet)
+
 	protectedRouter.HandleFunc("/assignments/my", secretGuestHandler.GetMyAssignments).Methods(http.MethodGet)                  // assignments
 	protectedRouter.HandleFunc("/assignments/my/{id}", secretGuestHandler.GetMyAssignmentByID).Methods(http.MethodGet)          // assignments
 	protectedRouter.HandleFunc("/assignments/my/{id}/accept", secretGuestHandler.AcceptMyAssignment).Methods(http.MethodPost)   // assignments

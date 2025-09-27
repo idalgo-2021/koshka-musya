@@ -20,8 +20,8 @@ type SecretGuestRepository interface {
 
 	// listings
 	CreateListing(ctx context.Context, listing *models.Listing) (uuid.UUID, error)
-	GetActiveListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error)
-	GetActiveListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error)
+	GetListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error)
+	GetListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error)
 
 	// assignments
 	CreateAssignment(ctx context.Context, assignment *models.Assignment) (uuid.UUID, error)
@@ -121,7 +121,7 @@ func (s *SecretGuestService) CreateListing(ctx context.Context, dto CreateListin
 		return nil, fmt.Errorf("failed to create listing in repository: %w", err)
 	}
 
-	dbListing, err := s.repo.GetActiveListingByID(ctx, listingID)
+	dbListing, err := s.repo.GetListingByID(ctx, listingID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get listing by id %s from repository: %w", listingID.String(), err)
 	}
@@ -129,13 +129,13 @@ func (s *SecretGuestService) CreateListing(ctx context.Context, dto CreateListin
 	return toListingResponseDTO(dbListing), nil
 }
 
-func (s *SecretGuestService) GetActiveListings(ctx context.Context, dto GetListingsRequestDTO) (*ListingsResponse, error) {
+func (s *SecretGuestService) GetListings(ctx context.Context, dto GetListingsRequestDTO) (*ListingsResponse, error) {
 
 	offset := (dto.Page - 1) * dto.Limit
 
-	dbListings, total, err := s.repo.GetActiveListings(ctx, dto.Limit, offset)
+	dbListings, total, err := s.repo.GetListings(ctx, dto.Limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active listings from repository: %w", err)
+		return nil, fmt.Errorf("failed to get listings from repository: %w", err)
 	}
 
 	responseDTOs := make([]*ListingResponseDTO, 0, len(dbListings))
@@ -154,9 +154,9 @@ func (s *SecretGuestService) GetActiveListings(ctx context.Context, dto GetListi
 
 func (s *SecretGuestService) GetListingByID(ctx context.Context, id uuid.UUID) (*ListingResponseDTO, error) {
 
-	dbListing, err := s.repo.GetActiveListingByID(ctx, id)
+	dbListing, err := s.repo.GetListingByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active listing by id %s from repository: %w", id.String(), err)
+		return nil, fmt.Errorf("failed to get listing by id %s from repository: %w", id.String(), err)
 	}
 
 	return toListingResponseDTO(dbListing), nil

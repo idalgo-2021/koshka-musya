@@ -64,11 +64,11 @@ func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *mode
 	return id, nil
 }
 
-func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error) {
+func (r *SecretGuestRepository) GetListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error) {
 
 	log := logger.GetLoggerFromCtx(ctx)
 
-	countQuery := `SELECT COUNT(*) FROM listings WHERE is_active = true;`
+	countQuery := `SELECT COUNT(*) FROM listings;`
 	var total int
 	err := r.db.QueryRow(ctx, countQuery).Scan(&total)
 	if err != nil {
@@ -83,13 +83,12 @@ func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, of
 	query := `
 		SELECT
 			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
-			l.latitude, l.longitude, l.created_at, l.is_active,
+			l.latitude, l.longitude, l.created_at, 
 			lt.id as "listing_type.id",
 			lt.slug as "listing_type.slug",
 			lt.name as "listing_type.name"
 		FROM listings l
 		JOIN listing_types lt ON l.listing_type_id = lt.id
-		WHERE l.is_active = true
 		ORDER BY l.created_at DESC
 		LIMIT $1 OFFSET $2;
 	`
@@ -106,7 +105,7 @@ func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, of
 		var l models.Listing
 		if err := rows.Scan(
 			&l.ID, &l.Code, &l.Title, &l.Description, &l.MainPicture, &l.ListingTypeID, &l.Address, &l.City, &l.Country,
-			&l.Latitude, &l.Longitude, &l.CreatedAt, &l.IsActive,
+			&l.Latitude, &l.Longitude, &l.CreatedAt,
 			&l.ListingType.ID, &l.ListingType.Slug, &l.ListingType.Name,
 		); err != nil {
 			log.Error(ctx, "Failed to scan listing row with join", zap.Error(err))
@@ -123,25 +122,25 @@ func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, of
 	return listings, total, nil
 }
 
-func (r *SecretGuestRepository) GetActiveListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error) {
+func (r *SecretGuestRepository) GetListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error) {
 
 	log := logger.GetLoggerFromCtx(ctx)
 
 	query := `
 		SELECT
 			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
-			l.latitude, l.longitude, l.created_at, l.is_active,
+			l.latitude, l.longitude, l.created_at,
 			lt.id as "listing_type.id",
 			lt.slug as "listing_type.slug",
 			lt.name as "listing_type.name"
 		FROM listings l
 		JOIN listing_types lt ON l.listing_type_id = lt.id
-		WHERE l.id = $1 AND l.is_active = true;
+		WHERE l.id = $1;
 	`
 	var l models.Listing
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&l.ID, &l.Code, &l.Title, &l.Description, &l.MainPicture, &l.ListingTypeID, &l.Address, &l.City, &l.Country,
-		&l.Latitude, &l.Longitude, &l.CreatedAt, &l.IsActive,
+		&l.Latitude, &l.Longitude, &l.CreatedAt,
 		&l.ListingType.ID, &l.ListingType.Slug, &l.ListingType.Name,
 	)
 

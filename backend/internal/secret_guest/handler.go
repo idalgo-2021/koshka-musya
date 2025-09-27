@@ -258,7 +258,7 @@ func (h *SecretGuestHandler) GetListings(w http.ResponseWriter, r *http.Request)
 		Limit: limit,
 	}
 
-	listings, err := h.service.GetActiveListings(ctx, dto)
+	listings, err := h.service.GetListings(ctx, dto)
 	if err != nil {
 		log.Error(ctx, "Failed to get active listings", zap.Error(err))
 		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
