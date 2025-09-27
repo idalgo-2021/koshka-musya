@@ -1,0 +1,2524 @@
+basePath: /
+definitions:
+  auth.ErrorResponse:
+    properties:
+      message:
+        example: An unexpected error occurred.
+        type: string
+    type: object
+  auth.GenerateTokenRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.GenerateTokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  auth.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  auth.RefreshTokenResponse:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  auth.RegisterUserRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth.RegisterUserResponse:
+    properties:
+      message:
+        example: User registered successfully
+        type: string
+    type: object
+  auth.ValidateTokenResponse:
+    properties:
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  models.ChecklistSchema:
+    additionalProperties: true
+    type: object
+  secret_guest.AnswerTypeResponse:
+    properties:
+      id:
+        type: integer
+      meta:
+        type: object
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.AnswerTypesResponse:
+    properties:
+      answer_types:
+        items:
+          $ref: '#/definitions/secret_guest.AnswerTypeResponse'
+        type: array
+    type: object
+  secret_guest.AssignmentResponseDTO:
+    properties:
+      accepted_at:
+        type: string
+      code:
+        type: string
+      created_at:
+        type: string
+      deadline:
+        type: string
+      declined_at:
+        type: string
+      expires_at:
+        type: string
+      id:
+        type: string
+      listing:
+        $ref: '#/definitions/secret_guest.ListingShortResponse'
+      purpose:
+        type: string
+      reporter:
+        $ref: '#/definitions/secret_guest.ReporterResponse'
+      status:
+        $ref: '#/definitions/secret_guest.StatusResponse'
+    type: object
+  secret_guest.AssignmentsResponse:
+    properties:
+      assignments:
+        items:
+          $ref: '#/definitions/secret_guest.AssignmentResponseDTO'
+        type: array
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  secret_guest.ChecklistItemAnswerTypeInfo:
+    properties:
+      id:
+        type: integer
+      meta:
+        type: object
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.ChecklistItemMediaRequirementInfo:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.ChecklistItemResponse:
+    properties:
+      answer_type:
+        $ref: '#/definitions/secret_guest.ChecklistItemAnswerTypeInfo'
+      description:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      listing_type_id:
+        type: integer
+      listing_type_slug:
+        type: string
+      media_allowed_types:
+        items:
+          type: string
+        type: array
+      media_max_files:
+        type: integer
+      media_requirement:
+        $ref: '#/definitions/secret_guest.ChecklistItemMediaRequirementInfo'
+      section:
+        $ref: '#/definitions/secret_guest.ChecklistItemSectionInfo'
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      title:
+        type: string
+    type: object
+  secret_guest.ChecklistItemSectionInfo:
+    properties:
+      id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      title:
+        type: string
+    type: object
+  secret_guest.ChecklistItemsResponse:
+    properties:
+      checklist_items:
+        items:
+          $ref: '#/definitions/secret_guest.ChecklistItemResponse'
+        type: array
+    type: object
+  secret_guest.ChecklistSectionResponse:
+    properties:
+      id:
+        type: integer
+      listing_type_id:
+        type: integer
+      listing_type_slug:
+        type: string
+      slug:
+        type: string
+      sort_order:
+        type: integer
+      title:
+        type: string
+    type: object
+  secret_guest.ChecklistSectionsResponse:
+    properties:
+      checklist_sections:
+        items:
+          $ref: '#/definitions/secret_guest.ChecklistSectionResponse'
+        type: array
+    type: object
+  secret_guest.CreateAnswerTypeRequestDTO:
+    properties:
+      meta:
+        description: Meta может быть null
+        type: object
+      name:
+        type: string
+      slug:
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  secret_guest.CreateAssignmentRequestDTO:
+    properties:
+      code:
+        type: string
+      expires_at:
+        type: string
+      listing_id:
+        type: string
+      purpose:
+        type: string
+      reporter_id:
+        type: string
+    required:
+    - code
+    - expires_at
+    - listing_id
+    - purpose
+    - reporter_id
+    type: object
+  secret_guest.CreateChecklistItemRequestDTO:
+    properties:
+      answer_type_id:
+        type: integer
+      description:
+        type: string
+      is_active:
+        type: boolean
+      listing_type_id:
+        type: integer
+      media_allowed_types:
+        items:
+          type: string
+        type: array
+      media_max_files:
+        minimum: 0
+        type: integer
+      media_requirement_id:
+        type: integer
+      section_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        minimum: 0
+        type: integer
+      title:
+        type: string
+    required:
+    - answer_type_id
+    - listing_type_id
+    - media_requirement_id
+    - section_id
+    - slug
+    - title
+    type: object
+  secret_guest.CreateChecklistSectionRequestDTO:
+    properties:
+      listing_type_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        minimum: 0
+        type: integer
+      title:
+        type: string
+    required:
+    - listing_type_id
+    - slug
+    - title
+    type: object
+  secret_guest.CreateListingRequestDTO:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      code:
+        type: string
+      country:
+        type: string
+      description:
+        type: string
+      latitude:
+        type: number
+      listing_type_id:
+        type: integer
+      longitude:
+        type: number
+      title:
+        type: string
+    required:
+    - address
+    - city
+    - code
+    - country
+    - description
+    - latitude
+    - listing_type_id
+    - longitude
+    - title
+    type: object
+  secret_guest.CreateListingTypeRequestDTO:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    required:
+    - name
+    - slug
+    type: object
+  secret_guest.ErrorResponse:
+    properties:
+      message:
+        example: An unexpected error occurred.
+        type: string
+    type: object
+  secret_guest.GenerateUploadURLRequest:
+    properties:
+      fileName:
+        type: string
+    type: object
+  secret_guest.GenerateUploadURLResponse:
+    properties:
+      form_data:
+        $ref: '#/definitions/secret_guest.UploadFormDataDTO'
+      headers:
+        additionalProperties:
+          type: string
+        type: object
+      method:
+        type: string
+      upload_url:
+        type: string
+    type: object
+  secret_guest.ListingResponseDTO:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      code:
+        type: string
+      country:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      listing_type:
+        $ref: '#/definitions/secret_guest.ListingTypeResponse'
+      longitude:
+        type: number
+      main_picture:
+        type: string
+      title:
+        type: string
+    type: object
+  secret_guest.ListingShortResponse:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      code:
+        type: string
+      country:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      listing_type:
+        $ref: '#/definitions/secret_guest.ListingTypeResponse'
+      longitude:
+        type: number
+      main_picture:
+        type: string
+      title:
+        type: string
+    type: object
+  secret_guest.ListingTypeResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.ListingTypesResponse:
+    properties:
+      listing_types:
+        items:
+          $ref: '#/definitions/secret_guest.ListingTypeResponse'
+        type: array
+    type: object
+  secret_guest.ListingsResponse:
+    properties:
+      listings:
+        items:
+          $ref: '#/definitions/secret_guest.ListingResponseDTO'
+        type: array
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
+  secret_guest.MediaRequirementResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.MediaRequirementsResponse:
+    properties:
+      media_requirements:
+        items:
+          $ref: '#/definitions/secret_guest.MediaRequirementResponse'
+        type: array
+    type: object
+  secret_guest.ReportResponseDTO:
+    properties:
+      assignment_id:
+        type: string
+      checklist_schema:
+        $ref: '#/definitions/models.ChecklistSchema'
+      created_at:
+        type: string
+      id:
+        type: string
+      listing:
+        $ref: '#/definitions/secret_guest.ListingShortResponse'
+      purpose:
+        type: string
+      reporter:
+        $ref: '#/definitions/secret_guest.ReporterResponse'
+      status:
+        $ref: '#/definitions/secret_guest.StatusResponse'
+      submitted_at:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  secret_guest.ReporterResponse:
+    properties:
+      id:
+        type: string
+      username:
+        type: string
+    type: object
+  secret_guest.ReportsResponse:
+    properties:
+      page:
+        type: integer
+      reports:
+        items:
+          $ref: '#/definitions/secret_guest.ReportResponseDTO'
+        type: array
+      total:
+        type: integer
+    type: object
+  secret_guest.StatusResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.UpdateAnswerTypeRequestDTO:
+    properties:
+      meta:
+        description: Для обновления/очистки meta передаем либо новый JSON, либо null
+        type: object
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.UpdateChecklistItemRequestDTO:
+    properties:
+      answer_type_id:
+        type: integer
+      description:
+        type: string
+      is_active:
+        type: boolean
+      listing_type_id:
+        type: integer
+      media_allowed_types:
+        items:
+          type: string
+        type: array
+      media_max_files:
+        minimum: 0
+        type: integer
+      media_requirement_id:
+        type: integer
+      section_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        minimum: 0
+        type: integer
+      title:
+        type: string
+    type: object
+  secret_guest.UpdateChecklistSectionRequestDTO:
+    properties:
+      listing_type_id:
+        type: integer
+      slug:
+        type: string
+      sort_order:
+        minimum: 0
+        type: integer
+      title:
+        type: string
+    type: object
+  secret_guest.UpdateListingTypeRequestDTO:
+    properties:
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  secret_guest.UpdateReportRequestDTO:
+    properties:
+      checklist_schema:
+        $ref: '#/definitions/models.ChecklistSchema'
+    type: object
+  secret_guest.UploadFormDataDTO:
+    properties:
+      expire:
+        type: string
+      fileName:
+        type: string
+      folder:
+        type: string
+      publicKey:
+        type: string
+      signature:
+        type: string
+      tags:
+        type: string
+      token:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is the API for the Secret Guest application.
+  title: Secret Guest API
+  version: "1.0"
+paths:
+  /admin/assignments:
+    post:
+      consumes:
+      - application/json
+      description: Creates new assignment object. Available for admin only.
+      parameters:
+      - description: Assignment Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.CreateAssignmentRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/secret_guest.AssignmentResponseDTO'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Assignment cannot be created (e.g., wrong payload)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create new Assignment (Admin)
+      tags:
+      - Assignments (Admin)
+  /admin/listings:
+    post:
+      consumes:
+      - application/json
+      description: Creates new listing object. Available for admin only.
+      parameters:
+      - description: Listing Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.CreateListingRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/secret_guest.ListingResponseDTO'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Listing cannot be created (e.g., wrong payload)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create new Listing (Admin)
+      tags:
+      - Listings (Admin)
+  /answer_types:
+    get:
+      description: Returns a list of all Answer Types with optional filtering.
+      parameters:
+      - collectionFormat: multi
+        description: Filter by one or more Answer Type IDs
+        in: query
+        items:
+          type: integer
+        name: id
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Answer Type slugs
+        in: query
+        items:
+          type: string
+        name: slug
+        type: array
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.AnswerTypesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Answer Types (Staff)
+      tags:
+      - Answer Types (Staff)
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Answer Type.
+      parameters:
+      - description: Answer Type Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.CreateAnswerTypeRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/secret_guest.AnswerTypeResponse'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Answer Type (Staff)
+      tags:
+      - Answer Types (Staff)
+  /answer_types/{id}:
+    delete:
+      description: Deletes an existing Answer Type. Deletion will fail if the type
+        is used in any checklist items.
+      parameters:
+      - description: Answer Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Answer Type not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Answer Type is in use and cannot be deleted
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Answer Type (Staff)
+      tags:
+      - Answer Types (Staff)
+    get:
+      description: Returns a single Answer Type by its ID.
+      parameters:
+      - description: Answer Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.AnswerTypeResponse'
+        "400":
+          description: Invalid ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Answer Type not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Answer Type By ID (Staff)
+      tags:
+      - Answer Types (Staff)
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing Answer Type.
+      parameters:
+      - description: Answer Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Answer Type Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.UpdateAnswerTypeRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            $ref: '#/definitions/secret_guest.AnswerTypeResponse'
+        "400":
+          description: Invalid payload or ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Answer Type not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Answer Type (Staff)
+      tags:
+      - Answer Types (Staff)
+  /assignments:
+    get:
+      description: Returns a paginated list of all assignments with optional filters.
+        Available for staff only.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by reporter (user) ID
+        format: uuid
+        in: query
+        name: reporter_id
+        type: string
+      - collectionFormat: multi
+        description: Filter by one or more status IDs
+        in: query
+        items:
+          type: integer
+        name: status_id
+        type: array
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.AssignmentsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Assignments (Staff)
+      tags:
+      - Assignments (Staff)
+  /assignments/{id}:
+    get:
+      description: Returns details of any assignment. Available for staff only.
+      parameters:
+      - description: Assignment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.AssignmentResponseDTO'
+        "400":
+          description: Invalid assignment ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Assignment not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Assignment By ID (Staff)
+      tags:
+      - Assignments (Staff)
+  /assignments/{id}/cancel:
+    post:
+      description: Cancel an assignment offer.
+      parameters:
+      - description: Assignment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid assignment ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Assignment not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Assignment cannot be cancelled
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Decline Assignment
+      tags:
+      - Assignments (Staff)
+  /assignments/my:
+    get:
+      description: Returns a paginated list of assignments for the current user.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.AssignmentsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My Assignments
+      tags:
+      - Assignments (User)
+  /assignments/my/{id}:
+    get:
+      description: Returns details of a specific assignment belonging to the current
+        user.
+      parameters:
+      - description: Assignment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.AssignmentResponseDTO'
+        "400":
+          description: Invalid assignment ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Assignment not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My Assignment By ID
+      tags:
+      - Assignments (User)
+  /assignments/my/{id}/accept:
+    post:
+      description: Accept an assignment offer. This will start an asynchronous process
+        to generate a report.
+      parameters:
+      - description: Assignment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "202":
+          description: Accepted
+        "400":
+          description: Invalid assignment ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Assignment not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Assignment cannot be accepted (e.g., wrong status)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Accept My Assignment
+      tags:
+      - Assignments (User)
+  /assignments/my/{id}/decline:
+    post:
+      description: Decline an assignment offer.
+      parameters:
+      - description: Assignment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid assignment ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Assignment not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Assignment cannot be declined (e.g., wrong status)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Decline My Assignment
+      tags:
+      - Assignments (User)
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh a JWT token using a refresh token
+      parameters:
+      - description: Refresh Token
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.RefreshTokenResponse'
+        "400":
+          description: Invalid request body
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+      summary: Refresh an existing JWT token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a user with username, password, and email
+      parameters:
+      - description: User Registration Info
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: 'message: User registered successfully'
+          schema:
+            $ref: '#/definitions/auth.RegisterUserResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "409":
+          description: User with this username or email already exists
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /auth/token:
+    post:
+      consumes:
+      - application/json
+      description: Generates a new JWT access token for authentication.
+      parameters:
+      - description: User Credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/auth.GenerateTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.GenerateTokenResponse'
+        "400":
+          description: Invalid request body or validation error
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "401":
+          description: Invalid username or password
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+      summary: Generate a new access token
+      tags:
+      - auth
+  /auth/validate:
+    post:
+      description: Validates the provided JWT access token.
+      parameters:
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.ValidateTokenResponse'
+        "401":
+          description: Unauthorized or invalid token
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Validate an access token
+      tags:
+      - auth
+  /checklist_items:
+    get:
+      description: Returns a list of all Checklist Items.
+      parameters:
+      - collectionFormat: multi
+        description: Filter by one or more Checklist Item IDs
+        in: query
+        items:
+          type: integer
+        name: id
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Checklist Item slugs
+        in: query
+        items:
+          type: string
+        name: slug
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Listing Type IDs
+        in: query
+        items:
+          type: integer
+        name: listing_type_id
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Listing Type slugs
+        in: query
+        items:
+          type: string
+        name: listing_type_slug
+        type: array
+      - description: Filter by active status
+        in: query
+        name: is_active
+        type: boolean
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistItemsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Checklist Items (Staff)
+      tags:
+      - Checklist Items (Staff)
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Checklist Item.
+      parameters:
+      - description: Checklist Item Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.CreateChecklistItemRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistItemResponse'
+        "400":
+          description: Invalid payload or non-existent foreign key
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug for this listing type
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Checklist Item (Staff)
+      tags:
+      - Checklist Items (Staff)
+  /checklist_items/{id}:
+    delete:
+      description: Deletes an existing Checklist Item.
+      parameters:
+      - description: Checklist Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Checklist Item not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Checklist Item (Staff)
+      tags:
+      - Checklist Items (Staff)
+    get:
+      description: Returns a single Checklist Item by its ID.
+      parameters:
+      - description: Checklist Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistItemResponse'
+        "400":
+          description: Invalid ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Checklist Item not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Checklist Item By ID (Staff)
+      tags:
+      - Checklist Items (Staff)
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing Checklist Item.
+      parameters:
+      - description: Checklist Item ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Checklist Item Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.UpdateChecklistItemRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistItemResponse'
+        "400":
+          description: Invalid payload or ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Checklist Item not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug or other constraint violation
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Checklist Item (Staff)
+      tags:
+      - Checklist Items (Staff)
+  /checklist_sections:
+    get:
+      description: Returns a list of all Checklist Sections.
+      parameters:
+      - collectionFormat: multi
+        description: Filter by one or more Checklist Section IDs
+        in: query
+        items:
+          type: integer
+        name: id
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Checklist Section slugs
+        in: query
+        items:
+          type: string
+        name: slug
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Listing Type IDs
+        in: query
+        items:
+          type: integer
+        name: listing_type_id
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Listing Type slugs
+        in: query
+        items:
+          type: string
+        name: listing_type_slug
+        type: array
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistSectionsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Checklist Sections (Staff)
+      tags:
+      - Checklist Sections (Staff)
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Checklist Section.
+      parameters:
+      - description: Checklist Section Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.CreateChecklistSectionRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistSectionResponse'
+        "400":
+          description: Invalid payload or non-existent listing_type_id
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug for this listing type
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Checklist Section (Staff)
+      tags:
+      - Checklist Sections (Staff)
+  /checklist_sections/{id}:
+    delete:
+      description: Deletes an existing Checklist Section. Deletion will fail if the
+        section is used in any checklist items.
+      parameters:
+      - description: Checklist Section ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Checklist Section not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Checklist Section is in use and cannot be deleted
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Checklist Section (Staff)
+      tags:
+      - Checklist Sections (Staff)
+    get:
+      description: Returns a single Checklist Section by its ID.
+      parameters:
+      - description: Checklist Section ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistSectionResponse'
+        "400":
+          description: Invalid ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Checklist Section not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Checklist Section By ID (Staff)
+      tags:
+      - Checklist Sections (Staff)
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing Checklist Section.
+      parameters:
+      - description: Checklist Section ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Checklist Section Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.UpdateChecklistSectionRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            $ref: '#/definitions/secret_guest.ChecklistSectionResponse'
+        "400":
+          description: Invalid payload or ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Checklist Section not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug for this listing type
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Checklist Section (Staff)
+      tags:
+      - Checklist Sections (Staff)
+  /hellouser:
+    get:
+      description: A simple test endpoint to check if authentication works.
+      parameters:
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Test Endpoint
+      tags:
+      - Tests
+  /listing_types:
+    get:
+      description: Returns a list of all Listing Types.
+      parameters:
+      - collectionFormat: multi
+        description: Filter by one or more Listing Type IDs
+        in: query
+        items:
+          type: integer
+        name: id
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Listing Type slugs
+        in: query
+        items:
+          type: string
+        name: slug
+        type: array
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ListingTypesResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Listing Types (Staff)
+      tags:
+      - Listing Types (Staff)
+    post:
+      consumes:
+      - application/json
+      description: Creates a new Listing Type.
+      parameters:
+      - description: Listing Type Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.CreateListingTypeRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/secret_guest.ListingTypeResponse'
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Listing Type (Staff)
+      tags:
+      - Listing Types (Staff)
+  /listing_types/{id}:
+    delete:
+      description: Deletes an existing Listing Type. Deletion will fail if the type
+        is used in any listings.
+      parameters:
+      - description: Listing Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Listing Type not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Listing Type is in use and cannot be deleted
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Listing Type (Staff)
+      tags:
+      - Listing Types (Staff)
+    get:
+      description: Returns a single Listing Type by its ID.
+      parameters:
+      - description: Listing Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ListingTypeResponse'
+        "400":
+          description: Invalid ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Listing Type not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Listing Type By ID (Staff)
+      tags:
+      - Listing Types (Staff)
+    patch:
+      consumes:
+      - application/json
+      description: Updates an existing Listing Type.
+      parameters:
+      - description: Listing Type ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Listing Type Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.UpdateListingTypeRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            $ref: '#/definitions/secret_guest.ListingTypeResponse'
+        "400":
+          description: Invalid payload or ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Listing Type not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Duplicate slug
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Listing Type (Staff)
+      tags:
+      - Listing Types (Staff)
+  /listings:
+    get:
+      description: Returns a paginated list of all active listings.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ListingsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      summary: Get Public Listings
+      tags:
+      - Listings (Public)
+  /listings/{id}:
+    get:
+      description: Returns detailed information about a single active listing.
+      parameters:
+      - description: Listing ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ListingResponseDTO'
+        "400":
+          description: Invalid listing ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Listing not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      summary: Get Listing By ID
+      tags:
+      - Listings (Public)
+  /media_requirements:
+    get:
+      description: Returns a paginated list of all Media Requirements.
+      parameters:
+      - collectionFormat: multi
+        description: Filter by one or more Media Requirements IDs
+        in: query
+        items:
+          type: integer
+        name: id
+        type: array
+      - collectionFormat: multi
+        description: Filter by one or more Media Requirements slugs
+        in: query
+        items:
+          type: string
+        name: slug
+        type: array
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.MediaRequirementsResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Media Requirements (Staff)
+      tags:
+      - Media Requirements (Staff)
+  /reports:
+    get:
+      description: Returns a paginated list of all reports. Available for staff only.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Filter by reporter (user) ID
+        format: uuid
+        in: query
+        name: reporter_id
+        type: string
+      - collectionFormat: multi
+        description: Filter by one or more status IDs
+        in: query
+        items:
+          type: integer
+        name: status_id
+        type: array
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ReportsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Reports (Staff)
+      tags:
+      - Reports (Staff)
+  /reports/{id}:
+    get:
+      description: Returns details of any report. Available for staff only.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ReportResponseDTO'
+        "400":
+          description: Invalid report ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Report By ID (Staff)
+      tags:
+      - Reports (Staff)
+  /reports/{id}/approve:
+    post:
+      description: Approves a submitted secret guest report. Available for staff only.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid report ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Report cannot be approved (e.g., wrong status)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a Report (Staff)
+      tags:
+      - Reports (Staff)
+  /reports/{id}/reject:
+    post:
+      description: Rejects a submitted secret guest report. Available for staff only.
+        This action does not require a request body.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid report ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Report cannot be rejected (e.g., wrong status)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject a Report (Staff)
+      tags:
+      - Reports (Staff)
+  /reports/my:
+    get:
+      description: Returns a paginated list of reports for the current user that are
+        in progress.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ReportsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My Reports
+      tags:
+      - Reports (User)
+  /reports/my/{id}:
+    get:
+      description: Returns a specific report with its schema and answers for the current
+        user to fill out.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ReportResponseDTO'
+        "400":
+          description: Invalid report ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My Report By ID
+      tags:
+      - Reports (User)
+    patch:
+      consumes:
+      - application/json
+      description: Saves the current state of a report draft.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated checklist schema with answers
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.UpdateReportRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid request body or report ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Report is not in a draft state and cannot be edited
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update My Report (Save Draft)
+      tags:
+      - Reports (User)
+  /reports/my/{id}/submit:
+    post:
+      description: Submits a completed report for review. The report can no longer
+        be edited after this.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid report ID or report is not complete
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Report is not in a draft state
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit My Report
+      tags:
+      - Reports (User)
+  /uploads/generate-url:
+    post:
+      consumes:
+      - application/json
+      description: Generates a presigned URL and form data for uploading a file directly
+        to the file storage.
+      parameters:
+      - description: File information
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.GenerateUploadURLRequest'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.GenerateUploadURLResponse'
+        "400":
+          description: Invalid request body or file name
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate Upload URL
+      tags:
+      - Uploads
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and a JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

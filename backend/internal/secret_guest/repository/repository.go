@@ -1,0 +1,1991 @@
+package repository
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/ostrovok-hackathon-2025/koshka-musya/internal/models"
+	"github.com/ostrovok-hackathon-2025/koshka-musya/pkg/logger"
+
+	"go.uber.org/zap"
+)
+
+type SecretGuestRepository struct {
+	db *pgxpool.Pool
+}
+
+func NewListingRepository(db *pgxpool.Pool) *SecretGuestRepository {
+	return &SecretGuestRepository{db: db}
+}
+
+// listings
+func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *models.Listing) (uuid.UUID, error) {
+
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		INSERT INTO listings (code, title, description, listing_type_id, address, city, country, latitude, longitude)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id;
+	`
+
+	row := r.db.QueryRow(ctx, query,
+		listing.Code,
+		listing.Title,
+		listing.Description,
+		listing.ListingTypeID,
+		listing.Address,
+		listing.City,
+		listing.Country,
+		listing.Latitude,
+		listing.Longitude,
+	)
+
+	var id uuid.UUID
+	if err := row.Scan(&id); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			if strings.Contains(pgErr.ConstraintName, "listings_code_uniq_key") {
+				log.Warn(ctx, "Attempt to register listing with existent code", zap.String("code", listing.Code.String()))
+				return id, models.ErrListingCannotBeCreated
+			}
+		}
+
+		return id, err
+	}
+
+	return id, nil
+}
+
+func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error) {
+
+	log := logger.GetLoggerFromCtx(ctx)
+
+	countQuery := `SELECT COUNT(*) FROM listings WHERE is_active = true;`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery).Scan(&total)
+	if err != nil {
+		log.Error(ctx, "Failed to query total active listings count", zap.Error(err))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.Listing{}, 0, nil
+	}
+
+	query := `
+		SELECT
+			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
+			l.latitude, l.longitude, l.created_at, l.is_active,
+			lt.id as "listing_type.id",
+			lt.slug as "listing_type.slug",
+			lt.name as "listing_type.name"
+		FROM listings l
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		WHERE l.is_active = true
+		ORDER BY l.created_at DESC
+		LIMIT $1 OFFSET $2;
+	`
+
+	rows, err := r.db.Query(ctx, query, limit, offset)
+	if err != nil {
+		log.Error(ctx, "Failed to query active listings with join", zap.Error(err))
+		return nil, total, err
+	}
+	defer rows.Close()
+
+	listings := make([]*models.Listing, 0)
+	for rows.Next() {
+		var l models.Listing
+		if err := rows.Scan(
+			&l.ID, &l.Code, &l.Title, &l.Description, &l.MainPicture, &l.ListingTypeID, &l.Address, &l.City, &l.Country,
+			&l.Latitude, &l.Longitude, &l.CreatedAt, &l.IsActive,
+			&l.ListingType.ID, &l.ListingType.Slug, &l.ListingType.Name,
+		); err != nil {
+			log.Error(ctx, "Failed to scan listing row with join", zap.Error(err))
+			return nil, total, err
+		}
+		listings = append(listings, &l)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over listing rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	return listings, total, nil
+}
+
+func (r *SecretGuestRepository) GetActiveListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error) {
+
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		SELECT
+			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
+			l.latitude, l.longitude, l.created_at, l.is_active,
+			lt.id as "listing_type.id",
+			lt.slug as "listing_type.slug",
+			lt.name as "listing_type.name"
+		FROM listings l
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		WHERE l.id = $1 AND l.is_active = true;
+	`
+	var l models.Listing
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&l.ID, &l.Code, &l.Title, &l.Description, &l.MainPicture, &l.ListingTypeID, &l.Address, &l.City, &l.Country,
+		&l.Latitude, &l.Longitude, &l.CreatedAt, &l.IsActive,
+		&l.ListingType.ID, &l.ListingType.Slug, &l.ListingType.Name,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Listing not found by ID in DB", zap.String("listing_id", id.String()))
+			return nil, models.ErrListingNotFound
+		}
+
+		log.Error(ctx, "Failed to query listing by ID",
+			zap.Error(err),
+			zap.String("listing_id", id.String()),
+		)
+		return nil, err
+	}
+
+	return &l, nil
+}
+
+// assignments
+
+type AssignmentsFilter struct {
+	AssignmentID *uuid.UUID
+	ReporterID   *uuid.UUID
+	StatusIDs    []int
+	Limit        int
+	Offset       int
+}
+
+func buildAssignmentWhereClause(filter AssignmentsFilter) (string, []interface{}, int) {
+	conditions := []string{}
+	args := []interface{}{}
+	paramCount := 1
+
+	if filter.AssignmentID != nil {
+		conditions = append(conditions, fmt.Sprintf("a.id = $%d", paramCount))
+		args = append(args, *filter.AssignmentID)
+		paramCount++
+	}
+
+	if filter.ReporterID != nil {
+		conditions = append(conditions, fmt.Sprintf("a.reporter_id = $%d", paramCount))
+		args = append(args, *filter.ReporterID)
+		paramCount++
+	}
+
+	if len(filter.StatusIDs) > 0 {
+		placeholders := make([]string, len(filter.StatusIDs))
+		for i, id := range filter.StatusIDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("a.status_id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	whereClause := strings.Join(conditions, " AND ")
+
+	return whereClause, args, paramCount
+}
+
+func (r *SecretGuestRepository) scanAssignment(row pgx.Row) (*models.Assignment, error) {
+	var a models.Assignment
+	if err := row.Scan(
+		&a.ID, &a.Code, &a.ListingID, &a.ReporterID, &a.StatusID,
+
+		&a.Purpose,
+		&a.CreatedAt,
+		&a.ExpiresAt,
+		&a.AcceptedAt,
+		&a.DeclinedAt,
+		&a.Deadline,
+
+		&a.Listing.Code,
+		&a.Listing.Title,
+		&a.Listing.Description,
+		&a.Listing.MainPicture,
+
+		&a.Listing.ListingTypeID, &a.Listing.ListingTypeSlug, &a.Listing.ListingTypeName,
+
+		&a.Listing.Address, &a.Listing.City, &a.Listing.Country,
+		&a.Listing.Latitude, &a.Listing.Longitude,
+
+		&a.Reporter.Username,
+
+		&a.Status.Slug,
+		&a.Status.Name,
+	); err != nil {
+		return nil, err
+	}
+
+	a.Listing.ID = a.ListingID
+	a.Reporter.ID = a.ReporterID
+	a.Status.ID = a.StatusID
+
+	return &a, nil
+}
+
+func (r *SecretGuestRepository) CreateAssignment(ctx context.Context, assignment *models.Assignment) (uuid.UUID, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		INSERT INTO assignments (code, listing_id, reporter_id, purpose, expires_at, status_id)
+		VALUES ($1, $2, $3, $4, (SELECT id FROM assignment_statuses WHERE slug = 'offered'))
+		RETURNING id;
+	`
+
+	row := r.db.QueryRow(ctx, query,
+		assignment.Code,
+		assignment.ListingID,
+		assignment.ReporterID,
+		assignment.Purpose,
+		assignment.ExpiresAt,
+	)
+
+	var id uuid.UUID
+	if err := row.Scan(&id); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			if strings.Contains(pgErr.ConstraintName, "assignments_code_uniq_key") {
+				log.Warn(ctx, "Attempt to register assignment with existent code", zap.String("code", assignment.Code.String()))
+				return id, models.ErrAssignmentCannotBeCreated
+			}
+		}
+
+		return uuid.UUID{}, err
+	}
+
+	return id, nil
+}
+
+func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter AssignmentsFilter) ([]*models.Assignment, int, error) {
+
+	log := logger.GetLoggerFromCtx(ctx)
+
+	whereClause, args, paramCount := buildAssignmentWhereClause(filter)
+
+	countQuery := "SELECT COUNT(a.id) FROM assignments a JOIN assignment_statuses s ON a.status_id = s.id"
+	if whereClause != "" {
+		countQuery += " WHERE " + whereClause
+	}
+
+	var total int
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		log.Error(ctx, "Failed to query total assignments count", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.Assignment{}, 0, nil
+	}
+
+	baseQuery := `
+		SELECT
+			a.id, a.code, a.listing_id, a.reporter_id, a.status_id,
+			a.purpose,
+			a.created_at,
+			a.expires_at,
+			a.accepted_at,
+			a.declined_at,
+			a.deadline,
+
+			l.code as "listing_code",
+			l.title as "listing_title",
+			l.description as "listing_description",
+
+			l.main_picture as "listing_main_picture", 
+			l.listing_type_id, 
+
+			lt.slug as "listing_type_slug", 
+			lt.name as "listing_type_name",
+
+			l.address as "listing_address", 
+			l.city as "listing_city", 
+			l.country as "listing_country",
+
+			l.latitude as "listing_latitude", 
+			l.longitude as "listing_longitude",
+
+			u.username as "reporter_username",
+
+			s.slug as "status_slug",
+			s.name as "status_name"
+
+		FROM assignments a
+		JOIN listings l ON a.listing_id = l.id
+		JOIN users u ON a.reporter_id = u.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		JOIN assignment_statuses s ON a.status_id = s.id
+	`
+
+	query := baseQuery
+	if whereClause != "" {
+		query += " WHERE " + whereClause
+	}
+
+	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
+
+	args = append(args, filter.Limit, filter.Offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query assignments with filter", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	assignments := make([]*models.Assignment, 0, filter.Limit)
+
+	for rows.Next() {
+		var a models.Assignment
+		if err := rows.Scan(
+			&a.ID, &a.Code, &a.ListingID, &a.ReporterID, &a.StatusID,
+			&a.Purpose,
+			&a.CreatedAt,
+			&a.ExpiresAt,
+			&a.AcceptedAt,
+			&a.DeclinedAt,
+			&a.Deadline,
+
+			&a.Listing.Code,
+			&a.Listing.Title,
+			&a.Listing.Description,
+
+			&a.Listing.MainPicture,
+			&a.Listing.ListingTypeID,
+			&a.Listing.ListingTypeSlug,
+			&a.Listing.ListingTypeName,
+
+			&a.Listing.Address, &a.Listing.City, &a.Listing.Country,
+			&a.Listing.Latitude,
+			&a.Listing.Longitude,
+
+			&a.Reporter.Username,
+
+			&a.Status.Slug,
+			&a.Status.Name,
+		); err != nil {
+			log.Error(ctx, "Failed to scan assignment row", zap.Error(err))
+			// Прерываем выполнение, так как ошибка сканирования может указывать на серьезную проблему.
+			return nil, total, err
+		}
+
+		a.Listing.ID = a.ListingID
+		a.Reporter.ID = a.ReporterID
+		a.Status.ID = a.StatusID
+
+		assignments = append(assignments, &a)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over assignment rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	return assignments, total, nil
+}
+
+func (r *SecretGuestRepository) GetAssignmentByID(ctx context.Context, assignmentID uuid.UUID) (*models.Assignment, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		SELECT
+			a.id, a.code, a.listing_id, a.reporter_id, a.status_id,
+			a.purpose, a.created_at, a.expires_at, a.accepted_at, a.declined_at, a.deadline, l.code as "listing_code",
+			
+			l.title as "listing_title", 
+			l.description as "listing_description", 
+			l.main_picture as "listing_main_picture", 
+			
+			l.listing_type_id,
+			lt.slug as "listing_type_slug", 
+			lt.name as "listing_type_name",
+
+			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
+			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
+
+			u.username as "reporter_username",
+			s.slug as "status_slug", s.name as "status_name"
+		FROM assignments a
+		JOIN listings l ON a.listing_id = l.id
+		JOIN users u ON a.reporter_id = u.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		JOIN assignment_statuses s ON a.status_id = s.id
+		WHERE a.id = $1
+	`
+	row := r.db.QueryRow(ctx, query, assignmentID)
+	assignment, err := r.scanAssignment(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
+			return nil, models.ErrAssignmentNotFound
+		}
+		log.Error(ctx, "Failed to query assignment by ID", zap.Error(err), zap.String("assignment_id", assignmentID.String()))
+		return nil, err
+	}
+	return assignment, nil
+}
+
+func (r *SecretGuestRepository) CancelAssignment(ctx context.Context, assignmentID uuid.UUID) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	updateQuery := `
+		UPDATE assignments SET status_id = $1 WHERE id = $2
+	`
+
+	ct, err := r.db.Exec(ctx, updateQuery,
+		models.AssignmentStatusCancelled, // new assignment status
+		assignmentID,
+	)
+
+	if err != nil {
+		log.Error(ctx, "DB error on cancelling assignment",
+			zap.Error(err),
+			zap.String("assignment_id", assignmentID.String()),
+		)
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		log.Warn(ctx, "Attempt to cancel assignment failed: assignment not found",
+			zap.String("assignment_id", assignmentID.String()),
+		)
+		return models.ErrAssignmentNotFound
+	}
+
+	return nil
+}
+
+func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, assignmentID, reporterID uuid.UUID) (*models.Assignment, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		SELECT
+			a.id, a.code, a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, a.declined_at, a.deadline, l.code as "listing_code",
+
+			l.title as "listing_title", l.description as "listing_description", l.main_picture as "listing_main_picture",
+			
+			l.listing_type_id, 
+			lt.slug as "listing_type_slug", lt.name as "listing_type_name"
+			
+			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
+			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
+
+			u.username as "reporter_username",
+			s.slug as "status_slug", s.name as "status_name"
+		FROM assignments a
+		JOIN listings l ON a.listing_id = l.id
+		JOIN users u ON a.reporter_id = u.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		JOIN assignment_statuses s ON a.status_id = s.id
+		WHERE a.id = $1 AND a.reporter_id = $2
+	`
+	row := r.db.QueryRow(ctx, query, assignmentID, reporterID)
+	assignment, err := r.scanAssignment(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Assignment not found by ID and owner", zap.String("assignment_id", assignmentID.String()), zap.String("reporter_id", reporterID.String()))
+			return nil, models.ErrAssignmentNotFound
+		}
+		log.Error(ctx, "Failed to query assignment by ID and owner", zap.Error(err), zap.String("assignment_id", assignmentID.String()))
+		return nil, err
+	}
+	return assignment, nil
+}
+
+func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt, deadline time.Time) (*models.Report, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	updateQuery := `
+		UPDATE assignments
+		SET status_id = $1, accepted_at = $2, deadline = $3
+		WHERE id = $4 AND reporter_id = $5 AND status_id = $6
+		RETURNING listing_id, purpose`
+
+	var listingID uuid.UUID
+	var purpose string
+	err = tx.QueryRow(ctx, updateQuery,
+		models.AssignmentStatusAccepted, // new assignment status
+		acceptedAt,
+		deadline,
+		assignmentID,
+		reporterID,
+		models.AssignmentStatusOffered, // current assignment status
+	).Scan(&listingID, &purpose)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, models.ErrAssignmentCannotBeAccepted
+		}
+		return nil, err
+	}
+
+	// Create report
+	report := &models.Report{
+		ID:           uuid.New(),
+		AssignmentID: assignmentID,
+		ListingID:    listingID,
+		Purpose:      purpose,
+		ReporterID:   reporterID,
+		StatusID:     models.ReportStatusGenerating,
+	}
+	insertQuery := `INSERT INTO reports (id, assignment_id, listing_id, purpose, reporter_id, status_id) VALUES ($1, $2, $3, $4, $5, $6)`
+	if _, err := tx.Exec(ctx, insertQuery, report.ID, report.AssignmentID, report.ListingID, report.Purpose, report.ReporterID, report.StatusID); err != nil {
+		log.Error(ctx, "Failed to create report in transaction", zap.Error(err))
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+	return report, nil
+}
+
+func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, declinedAt time.Time) error {
+
+	log := logger.GetLoggerFromCtx(ctx)
+
+	updateQuery := `
+		UPDATE assignments
+		SET status_id = $1, declined_at = $2
+		WHERE id = $3 AND reporter_id = $4 AND status_id = $5
+	`
+
+	ct, err := r.db.Exec(ctx, updateQuery,
+		models.AssignmentStatusDeclined, // new assignment status
+		declinedAt,
+		assignmentID,
+		reporterID,
+		models.AssignmentStatusOffered, // current assignment status
+	)
+
+	if err != nil {
+		log.Error(ctx, "DB error on declining assignment",
+			zap.Error(err),
+			zap.String("assignment_id", assignmentID.String()),
+			zap.String("reporter_id", reporterID.String()),
+		)
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		log.Warn(ctx, "Attempt to decline assignment failed: conditions not met",
+			zap.String("assignment_id", assignmentID.String()),
+			zap.String("reporter_id", reporterID.String()),
+			zap.Int("required_status_id", models.AssignmentStatusOffered),
+		)
+		return models.ErrAssignmentCannotBeDeclined
+	}
+
+	return nil
+
+}
+
+// reports
+
+type ReportsFilter struct {
+	ReportID   *uuid.UUID
+	ReporterID *uuid.UUID
+	StatusIDs  []int
+	Limit      int
+	Offset     int
+}
+
+func buildReportWhereClause(filter ReportsFilter) (string, []interface{}, int) {
+	conditions := []string{}
+	args := []interface{}{}
+	paramCount := 1
+
+	if filter.ReportID != nil {
+		conditions = append(conditions, fmt.Sprintf("r.id = $%d", paramCount))
+		args = append(args, *filter.ReportID)
+		paramCount++
+	}
+
+	if filter.ReporterID != nil {
+		conditions = append(conditions, fmt.Sprintf("r.reporter_id = $%d", paramCount))
+		args = append(args, *filter.ReporterID)
+		paramCount++
+	}
+
+	if len(filter.StatusIDs) > 0 {
+		placeholders := make([]string, len(filter.StatusIDs))
+		for i, id := range filter.StatusIDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("r.status_id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	whereClause := strings.Join(conditions, " AND ")
+
+	return whereClause, args, paramCount
+}
+
+func (r *SecretGuestRepository) scanReport(row pgx.Row) (*models.Report, error) {
+	var rep models.Report
+	if err := row.Scan(
+		&rep.ID,
+		&rep.AssignmentID, &rep.ListingID, &rep.ReporterID, &rep.StatusID,
+		&rep.Purpose,
+		&rep.CreatedAt,
+		&rep.UpdatedAt,
+		&rep.SubmittedAt,
+
+		&rep.ChecklistSchema,
+
+		&rep.Listing.Code,
+		&rep.Listing.Title,
+		&rep.Listing.Description,
+		&rep.Listing.MainPicture,
+
+		&rep.Listing.ListingTypeID,
+		&rep.Listing.ListingTypeSlug,
+		&rep.Listing.ListingTypeName,
+
+		&rep.Listing.Address, &rep.Listing.City, &rep.Listing.Country,
+		&rep.Listing.Latitude, &rep.Listing.Longitude,
+
+		&rep.Reporter.Username,
+
+		&rep.Status.Slug,
+		&rep.Status.Name,
+	); err != nil {
+		return nil, err
+	}
+
+	rep.Listing.ID = rep.ListingID
+	rep.Reporter.ID = rep.ReporterID
+	rep.Status.ID = rep.StatusID
+
+	return &rep, nil
+}
+
+func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFilter) ([]*models.Report, int, error) {
+
+	log := logger.GetLoggerFromCtx(ctx)
+
+	whereClause, args, paramCount := buildReportWhereClause(filter)
+
+	countQuery := "SELECT COUNT(r.id) FROM reports r JOIN report_statuses s ON r.status_id = s.id"
+	if whereClause != "" {
+		countQuery += " WHERE " + whereClause
+	}
+
+	var total int
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		log.Error(ctx, "Failed to query total reports count", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.Report{}, 0, nil
+	}
+
+	baseQuery := `
+		SELECT
+			r.id,
+			r.assignment_id, r.listing_id, r.reporter_id, r.status_id,
+			r.purpose,
+			r.created_at,
+			r.updated_at,
+			r.submitted_at,
+
+			r.checklist_schema,
+
+			l.code as "listing_code",
+			l.title as "listing_title",
+			l.description as "listing_description",
+			l.main_picture as "listing_main_picture", 
+			
+			l.listing_type_id, 
+			lt.slug as "listing_type_slug", lt.name as "listing_type_name",
+						
+			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
+			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
+
+			u.username as "reporter_username",
+
+			s.slug as "status_slug",
+			s.name as "status_name"
+
+		FROM reports r
+		JOIN listings l ON r.listing_id = l.id
+		JOIN users u ON r.reporter_id = u.id
+		JOIN report_statuses s ON r.status_id = s.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+	`
+
+	query := baseQuery
+	if whereClause != "" {
+		query += " WHERE " + whereClause
+	}
+
+	query += fmt.Sprintf(" ORDER BY r.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
+	args = append(args, filter.Limit, filter.Offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query reports with filter", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	reports := make([]*models.Report, 0, filter.Limit)
+
+	for rows.Next() {
+		var r models.Report
+		if err := rows.Scan(
+			&r.ID,
+			&r.AssignmentID, &r.ListingID, &r.ReporterID, &r.StatusID,
+			&r.Purpose,
+			&r.CreatedAt,
+			&r.UpdatedAt,
+			&r.SubmittedAt,
+
+			&r.ChecklistSchema,
+
+			&r.Listing.Code,
+			&r.Listing.Title,
+			&r.Listing.Description,
+			&r.Listing.MainPicture,
+
+			&r.Listing.ListingTypeID,
+			&r.Listing.ListingTypeSlug,
+			&r.Listing.ListingTypeName,
+
+			&r.Listing.Address, &r.Listing.City, &r.Listing.Country,
+			&r.Listing.Latitude, &r.Listing.Longitude,
+
+			&r.Reporter.Username,
+
+			&r.Status.Slug,
+			&r.Status.Name,
+		); err != nil {
+			log.Error(ctx, "Failed to scan report  row", zap.Error(err))
+			// Прерываем выполнение, так как ошибка сканирования может указывать на серьезную проблему.
+			return nil, total, err
+		}
+
+		r.Listing.ID = r.ListingID
+		r.Reporter.ID = r.ReporterID
+		r.Status.ID = r.StatusID
+
+		reports = append(reports, &r)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over report rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	return reports, total, nil
+
+}
+
+func (r *SecretGuestRepository) GetReportByID(ctx context.Context, reportID uuid.UUID) (*models.Report, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		SELECT
+			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
+			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
+			l.title as "listing_title", l.description as "listing_description", 
+			l.main_picture as "listing_main_picture",
+			
+			l.listing_type_id,
+			lt.slug as "listing_type_slug", 
+			lt.name as "listing_type_name",  
+			
+			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
+			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
+
+			u.username as "reporter_username",
+			s.slug as "status_slug", s.name as "status_name"
+		FROM reports r
+		JOIN listings l ON r.listing_id = l.id
+		JOIN users u ON r.reporter_id = u.id
+		JOIN report_statuses s ON r.status_id = s.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		WHERE r.id = $1
+	`
+	row := r.db.QueryRow(ctx, query, reportID)
+	report, err := r.scanReport(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Report not found by ID", zap.String("report_id", reportID.String()))
+			return nil, models.ErrReportNotFound
+		}
+		log.Error(ctx, "Failed to query report by ID", zap.Error(err), zap.String("report_id", reportID.String()))
+		return nil, err
+	}
+	return report, nil
+}
+
+func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, reportID, reporterID uuid.UUID) (*models.Report, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		SELECT
+			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
+			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
+			l.title as "listing_title", l.description as "listing_description", 
+			l.main_picture as "listing_main_picture",
+			
+			l.listing_type_id, 
+			lt.slug as "listing_type_slug", 
+			lt.name as "listing_type_name",  
+						
+			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
+			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
+
+			u.username as "reporter_username",
+			s.slug as "status_slug", s.name as "status_name"
+		FROM reports r
+		JOIN listings l ON r.listing_id = l.id
+		JOIN users u ON r.reporter_id = u.id
+		JOIN report_statuses s ON r.status_id = s.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		WHERE r.id = $1 AND r.reporter_id = $2
+	`
+	row := r.db.QueryRow(ctx, query, reportID, reporterID)
+	report, err := r.scanReport(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Report not found by ID and owner",
+				zap.String("report_id", reportID.String()),
+				zap.String("reporter_id", reporterID.String()),
+			)
+			return nil, models.ErrReportNotFound
+		}
+		log.Error(ctx, "Failed to query report by ID and owner",
+			zap.Error(err),
+			zap.String("report_id", reportID.String()),
+			zap.String("reporter_id", reporterID.String()),
+		)
+		return nil, err
+	}
+	return report, nil
+}
+
+func (r *SecretGuestRepository) UpdateMyReportContent(ctx context.Context, reportID, reporterID uuid.UUID, currentStatusID int, schema models.ChecklistSchema) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		UPDATE reports
+		SET
+			checklist_schema = $1,
+			updated_at = NOW()
+		WHERE id = $2 AND reporter_id = $3 AND status_id = $4
+	`
+
+	ct, err := r.db.Exec(ctx, query,
+		schema,
+		reportID,
+		reporterID,
+		currentStatusID,
+	)
+
+	if err != nil {
+		log.Error(ctx, "DB error on updating report content",
+			zap.Error(err),
+			zap.String("report_id", reportID.String()),
+			zap.String("reporter_id", reporterID.String()),
+		)
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		log.Warn(ctx, "Attempt to update report content failed: conditions not met",
+			zap.String("report_id", reportID.String()),
+			zap.String("reporter_id", reporterID.String()),
+			zap.Int("required_status_id", currentStatusID),
+		)
+		return models.ErrReportNotEditable
+	}
+
+	return nil
+}
+
+func (r *SecretGuestRepository) UpdateMyReportStatus(ctx context.Context, reportID, reporterID uuid.UUID, currentStatusID, newStatusID int) error {
+
+	query := `UPDATE reports SET status_id = $1, updated_at = NOW() WHERE id = $2 AND reporter_id = $3 AND status_id = $4`
+
+	if newStatusID == models.ReportStatusSubmitted {
+		query = `UPDATE reports SET status_id = $1, updated_at = NOW(), submitted_at = NOW() WHERE id = $2 AND reporter_id = $3 AND status_id = $4`
+	}
+
+	ct, err := r.db.Exec(ctx, query, newStatusID, reportID, reporterID, currentStatusID)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return models.ErrReportNotEditable
+	}
+	return nil
+}
+
+func (r *SecretGuestRepository) UpdateReportStatusAsStaff(ctx context.Context, reportID uuid.UUID, currentStatusID, newStatusID int) error {
+	query := `UPDATE reports SET status_id = $1, updated_at = NOW() WHERE id = $2 AND status_id = $3`
+	ct, err := r.db.Exec(ctx, query, newStatusID, reportID, currentStatusID)
+	if err != nil {
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		switch newStatusID {
+		case models.ReportStatusApproved:
+			return models.ErrReportCannotBeApproved
+		case models.ReportStatusRejected:
+			return models.ErrReportCannotBeRejected
+		default:
+			return models.ErrReportNotEditable
+		}
+	}
+	return nil
+}
+
+// answer_types
+
+type AnswerTypesFilter struct {
+	IDs   []int
+	Slugs []string
+}
+
+func (r *SecretGuestRepository) GetAnswerTypes(ctx context.Context, filter AnswerTypesFilter) ([]*models.AnswerType, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `SELECT id, slug, name, meta FROM answer_types`
+	args := []interface{}{}
+	conditions := []string{}
+	paramCount := 1
+
+	if len(filter.IDs) > 0 {
+		placeholders := make([]string, len(filter.IDs))
+		for i, id := range filter.IDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.Slugs) > 0 {
+		placeholders := make([]string, len(filter.Slugs))
+		for i, slug := range filter.Slugs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, slug)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("slug IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY id"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query answer types", zap.Error(err), zap.Any("filter", filter))
+		return nil, err
+	}
+	defer rows.Close()
+
+	answerTypes, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[models.AnswerType])
+	if err != nil {
+		log.Error(ctx, "Failed to scan answer types", zap.Error(err))
+		return nil, err
+	}
+
+	return answerTypes, nil
+}
+
+func (r *SecretGuestRepository) GetAnswerTypeByID(ctx context.Context, id int) (*models.AnswerType, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `SELECT id, slug, name, meta FROM answer_types WHERE id = $1`
+	row := r.db.QueryRow(ctx, query, id)
+
+	var at models.AnswerType
+	err := row.Scan(&at.ID, &at.Slug, &at.Name, &at.Meta)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Answer type not found by ID", zap.Int("id", id))
+			return nil, models.ErrNotFound
+		}
+		log.Error(ctx, "Failed to query answer type by ID", zap.Error(err), zap.Int("id", id))
+		return nil, err
+	}
+	return &at, nil
+}
+
+func (r *SecretGuestRepository) CreateAnswerType(ctx context.Context, at *models.AnswerType) (*models.AnswerType, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `INSERT INTO answer_types (slug, name, meta) VALUES ($1, $2, $3) RETURNING id, slug, name, meta`
+
+	var createdAT models.AnswerType
+	err := r.db.QueryRow(ctx, query, at.Slug, at.Name, at.Meta).Scan(&createdAT.ID, &createdAT.Slug, &createdAT.Name, &createdAT.Meta)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // unique_violation
+			log.Warn(ctx, "Attempt to create answer type with duplicate slug", zap.String("slug", at.Slug))
+			return nil, models.ErrDuplicate
+		}
+		log.Error(ctx, "Failed to create answer type", zap.Error(err))
+		return nil, err
+	}
+	return &createdAT, nil
+}
+
+func (r *SecretGuestRepository) UpdateAnswerType(ctx context.Context, id int, at *models.AnswerType, metaSetted bool) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := "UPDATE answer_types SET"
+	args := []interface{}{}
+	paramCount := 1
+	updates := []string{}
+
+	if at.Slug != "" {
+		updates = append(updates, fmt.Sprintf("slug = $%d", paramCount))
+		args = append(args, at.Slug)
+		paramCount++
+	}
+	if at.Name != "" {
+		updates = append(updates, fmt.Sprintf("name = $%d", paramCount))
+		args = append(args, at.Name)
+		paramCount++
+	}
+
+	if metaSetted {
+		updates = append(updates, fmt.Sprintf("meta = $%d", paramCount))
+		args = append(args, at.Meta)
+		paramCount++
+	}
+
+	if len(updates) == 0 {
+		return nil
+	}
+
+	query += " " + strings.Join(updates, ", ") + fmt.Sprintf(" WHERE id = $%d", paramCount)
+	args = append(args, id)
+
+	ct, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			log.Warn(ctx, "Attempt to update answer type with duplicate slug", zap.String("slug", at.Slug))
+			return models.ErrDuplicate
+		}
+		log.Error(ctx, "DB error on updating answer type", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *SecretGuestRepository) DeleteAnswerType(ctx context.Context, id int) error {
+	log := logger.GetLoggerFromCtx(ctx)
+	ct, err := r.db.Exec(ctx, "DELETE FROM answer_types WHERE id = $1", id)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		// Код '23503' - это foreign_key_violation в PostgreSQL
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			log.Warn(ctx, "Attempt to delete an answer type that is in use", zap.Int("id", id))
+			return models.ErrInUse
+		}
+		log.Error(ctx, "DB error on deleting answer type", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+	return nil
+}
+
+// media_requirements
+
+type MediaRequirementsFilter struct {
+	IDs   []int
+	Slugs []string
+}
+
+func (r *SecretGuestRepository) GetMediaRequirements(ctx context.Context, filter MediaRequirementsFilter) ([]*models.MediaRequirement, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `SELECT id, slug, name FROM media_requirements`
+	args := []interface{}{}
+	conditions := []string{}
+	paramCount := 1
+
+	if len(filter.IDs) > 0 {
+		placeholders := make([]string, len(filter.IDs))
+		for i, id := range filter.IDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.Slugs) > 0 {
+		placeholders := make([]string, len(filter.Slugs))
+		for i, slug := range filter.Slugs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, slug)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("slug IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY id"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query media requirements", zap.Error(err), zap.Any("filter", filter))
+		return nil, err
+	}
+	defer rows.Close()
+
+	mediaRequirements, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[models.MediaRequirement])
+	if err != nil {
+		log.Error(ctx, "Failed to scan media requirements", zap.Error(err))
+		return nil, err
+	}
+
+	return mediaRequirements, nil
+}
+
+// listing_types
+
+type ListingTypesFilter struct {
+	IDs   []int
+	Slugs []string
+}
+
+func (r *SecretGuestRepository) GetListingTypes(ctx context.Context, filter ListingTypesFilter) ([]*models.ListingType, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `SELECT id, slug, name FROM listing_types`
+	args := []interface{}{}
+	conditions := []string{}
+	paramCount := 1
+
+	if len(filter.IDs) > 0 {
+		placeholders := make([]string, len(filter.IDs))
+		for i, id := range filter.IDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.Slugs) > 0 {
+		placeholders := make([]string, len(filter.Slugs))
+		for i, slug := range filter.Slugs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, slug)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("slug IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY id"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query listing types", zap.Error(err), zap.Any("filter", filter))
+		return nil, err
+	}
+	defer rows.Close()
+
+	listingTypes, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[models.ListingType])
+	if err != nil {
+		log.Error(ctx, "Failed to scan listing types", zap.Error(err))
+		return nil, err
+	}
+
+	return listingTypes, nil
+}
+
+func (r *SecretGuestRepository) GetListingTypeByID(ctx context.Context, id int) (*models.ListingType, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `SELECT id, slug, name FROM listing_types WHERE id = $1`
+	row := r.db.QueryRow(ctx, query, id)
+
+	var lt models.ListingType
+	err := row.Scan(&lt.ID, &lt.Slug, &lt.Name)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Listing type not found by ID", zap.Int("id", id))
+			return nil, models.ErrNotFound
+		}
+		log.Error(ctx, "Failed to query listing type by ID", zap.Error(err), zap.Int("id", id))
+		return nil, err
+	}
+	return &lt, nil
+}
+
+func (r *SecretGuestRepository) CreateListingType(ctx context.Context, lt *models.ListingType) (*models.ListingType, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `INSERT INTO listing_types (slug, name) VALUES ($1, $2) RETURNING id, slug, name`
+
+	var createdLT models.ListingType
+	err := r.db.QueryRow(ctx, query, lt.Slug, lt.Name).Scan(&createdLT.ID, &createdLT.Slug, &createdLT.Name)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // unique_violation
+			log.Warn(ctx, "Attempt to create listing type with duplicate slug", zap.String("slug", lt.Slug))
+			return nil, models.ErrDuplicate
+		}
+		log.Error(ctx, "Failed to create listing type", zap.Error(err))
+		return nil, err
+	}
+	return &createdLT, nil
+}
+
+func (r *SecretGuestRepository) UpdateListingType(ctx context.Context, id int, lt *models.ListingType) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	updates := []string{}
+	args := []interface{}{}
+	paramCount := 1
+
+	if lt.Slug != "" {
+		updates = append(updates, fmt.Sprintf("slug = $%d", paramCount))
+		args = append(args, lt.Slug)
+		paramCount++
+	}
+	if lt.Name != "" {
+		updates = append(updates, fmt.Sprintf("name = $%d", paramCount))
+		args = append(args, lt.Name)
+		paramCount++
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+
+	query := "UPDATE listing_types SET " + strings.Join(updates, ", ")
+	query += fmt.Sprintf(" WHERE id = $%d", paramCount)
+	args = append(args, id)
+
+	ct, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			log.Warn(ctx, "Attempt to update listing type with duplicate value", zap.Any("listing_type", lt))
+			return models.ErrDuplicate
+		}
+		log.Error(ctx, "DB error on updating listing type", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *SecretGuestRepository) DeleteListingType(ctx context.Context, id int) error {
+	log := logger.GetLoggerFromCtx(ctx)
+	ct, err := r.db.Exec(ctx, "DELETE FROM listing_types WHERE id = $1", id)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		// Код '23503' - это foreign_key_violation в PostgreSQL
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			log.Warn(ctx, "Attempt to delete a listing type that is in use", zap.Int("id", id))
+			return models.ErrInUse
+		}
+		log.Error(ctx, "DB error on deleting listing type", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+	return nil
+}
+
+// checklist_sections
+
+type ChecklistSectionsFilter struct {
+	IDs              []int
+	Slugs            []string
+	ListingTypeIDs   []int
+	ListingTypeSlugs []string
+}
+
+func (r *SecretGuestRepository) GetChecklistSections(ctx context.Context, filter ChecklistSectionsFilter) ([]*models.ChecklistSection, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		SELECT cs.id, cs.slug, cs.title, cs.sort_order, cs.listing_type_id, lt.slug as listing_type_slug
+		FROM checklist_sections cs
+		JOIN listing_types lt ON cs.listing_type_id = lt.id
+	`
+	args := []interface{}{}
+	conditions := []string{}
+	paramCount := 1
+
+	if len(filter.IDs) > 0 {
+		placeholders := make([]string, len(filter.IDs))
+		for i, id := range filter.IDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("cs.id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.Slugs) > 0 {
+		placeholders := make([]string, len(filter.Slugs))
+		for i, slug := range filter.Slugs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, slug)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("cs.slug IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.ListingTypeIDs) > 0 {
+		placeholders := make([]string, len(filter.ListingTypeIDs))
+		for i, id := range filter.ListingTypeIDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("cs.listing_type_id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.ListingTypeSlugs) > 0 {
+		placeholders := make([]string, len(filter.ListingTypeSlugs))
+		for i, slug := range filter.ListingTypeSlugs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, slug)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("lt.slug IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY cs.listing_type_id, cs.sort_order"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query checklist sections", zap.Error(err), zap.Any("filter", filter))
+		return nil, err
+	}
+	defer rows.Close()
+
+	sections, err := pgx.CollectRows(rows, pgx.RowToAddrOfStructByPos[models.ChecklistSection])
+	if err != nil {
+		log.Error(ctx, "Failed to scan checklist sections", zap.Error(err))
+		return nil, err
+	}
+
+	return sections, nil
+}
+
+func (r *SecretGuestRepository) GetChecklistSectionByID(ctx context.Context, id int) (*models.ChecklistSection, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		SELECT cs.id, cs.slug, cs.title, cs.sort_order, cs.listing_type_id, lt.slug as listing_type_slug
+		FROM checklist_sections cs
+		JOIN listing_types lt ON cs.listing_type_id = lt.id
+		WHERE cs.id = $1
+	`
+	row := r.db.QueryRow(ctx, query, id)
+
+	var cs models.ChecklistSection
+	err := row.Scan(&cs.ID, &cs.Slug, &cs.Title, &cs.SortOrder, &cs.ListingTypeID, &cs.ListingTypeSlug)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Checklist section not found by ID", zap.Int("id", id))
+			return nil, models.ErrNotFound
+		}
+		log.Error(ctx, "Failed to query checklist section by ID", zap.Error(err), zap.Int("id", id))
+		return nil, err
+	}
+	return &cs, nil
+}
+
+func (r *SecretGuestRepository) CreateChecklistSection(ctx context.Context, cs *models.ChecklistSection) (*models.ChecklistSection, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		INSERT INTO checklist_sections (listing_type_id, slug, title, sort_order)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id
+	`
+
+	err := r.db.QueryRow(ctx, query, cs.ListingTypeID, cs.Slug, cs.Title, cs.SortOrder).Scan(&cs.ID)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case "23505": // unique_violation
+				log.Warn(ctx, "Attempt to create checklist section with duplicate slug for listing type",
+					zap.String("slug", cs.Slug),
+					zap.Int("listing_type_id", cs.ListingTypeID))
+				return nil, models.ErrDuplicate
+			case "23503": // foreign_key_violation
+				log.Warn(ctx, "Attempt to create checklist section with non-existent listing_type_id",
+					zap.Int("listing_type_id", cs.ListingTypeID))
+				return nil, models.ErrForeignKeyViolation
+			}
+		}
+		log.Error(ctx, "Failed to create checklist section", zap.Error(err))
+		return nil, err
+	}
+
+	return r.GetChecklistSectionByID(ctx, cs.ID)
+}
+
+func (r *SecretGuestRepository) UpdateChecklistSection(ctx context.Context, id int, csUpd *models.ChecklistSectionUpdate) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	updates := []string{}
+	args := []interface{}{}
+	paramCount := 1
+
+	if csUpd.Slug != "" {
+		updates = append(updates, fmt.Sprintf("slug = $%d", paramCount))
+		args = append(args, csUpd.Slug)
+		paramCount++
+	}
+	if csUpd.Title != "" {
+		updates = append(updates, fmt.Sprintf("title = $%d", paramCount))
+		args = append(args, csUpd.Title)
+		paramCount++
+	}
+	if csUpd.SortOrder != nil {
+		updates = append(updates, fmt.Sprintf("sort_order = $%d", paramCount))
+		args = append(args, *csUpd.SortOrder)
+		paramCount++
+	}
+	if csUpd.ListingTypeID != nil {
+		updates = append(updates, fmt.Sprintf("listing_type_id = $%d", paramCount))
+		args = append(args, *csUpd.ListingTypeID)
+		paramCount++
+	}
+
+	if len(updates) == 0 {
+		return nil
+	}
+
+	query := "UPDATE checklist_sections SET " + strings.Join(updates, ", ")
+	query += fmt.Sprintf(" WHERE id = $%d", paramCount)
+	args = append(args, id)
+
+	ct, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			log.Warn(ctx, "Attempt to update checklist section with duplicate slug", zap.Any("updates", csUpd))
+			return models.ErrDuplicate
+		} else if errors.As(err, &pgErr) && pgErr.Code == "23503" { // foreign_key_violation
+			log.Warn(ctx, "Attempt to update checklist section with non-existent listing_type_id",
+				zap.Any("listing_type_id", csUpd.ListingTypeID))
+			return models.ErrForeignKeyViolation
+		}
+		log.Error(ctx, "DB error on updating checklist section", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *SecretGuestRepository) DeleteChecklistSection(ctx context.Context, id int) error {
+	log := logger.GetLoggerFromCtx(ctx)
+	ct, err := r.db.Exec(ctx, "DELETE FROM checklist_sections WHERE id = $1", id)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		// Код '23503' - это foreign_key_violation в PostgreSQL
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			log.Warn(ctx, "Attempt to delete a checklist section that is in use", zap.Int("id", id))
+			return models.ErrInUse
+		}
+		log.Error(ctx, "DB error on deleting checklist section", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+	return nil
+}
+
+// checklist_items
+
+type ChecklistItemsFilter struct {
+	IDs              []int
+	Slugs            []string
+	ListingTypeIDs   []int
+	ListingTypeSlugs []string
+	IsActive         *bool
+}
+
+func (r *SecretGuestRepository) GetChecklistItems(ctx context.Context, filter ChecklistItemsFilter) ([]*models.ChecklistItem, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		SELECT
+			ci.id,
+			ci.section_id,
+			cs.slug as section_slug,
+			cs.title as section_title,
+			cs.sort_order as section_sort_order,
+			ci.slug,
+			ci.title,
+			ci.description,
+			at.id as answer_type_id,
+			at.slug as answer_type_slug,
+			at.name as answer_type_name,
+			at.meta as answer_type_meta,
+			mr.id as media_requirement_id,
+			mr.slug as media_requirement_slug,
+			mr.name as media_requirement_name,
+			ci.media_allowed_types,
+			ci.media_max_files,
+			ci.sort_order,
+			ci.listing_type_id,
+			lt.slug as listing_type_slug,
+			ci.is_active
+		FROM checklist_items ci
+		JOIN listing_types lt ON ci.listing_type_id = lt.id
+		JOIN checklist_sections cs ON ci.section_id = cs.id
+		JOIN answer_types at ON ci.answer_type_id = at.id
+		JOIN media_requirements mr ON ci.media_requirement_id = mr.id
+	`
+	args := []interface{}{}
+	conditions := []string{}
+	paramCount := 1
+
+	if len(filter.IDs) > 0 {
+		placeholders := make([]string, len(filter.IDs))
+		for i, id := range filter.IDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("ci.id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.Slugs) > 0 {
+		placeholders := make([]string, len(filter.Slugs))
+		for i, slug := range filter.Slugs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, slug)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("ci.slug IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.ListingTypeIDs) > 0 {
+		placeholders := make([]string, len(filter.ListingTypeIDs))
+		for i, id := range filter.ListingTypeIDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("ci.listing_type_id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if len(filter.ListingTypeSlugs) > 0 {
+		placeholders := make([]string, len(filter.ListingTypeSlugs))
+		for i, slug := range filter.ListingTypeSlugs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, slug)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("lt.slug IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	if filter.IsActive != nil {
+		conditions = append(conditions, fmt.Sprintf("ci.is_active = $%d", paramCount))
+		args = append(args, *filter.IsActive)
+		paramCount++
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// query += " ORDER BY ci.listing_type_id, ci.section_id, cs.sort_order, ci.sort_order"
+	// Изменим сортировку, чтобы она была более предсказуемой
+	query += " ORDER BY ci.listing_type_id, cs.sort_order, ci.sort_order"
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query checklist items", zap.Error(err), zap.Any("filter", filter))
+		return nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*models.ChecklistItem, 0)
+	for rows.Next() {
+		item, err := r.scanChecklistItem(rows)
+		if err != nil {
+			log.Error(ctx, "Failed to scan checklist item row", zap.Error(err))
+			return nil, err
+		}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over checklist item rows", zap.Error(err))
+		return nil, err
+	}
+
+	return items, nil
+}
+
+func (r *SecretGuestRepository) scanChecklistItem(row pgx.Row) (*models.ChecklistItem, error) {
+	var i models.ChecklistItem
+	err := row.Scan(
+		&i.ID,
+		&i.SectionID,
+		&i.SectionSlug,
+		&i.SectionTitle,
+		&i.SectionSortOrder,
+		&i.Slug,
+		&i.Title,
+		&i.Description,
+		&i.AnswerTypeID,
+		&i.AnswerTypeSlug,
+		&i.AnswerTypeName,
+		&i.AnswerTypeMeta,
+		&i.MediaRequirementID,
+		&i.MediaRequirementSlug,
+		&i.MediaRequirementName,
+		&i.MediaAllowedTypes,
+		&i.MediaMaxFiles,
+		&i.SortOrder,
+		&i.ListingTypeID,
+		&i.ListingTypeSlug,
+		&i.IsActive,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &i, nil
+}
+
+func (r *SecretGuestRepository) GetChecklistItemByID(ctx context.Context, id int) (*models.ChecklistItem, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		SELECT
+			ci.id, ci.section_id, cs.slug as section_slug, cs.title as section_title, cs.sort_order as section_sort_order,
+			ci.slug, ci.title, ci.description,
+			at.id as answer_type_id, at.slug as answer_type_slug, at.name as answer_type_name, at.meta as answer_type_meta,
+			mr.id as media_requirement_id, mr.slug as media_requirement_slug, mr.name as media_requirement_name,
+			ci.media_allowed_types, ci.media_max_files, ci.sort_order, ci.listing_type_id, lt.slug as listing_type_slug, ci.is_active
+		FROM checklist_items ci
+		JOIN listing_types lt ON ci.listing_type_id = lt.id
+		JOIN checklist_sections cs ON ci.section_id = cs.id
+		JOIN answer_types at ON ci.answer_type_id = at.id
+		JOIN media_requirements mr ON ci.media_requirement_id = mr.id
+		WHERE ci.id = $1
+	`
+	row := r.db.QueryRow(ctx, query, id)
+	item, err := r.scanChecklistItem(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Checklist item not found by ID", zap.Int("id", id))
+			return nil, models.ErrNotFound
+		}
+		log.Error(ctx, "Failed to query checklist item by ID", zap.Error(err), zap.Int("id", id))
+		return nil, err
+	}
+	return item, nil
+}
+
+func (r *SecretGuestRepository) CreateChecklistItem(ctx context.Context, item *models.ChecklistItem) (*models.ChecklistItem, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		INSERT INTO checklist_items (
+			listing_type_id, section_id, answer_type_id, media_requirement_id,
+			slug, title, description, media_allowed_types, media_max_files, sort_order, is_active
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		RETURNING id
+	`
+	err := r.db.QueryRow(ctx, query,
+		item.ListingTypeID, item.SectionID, item.AnswerTypeID, item.MediaRequirementID,
+		item.Slug, item.Title, item.Description, item.MediaAllowedTypes, item.MediaMaxFiles, item.SortOrder, item.IsActive,
+	).Scan(&item.ID)
+
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			case "23505": // unique_violation
+				log.Warn(ctx, "Attempt to create checklist item with duplicate slug for listing type",
+					zap.String("slug", item.Slug),
+					zap.Int("listing_type_id", item.ListingTypeID))
+				return nil, models.ErrDuplicate
+			case "23503": // foreign_key_violation
+				log.Warn(ctx, "Attempt to create checklist item with non-existent foreign key",
+					zap.Int("listing_type_id", item.ListingTypeID),
+					zap.Int("section_id", item.SectionID),
+					zap.Int("answer_type_id", item.AnswerTypeID),
+					zap.Int("media_requirement_id", item.MediaRequirementID))
+				return nil, models.ErrForeignKeyViolation
+			}
+		}
+		log.Error(ctx, "Failed to create checklist item", zap.Error(err))
+		return nil, err
+	}
+
+	return r.GetChecklistItemByID(ctx, item.ID)
+}
+
+func (r *SecretGuestRepository) UpdateChecklistItem(ctx context.Context, id int, itemUpd *models.ChecklistItemUpdate) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	updates := []string{}
+	args := []interface{}{}
+	paramCount := 1
+
+	if itemUpd.ListingTypeID != nil {
+		updates = append(updates, fmt.Sprintf("listing_type_id = $%d", paramCount))
+		args = append(args, *itemUpd.ListingTypeID)
+		paramCount++
+	}
+	if itemUpd.SectionID != nil {
+		updates = append(updates, fmt.Sprintf("section_id = $%d", paramCount))
+		args = append(args, *itemUpd.SectionID)
+		paramCount++
+	}
+	if itemUpd.AnswerTypeID != nil {
+		updates = append(updates, fmt.Sprintf("answer_type_id = $%d", paramCount))
+		args = append(args, *itemUpd.AnswerTypeID)
+		paramCount++
+	}
+	if itemUpd.MediaRequirementID != nil {
+		updates = append(updates, fmt.Sprintf("media_requirement_id = $%d", paramCount))
+		args = append(args, *itemUpd.MediaRequirementID)
+		paramCount++
+	}
+	if itemUpd.Slug != nil {
+		updates = append(updates, fmt.Sprintf("slug = $%d", paramCount))
+		args = append(args, *itemUpd.Slug)
+		paramCount++
+	}
+	if itemUpd.Title != nil {
+		updates = append(updates, fmt.Sprintf("title = $%d", paramCount))
+		args = append(args, *itemUpd.Title)
+		paramCount++
+	}
+	if itemUpd.Description != nil {
+		updates = append(updates, fmt.Sprintf("description = $%d", paramCount))
+		args = append(args, *itemUpd.Description)
+		paramCount++
+	}
+	if itemUpd.MediaAllowedTypes != nil {
+		updates = append(updates, fmt.Sprintf("media_allowed_types = $%d", paramCount))
+		args = append(args, itemUpd.MediaAllowedTypes)
+		paramCount++
+	}
+	if itemUpd.MediaMaxFiles != nil {
+		updates = append(updates, fmt.Sprintf("media_max_files = $%d", paramCount))
+		args = append(args, *itemUpd.MediaMaxFiles)
+		paramCount++
+	}
+	if itemUpd.SortOrder != nil {
+		updates = append(updates, fmt.Sprintf("sort_order = $%d", paramCount))
+		args = append(args, *itemUpd.SortOrder)
+		paramCount++
+	}
+	if itemUpd.IsActive != nil {
+		updates = append(updates, fmt.Sprintf("is_active = $%d", paramCount))
+		args = append(args, *itemUpd.IsActive)
+		paramCount++
+	}
+
+	if len(updates) == 0 {
+		return nil
+	}
+
+	query := "UPDATE checklist_items SET " + strings.Join(updates, ", ") + fmt.Sprintf(" WHERE id = $%d", paramCount)
+	args = append(args, id)
+
+	ct, err := r.db.Exec(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "DB error on updating checklist item", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *SecretGuestRepository) DeleteChecklistItem(ctx context.Context, id int) error {
+	log := logger.GetLoggerFromCtx(ctx)
+	ct, err := r.db.Exec(ctx, "DELETE FROM checklist_items WHERE id = $1", id)
+	if err != nil {
+		log.Error(ctx, "DB error on deleting checklist item", zap.Error(err), zap.Int("id", id))
+		return err
+	}
+	if ct.RowsAffected() == 0 {
+		return models.ErrNotFound
+	}
+	return nil
+}
+
+// ГЕнерация отчета
+
+func (r *SecretGuestRepository) GetListingTypeID(ctx context.Context, listingID uuid.UUID) (int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `SELECT listing_type_id FROM listings WHERE id = $1`
+
+	var listingTypeID int
+
+	err := r.db.QueryRow(ctx, query, listingID).Scan(&listingTypeID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Listing not found by ID when getting type ID", zap.String("listing_id", listingID.String()))
+			return 0, models.ErrListingNotFound
+		}
+		log.Error(ctx, "DB error on getting listing type ID",
+			zap.Error(err),
+			zap.String("listing_id", listingID.String()),
+		)
+		return 0, err
+	}
+
+	return listingTypeID, nil
+}
+
+func (r *SecretGuestRepository) GetChecklistTemplate(ctx context.Context, listingTypeID int) ([]*models.ChecklistSection, []*models.ChecklistItem, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	sectionsQuery := `SELECT id, slug, title, sort_order FROM checklist_sections WHERE listing_type_id = $1 ORDER BY sort_order`
+
+	rows, err := r.db.Query(ctx, sectionsQuery, listingTypeID)
+	if err != nil {
+		log.Error(ctx, "Failed to query checklist sections", zap.Error(err), zap.Int("listing_type_id", listingTypeID))
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	sections := make([]*models.ChecklistSection, 0)
+	for rows.Next() {
+		var s models.ChecklistSection
+		if err := rows.Scan(&s.ID, &s.Slug, &s.Title, &s.SortOrder); err != nil {
+			log.Error(ctx, "Failed to scan checklist section", zap.Error(err))
+			return nil, nil, err
+		}
+		sections = append(sections, &s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	itemsQuery := `
+		SELECT
+			ci.id, ci.section_id, ci.slug, ci.title, ci.description,
+			at.slug as answer_type_slug, at.name as answer_type_name, at.meta as answer_type_meta,
+			mr.slug as media_requirement_slug,
+			ci.media_allowed_types, ci.media_max_files, ci.sort_order
+		FROM checklist_items ci
+		JOIN answer_types at ON ci.answer_type_id = at.id
+		JOIN media_requirements mr ON ci.media_requirement_id = mr.id
+		WHERE ci.listing_type_id = $1 AND ci.is_active = true
+		ORDER BY ci.section_id, ci.sort_order
+	`
+
+	rows, err = r.db.Query(ctx, itemsQuery, listingTypeID)
+	if err != nil {
+		log.Error(ctx, "Failed to query checklist items", zap.Error(err), zap.Int("listing_type_id", listingTypeID))
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	items := make([]*models.ChecklistItem, 0)
+	for rows.Next() {
+		var i models.ChecklistItem
+		if err := rows.Scan(
+			&i.ID, &i.SectionID, &i.Slug, &i.Title, &i.Description,
+			&i.AnswerTypeSlug, &i.AnswerTypeName, &i.AnswerTypeMeta,
+			&i.MediaRequirementSlug, &i.MediaAllowedTypes, &i.MediaMaxFiles, &i.SortOrder,
+		); err != nil {
+			log.Error(ctx, "Failed to scan checklist item", zap.Error(err))
+			return nil, nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+
+	return sections, items, nil
+}
+
+func (r *SecretGuestRepository) UpdateReportSchema(ctx context.Context, reportID uuid.UUID, schema models.ChecklistSchema) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		UPDATE reports
+		SET checklist_schema = $1, updated_at = NOW()
+		WHERE id = $2
+	`
+
+	ct, err := r.db.Exec(ctx, query, schema, reportID)
+	if err != nil {
+		log.Error(ctx, "DB error on updating report schema",
+			zap.Error(err),
+			zap.String("report_id", reportID.String()),
+		)
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		log.Warn(ctx, "Attempt to update schema for a non-existent report",
+			zap.String("report_id", reportID.String()),
+		)
+		return models.ErrReportNotFound
+	}
+
+	return nil
+}
