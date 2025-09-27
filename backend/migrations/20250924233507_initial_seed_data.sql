@@ -203,7 +203,8 @@ INSERT INTO ota_sg_reservations (created_at,
                                 booking_number, 
                                 listing_id, 
                                 checkin_date, 
-                                checkout_date, 
+                                checkout_date,
+                                pricing, 
                                 status_id, 
                                 source_msg)
 VALUES (
@@ -213,8 +214,8 @@ VALUES (
     (SELECT id FROM listings WHERE code = 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'), -- поиск по уникальному коду
     '2025-10-05T15:00:00Z', -- из source_msg
     '2025-10-10T12:00:00Z', -- из source_msg
-    
+    '{"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}}'::jsonb, -- информация о стоимости
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
-    '{"reservation":{"ota_id":"f6b1c8f4-23ab-4c32-87a1-7810e7a3e9b1","booking_number":"TG-20250927-AB1234","status":"reserved","listing":{"id":"b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0","title":"Гранд Отель \"Центральный\"","description":"Роскошный отель в самом сердце города с видом на главную площадь.","main_picture":"https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg","listing_type":{"id":1,"slug":"hotel","name":"Отель"},"address":"ул. Тверская, д. 1","city":"Москва","country":"Россия","latitude":55.7558,"longitude":37.6176},"dates":{"checkin":"2025-10-05T15:00:00Z","checkout":"2025-10-10T12:00:00Z"},"guests":{"adults":2,"children":1}},"source":"Ostrovok.com","received_at":"2025-09-27T00:12:00Z"}'::jsonb
+    '{"reservation":{"ota_id":"f6b1c8f4-23ab-4c32-87a1-7810e7a3e9b1","booking_number":"TG-20250927-AB1234","status":"reserved","listing":{"id":"b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0","title":"Гранд Отель \"Центральный\"","description":"Роскошный отель в самом сердце города с видом на главную площадь.","main_picture":"https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg","listing_type":{"id":1,"slug":"hotel","name":"Отель"},"address":"ул. Тверская, д. 1","city":"Москва","country":"Россия","latitude":55.7558,"longitude":37.6176},"dates":{"checkin":"2025-10-05T15:00:00Z","checkout":"2025-10-10T12:00:00Z"},"guests":{"adults":2,"children":1},"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}},"source":"Ostrovok.com","received_at":"2025-09-27T00:12:00Z"}'::jsonb
 );
 

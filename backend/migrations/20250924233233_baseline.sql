@@ -115,6 +115,7 @@ CREATE TABLE "public"."ota_sg_reservations" (
   "listing_id" uuid NOT NULL,     -- к какому объекту относится(читаем из sourse_msg)
   "checkin_date" timestamp NOT NULL,  -- дата начала брони, когда надо въехать(читаем из sourse_msg)
   "checkout_date" timestamp NOT NULL, -- окончание брони, когда надо выезжать(читаем из sourse_msg)
+  "pricing" jsonb NULL,  -- инфо по стоимости
   "status_id" integer NOT NULL,
  
   PRIMARY KEY ("id"),
