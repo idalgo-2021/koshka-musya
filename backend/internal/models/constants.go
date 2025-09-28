@@ -18,8 +18,9 @@ const (
 const (
 	ReportStatusGenerating       = 1 // Генерация
 	ReportStatusDraft            = 2 // Черновик
-	ReportStatusSubmitted        = 3 // Сдан на проверку
-	ReportStatusApproved         = 4 // Одобрен
-	ReportStatusRejected         = 5 // Отклонен
-	ReportStatusGenerationFailed = 6 // Ошибка генерации
+	ReportStatusSubmitted        = 3 // Сдан клиентом на проверку
+	ReportStatusRefused          = 4 // Отказ клиента продолжать заполнение
+	ReportStatusApproved         = 5 // Одобрен
+	ReportStatusRejected         = 6 // Отклонен
+	ReportStatusGenerationFailed = 7 // Ошибка генерации
 )

@@ -1790,37 +1790,6 @@ paths:
       summary: Update Checklist Section (Staff)
       tags:
       - Checklist Sections (Staff)
-  /hellouser:
-    get:
-      description: A simple test endpoint to check if authentication works.
-      parameters:
-      - description: Bearer Access Token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Test Endpoint
-      tags:
-      - Tests
   /listing_types:
     get:
       description: Returns a list of all Listing Types.
@@ -2460,6 +2429,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Update My Report (Save Draft)
+      tags:
+      - Reports (User)
+  /reports/my/{id}/refuse:
+    post:
+      description: Refuses a report, setting its status to 'refused'. The report can
+        no longer be edited after this.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid report ID
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Report is not in a draft state
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Refuse My Report
       tags:
       - Reports (User)
   /reports/my/{id}/submit:

@@ -1820,55 +1820,6 @@
                 }
             }
         },
-        "/hellouser": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "A simple test endpoint to check if authentication works.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Tests"
-                ],
-                "summary": "Test Endpoint",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Bearer Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/listing_types": {
             "get": {
                 "security": [
@@ -2614,6 +2565,72 @@
                     },
                     "409": {
                         "description": "Report is not in a draft state and cannot be edited",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/reports/my/{id}/refuse": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Refuses a report, setting its status to 'refused'. The report can no longer be edited after this.",
+                "tags": [
+                    "Reports (User)"
+                ],
+                "summary": "Refuse My Report",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid report ID",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found or does not belong to user",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Report is not in a draft state",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }

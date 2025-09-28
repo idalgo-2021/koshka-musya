@@ -491,9 +491,20 @@ func (s *SecretGuestService) SubmitMyReport(ctx context.Context, userID, reportI
 
 	// TODO: Валидация, что отчет заполнен
 
+	// ЗАсабмитить можно только отчет в статусе "Черновик"
 	err := s.repo.UpdateMyReportStatus(ctx, reportID, userID, models.ReportStatusDraft, models.ReportStatusSubmitted)
 	if err != nil {
 		return fmt.Errorf("failed to submit report %s by user %s: %w", reportID.String(), userID.String(), err)
+	}
+	return nil
+}
+
+func (s *SecretGuestService) RefuseMyReport(ctx context.Context, userID, reportID uuid.UUID) error {
+
+	// Отказаться можно только от отчета в статусе "Черновик"
+	err := s.repo.UpdateMyReportStatus(ctx, reportID, userID, models.ReportStatusDraft, models.ReportStatusRefused)
+	if err != nil {
+		return fmt.Errorf("failed to refuse report %s by user %s: %w", reportID.String(), userID.String(), err)
 	}
 	return nil
 }
