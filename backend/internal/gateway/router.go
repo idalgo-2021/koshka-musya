@@ -40,7 +40,8 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	protectedRouter := r.PathPrefix("/").Subrouter()
 	protectedRouter.Use(authHandlers.AuthMiddleware)
 
-	protectedRouter.HandleFunc("/hellouser", secretGuestHandler.HelloUser).Methods(http.MethodGet)
+	protectedRouter.HandleFunc("/listings", secretGuestHandler.GetListings).Methods(http.MethodGet)         // listings
+	protectedRouter.HandleFunc("/listings/{id}", secretGuestHandler.GetListingByID).Methods(http.MethodGet) // listings
 
 	protectedRouter.HandleFunc("/assignments/my", secretGuestHandler.GetMyAssignments).Methods(http.MethodGet)                  // assignments
 	protectedRouter.HandleFunc("/assignments/my/{id}", secretGuestHandler.GetMyAssignmentByID).Methods(http.MethodGet)          // assignments
@@ -51,6 +52,7 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	protectedRouter.HandleFunc("/reports/my/{id}", secretGuestHandler.GetMyReportByID).Methods(http.MethodGet)        // reports
 	protectedRouter.HandleFunc("/reports/my/{id}", secretGuestHandler.UpdateMyReport).Methods(http.MethodPatch)       // reports
 	protectedRouter.HandleFunc("/reports/my/{id}/submit", secretGuestHandler.SubmitMyReport).Methods(http.MethodPost) // reports
+	protectedRouter.HandleFunc("/reports/my/{id}/refuse", secretGuestHandler.RefuseMyReport).Methods(http.MethodPost) // reports
 
 	// - - - - UPLOADS
 	protectedRouter.HandleFunc("/uploads/generate-url", secretGuestHandler.GenerateUploadURL).Methods(http.MethodPost)
@@ -58,9 +60,6 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	// - - - - FOR STUFF
 	staffRouter := protectedRouter.PathPrefix("/").Subrouter()
 	staffRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID, models.ModeratorRoleID))
-
-	staffRouter.HandleFunc("/listings", secretGuestHandler.GetListings).Methods(http.MethodGet)         // listings
-	staffRouter.HandleFunc("/listings/{id}", secretGuestHandler.GetListingByID).Methods(http.MethodGet) // listings
 
 	staffRouter.HandleFunc("/assignments", secretGuestHandler.GetAllAssignments).Methods(http.MethodGet)              // assignments
 	staffRouter.HandleFunc("/assignments/{id}", secretGuestHandler.GetAssignmentByID_AsStaff).Methods(http.MethodGet) // assignments
@@ -71,7 +70,7 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	staffRouter.HandleFunc("/reports/{id}/approve", secretGuestHandler.ApproveReport).Methods(http.MethodPost) // reports
 	staffRouter.HandleFunc("/reports/{id}/reject", secretGuestHandler.RejectReport).Methods(http.MethodPost)   // reports
 
-	staffRouter.HandleFunc("/users", secretGuestHandler.GetAllUsers).Methods(http.MethodGet)
+	staffRouter.HandleFunc("/users", secretGuestHandler.GetAllUsers).Methods(http.MethodGet) // users
 
 	///
 

@@ -28,47 +28,6 @@ func NewSecretGuestHandler(service *SecretGuestService, cfg *config.Config) *Sec
 	return &SecretGuestHandler{service: service, cfg: cfg}
 }
 
-// @Summary      Test Endpoint
-// @Security     BearerAuth
-// @Description  A simple test endpoint to check if authentication works.
-// @Tags         Tests
-// @Produce      json
-// @Param Authorization header string true "Bearer Access Token"
-// @Success      200 {object} map[string]string
-// @Failure      401 {object} ErrorResponse "Unauthorized"
-// @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /hellouser [get]
-func (h *SecretGuestHandler) HelloUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	log := logger.GetLoggerFromCtx(ctx)
-
-	user, ok := ctx.Value(auth.UserKey).(auth.AuthenticatedUser)
-	if !ok {
-		log.Error(ctx, "User information missing from context in a protected handler")
-		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
-		return
-	}
-
-	message := "Hello, " + user.Username + "! Welcome to the secret area. You role_id:" + strconv.Itoa(user.RoleID)
-
-	log.Info(ctx, "Protected hello endpoint called",
-		zap.String("username", user.Username),
-		zap.String("user_id", user.ID),
-	)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	err := json.NewEncoder(w).Encode(map[string]string{"message": message})
-	if err != nil {
-		log.Error(ctx, "Failed to encode response for HelloUser",
-			zap.Error(err),
-			zap.String("user_id", user.ID),
-		)
-	}
-
-}
-
 // helpers
 
 func (h *SecretGuestHandler) parseUserAndID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
@@ -843,6 +802,52 @@ func (h *SecretGuestHandler) SubmitMyReport(w http.ResponseWriter, r *http.Reque
 			h.writeErrorResponse(ctx, w, http.StatusConflict, "Report is not in a draft state and cannot be submitted")
 		} else {
 			log.Error(ctx, "Failed to submit my report", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// @Summary      Refuse My Report
+// @Security     BearerAuth
+// @Description  Refuses a report, setting its status to 'refused'. The report can no longer be edited after this.
+// @Tags         Reports (User)
+// @Param        id path string true "Report ID" format(uuid)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      204 "No Content"
+// @Failure      400 {object} ErrorResponse "Invalid report ID"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "Report not found or does not belong to user"
+// @Failure      409 {object} ErrorResponse "Report is not in a draft state"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /reports/my/{id}/refuse [post]
+func (h *SecretGuestHandler) RefuseMyReport(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUserAndID(w, r)
+	if !ok {
+		return
+	}
+
+	reportID, ok := h.parseUUIDFromPath(w, r, "id")
+	if !ok {
+		return
+	}
+
+	err := h.service.RefuseMyReport(ctx, userID, reportID)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrReportNotFound), errors.Is(err, models.ErrForbidden):
+			log.Info(ctx, "Report not found or access denied on refuse", zap.String("report_id", reportID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Report not found or access denied")
+		case errors.Is(err, models.ErrReportNotEditable):
+			log.Info(ctx, "Report is not in a draft state and cannot be refused", zap.String("report_id", reportID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusConflict, "Report is not in a draft state and cannot be refused")
+		default:
+			log.Error(ctx, "Failed to refuse my report", zap.Error(err))
 			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
 		}
 		return

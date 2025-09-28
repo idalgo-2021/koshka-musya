@@ -20,10 +20,11 @@ INSERT INTO assignment_statuses (id, slug, name) VALUES
 INSERT INTO report_statuses (id, slug, name) VALUES
     (1, 'generating', 'Генерация'),
     (2, 'draft', 'Черновик'),
-    (3, 'submitted', 'Сдан на проверку'),
-    (4, 'approved', 'Одобрен'),
-    (5, 'rejected', 'Отклонен'),
-    (6, 'failed_generation', 'Ошибка генерации');
+    (3, 'submitted', 'Сдан на проверку клиентом'),
+    (4, 'refused', 'Отказ клиента'),
+    (5, 'approved', 'Одобрен'),
+    (6, 'rejected', 'Отклонен'),
+    (7, 'failed_generation', 'Ошибка генерации');
 
 INSERT INTO answer_types (slug, name, meta) VALUES
     ('text', 'Текстовый ответ', null),
