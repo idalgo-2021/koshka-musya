@@ -111,6 +111,27 @@ type OTAReservationPricingBreakdown struct {
 	Nights   int `json:"nights" validate:"required,gte=0"`
 }
 
+type GetAllOTAReservationsRequestDTO struct {
+	StatusIDs []int
+	Page      int
+	Limit     int
+}
+
+type OTAReservationResponseDTO struct {
+	OTAID         uuid.UUID      `json:"ota_id" validate:"required,uuid"`
+	BookingNumber string         `db:"booking_number"`
+	ListingID     uuid.UUID      `db:"listing_id"`
+	CheckinDate   time.Time      `db:"checkin_date"`
+	CheckoutDate  time.Time      `db:"checkout_date"`
+	Status        StatusResponse `json:"status"`
+}
+
+type OTAReservationsResponse struct {
+	Reservations []*OTAReservationResponseDTO `json:"reservations"`
+	Total        int                          `json:"total"`
+	Page         int                          `json:"page"`
+}
+
 // ================================
 type CreateAssignmentRequestDTO struct {
 	Code       uuid.UUID `json:"code" validate:"required,uuid"`

@@ -329,6 +329,116 @@ func (h *SecretGuestHandler) HandleOTAReservation(w http.ResponseWriter, r *http
 	h.writeJSONResponse(ctx, w, http.StatusOK, "OK")
 }
 
+// @Summary      Get All OTA Reservations (Staff)
+// @Security     BearerAuth
+// @Description  Returns a paginated list of all OTA reservations. Available for staff only.
+// @Tags         Reservations (Staff)
+// @Produce      json
+// @Param        page query int false "Page number for pagination" default(1)
+// @Param        limit query int false "Number of items per page" default(50)
+// @Param        status_id query []int false "Filter by one or more status IDs" collectionFormat(multi)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.AssignmentsResponse
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /sg_reservations [get]
+func (h *SecretGuestHandler) GetAllOTAReservations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	page, limit := h.parsePagination(r)
+	_, statusIDs := h.parseFilterParams(r)
+
+	dto := GetAllOTAReservationsRequestDTO{
+		StatusIDs: statusIDs,
+		Page:      page,
+		Limit:     limit,
+	}
+
+	reservations, err := h.service.GetAllOTAReservations(ctx, dto)
+	if err != nil {
+		log.Error(ctx, "Failed to get all OTA reservations", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, reservations)
+}
+
+// @Summary      Get OTA Reservation By ID
+// @Description  Returns detailed information about a single OTA reservation.
+// @Tags         Reservations (Staff)
+// @Produce      json
+// @Param        id path string true "OTA Reservation ID" format(uuid)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.OTAReservationResponseDTO
+// @Failure      400 {object} ErrorResponse "Invalid OTA Reservation ID format"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "OTA Reservation not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /sg_reservations/{id} [get]
+func (h *SecretGuestHandler) GetOTAReservationByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	reservationID, ok := h.parseUUIDFromPath(w, r, "id")
+	if !ok {
+		return
+	}
+
+	reservation, err := h.service.GetOTAReservationByID(ctx, reservationID)
+	if err != nil {
+		if errors.Is(err, models.ErrOTAReservationNotFound) {
+			log.Info(ctx, "OTA reservation not found by ID", zap.String("reservation_id", reservationID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found")
+		} else {
+			log.Error(ctx, "Failed to get OTA reservation by ID", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, reservation)
+}
+
+// @Summary      Hide an OTA Reservation (Staff)
+// @Security     BearerAuth
+// @Description  Changes OTA Reservation status to NoShow. Available for staff only.
+// @Tags         Reservations (Staff)
+// @Param        id path string true "Reservation ID" format(uuid)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      204 "No Content"
+// @Failure      400 {object} ErrorResponse "Invalid reservation ID format"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      404 {object} ErrorResponse "Reservation not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /sg_reservations/{id}/no-show [post]
+func (h *SecretGuestHandler) UpdateOTAReservationStatusNoShow(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	reservationID, ok := h.parseUUIDFromPath(w, r, "id")
+	if !ok {
+		return
+	}
+
+	err := h.service.UpdateOTAReservationStatusNoShow(ctx, reservationID)
+	if err != nil {
+		if errors.Is(err, models.ErrOTAReservationNotFound) {
+			log.Info(ctx, "OTA reservation not found by ID", zap.String("reservation_id", reservationID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found")
+		} else {
+			log.Error(ctx, "Failed to update OTA reservation status", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 // assignments
 
 // @Summary      Create new Assignment (Admin)
