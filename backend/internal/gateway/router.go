@@ -69,6 +69,8 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	staffRouter.HandleFunc("/reports/{id}/approve", secretGuestHandler.ApproveReport).Methods(http.MethodPost) // reports
 	staffRouter.HandleFunc("/reports/{id}/reject", secretGuestHandler.RejectReport).Methods(http.MethodPost)   // reports
 
+	staffRouter.HandleFunc("/users", secretGuestHandler.GetAllUsers).Methods(http.MethodGet)
+
 	///
 
 	staffRouter.HandleFunc("/answer_types", secretGuestHandler.GetAnswerTypes).Methods(http.MethodGet)                  // answer_types

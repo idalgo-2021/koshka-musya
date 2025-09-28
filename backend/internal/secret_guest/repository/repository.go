@@ -1871,6 +1871,68 @@ func (r *SecretGuestRepository) DeleteChecklistItem(ctx context.Context, id int)
 	return nil
 }
 
+// users
+
+func (r *SecretGuestRepository) GetAllUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	countQuery := `SELECT COUNT(*) FROM users;`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery).Scan(&total)
+	if err != nil {
+		log.Error(ctx, "Failed to query total users count", zap.Error(err))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.User{}, 0, nil
+	}
+
+	query := `
+		SELECT 
+			u.id, 
+			u.username,
+			u.email,
+			u.password_hash,
+			u.role_id,
+			u.created_at,
+			r.name as role_name
+		FROM users u
+		JOIN roles r ON u.role_id = r.id
+		ORDER BY u.created_at DESC
+		LIMIT $1 OFFSET $2;
+	`
+
+	rows, err := r.db.Query(ctx, query, limit, offset)
+	if err != nil {
+		log.Error(ctx, "Failed to query users", zap.Error(err))
+		return nil, total, err
+	}
+	defer rows.Close()
+
+	users := make([]*models.User, 0)
+	for rows.Next() {
+		var u models.User
+		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.PasswordHash, &u.RoleID, &u.CreatedAt, &u.RoleName); err != nil {
+			log.Error(ctx, "Failed to scan user row with role", zap.Error(err))
+			return nil, total, err
+		}
+		users = append(users, &u)
+	}
+
+	if err != nil {
+		log.Error(ctx, "Failed to scan user rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over user rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	return users, total, nil
+}
+
 // ГЕнерация отчета
 
 func (r *SecretGuestRepository) GetListingTypeID(ctx context.Context, listingID uuid.UUID) (int, error) {

@@ -454,3 +454,25 @@ type UpdateChecklistItemRequestDTO struct {
 	SortOrder          *int     `json:"sort_order,omitempty" validate:"omitempty,gte=0"`
 	IsActive           *bool    `json:"is_active,omitempty"`
 }
+
+// ================================
+
+type GetAllUsersRequestDTO struct {
+	Page  int
+	Limit int
+}
+
+type UserResponseDTO struct {
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Email     *string   `json:"email"`
+	RoleID    int       `json:"role_id"`
+	RoleName  string    `json:"role_name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type UsersResponse struct {
+	Users []*UserResponseDTO `json:"users"`
+	Total int                `json:"total"`
+	Page  int                `json:"page"`
+}

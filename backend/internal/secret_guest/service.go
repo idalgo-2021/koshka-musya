@@ -77,6 +77,9 @@ type SecretGuestRepository interface {
 	CreateChecklistItem(ctx context.Context, item *models.ChecklistItem) (*models.ChecklistItem, error)
 	UpdateChecklistItem(ctx context.Context, id int, item *models.ChecklistItemUpdate) error
 	DeleteChecklistItem(ctx context.Context, id int) error
+
+	// users
+	GetAllUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error)
 }
 
 type SecretGuestService struct {
@@ -909,6 +912,52 @@ func (s *SecretGuestService) DeleteChecklistItem(ctx context.Context, id int) er
 	}
 	return nil
 }
+
+// users
+
+func (s *SecretGuestService) GetAllUsers(ctx context.Context, dto GetAllUsersRequestDTO) (*UsersResponse, error) {
+
+	offset := (dto.Page - 1) * dto.Limit
+
+	dbUsers, total, err := s.repo.GetAllUsers(ctx, dto.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users from repository: %w", err)
+	}
+
+	responseDTOs := make([]*UserResponseDTO, 0, len(dbUsers))
+	for _, u := range dbUsers {
+		responseDTOs = append(responseDTOs, toUserResponseDTO(u))
+	}
+
+	response := &UsersResponse{
+		Users: responseDTOs,
+		Total: total,
+		Page:  dto.Page,
+	}
+	return response, nil
+}
+
+func toUserResponseDTO(u *models.User) *UserResponseDTO {
+	if u == nil {
+		return nil
+	}
+
+	var email *string
+	if u.Email != "" {
+		email = &u.Email
+	}
+
+	return &UserResponseDTO{
+		ID:        u.ID,
+		Username:  u.Username,
+		Email:     email,
+		RoleID:    u.RoleID,
+		RoleName:  u.RoleName,
+		CreatedAt: u.CreatedAt,
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Генерация схемы отчета
 

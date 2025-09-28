@@ -574,6 +574,32 @@ definitions:
       token:
         type: string
     type: object
+  secret_guest.UserResponseDTO:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      role_id:
+        type: integer
+      role_name:
+        type: string
+      username:
+        type: string
+    type: object
+  secret_guest.UsersResponse:
+    properties:
+      page:
+        type: integer
+      total:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/secret_guest.UserResponseDTO'
+        type: array
+    type: object
 info:
   contact: {}
   description: This is the API for the Secret Guest application.
@@ -2515,6 +2541,49 @@ paths:
       summary: Generate Upload URL
       tags:
       - Uploads
+  /users:
+    get:
+      description: Returns a paginated list of all users. Available for staff only.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.UsersResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Users (Staff)
+      tags:
+      - Users (Staff)
 securityDefinitions:
   BearerAuth:
     description: Type "Bearer" followed by a space and a JWT token.
