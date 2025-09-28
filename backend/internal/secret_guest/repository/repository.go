@@ -229,6 +229,51 @@ func (r *SecretGuestRepository) GetListingByCode(ctx context.Context, code uuid.
 }
 
 // reservations
+type OTAReservationsFilter struct {
+	StatusIDs []int
+	Limit     int
+	Offset    int
+}
+
+func buildOTAReservationsWhereClause(filter OTAReservationsFilter) (string, []interface{}, int) {
+	conditions := []string{}
+	args := []interface{}{}
+	paramCount := 1
+
+	if len(filter.StatusIDs) > 0 {
+		placeholders := make([]string, len(filter.StatusIDs))
+		for i, id := range filter.StatusIDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("r.status_id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	whereClause := strings.Join(conditions, " AND ")
+
+	return whereClause, args, paramCount
+}
+
+func (r *SecretGuestRepository) scanOTAReservation(row pgx.Row) (*models.OTAReservation, error) {
+	var rs models.OTAReservation
+	if err := row.Scan(
+		&rs.OTAID,
+		&rs.BookingNumber,
+		&rs.ListingID,
+		&rs.CheckinDate,
+		&rs.CheckoutDate,
+		&rs.StatusID,
+		&rs.Status.Slug,
+		&rs.Status.Name,
+	); err != nil {
+		return nil, err
+	}
+
+	rs.Status.ID = rs.StatusID
+
+	return &rs, nil
+}
 
 func (r *SecretGuestRepository) CreateOTAReservation(ctx context.Context, reservation *models.OTAReservation) (uuid.UUID, error) {
 	query := `
@@ -254,6 +299,128 @@ func (r *SecretGuestRepository) CreateOTAReservation(ctx context.Context, reserv
 	}
 
 	return id, nil
+}
+
+func (r *SecretGuestRepository) GetOTAReservations(ctx context.Context, filter OTAReservationsFilter) ([]*models.OTAReservation, int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	whereClause, args, _ := buildOTAReservationsWhereClause(filter)
+
+	countQuery := `
+		SELECT COUNT(r.id) FROM ota_sg_reservations r
+		JOIN ota_sg_reservation_statuses s ON r.status_id = s.id
+	`
+	if whereClause != "" {
+		countQuery += " WHERE " + whereClause
+	}
+
+	var total int
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		log.Error(ctx, "Failed to query total OTA reservations count", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.OTAReservation{}, 0, nil
+	}
+
+	baseQuery := `
+		SELECT r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
+			s.slug as "status_slug", s.name as "status_name"
+		FROM ota_sg_reservations r
+		JOIN ota_sg_reservation_statuses s ON r.status_id = s.id
+	`
+
+	query := baseQuery
+	if whereClause != "" {
+		query += " WHERE " + whereClause
+	}
+
+	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT %d OFFSET %d", filter.Limit, filter.Offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query assignments with filter", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	reservations := make([]*models.OTAReservation, 0, filter.Limit)
+
+	for rows.Next() {
+		var r models.OTAReservation
+		if err := rows.Scan(
+			&r.OTAID,
+			&r.BookingNumber,
+			&r.ListingID,
+			&r.CheckinDate,
+			&r.CheckoutDate,
+			&r.StatusID,
+			&r.Status.Slug,
+			&r.Status.Name,
+		); err != nil {
+			log.Error(ctx, "Failed to scan reservation row", zap.Error(err))
+			// Прерываем выполнение, так как ошибка сканирования может указывать на серьезную проблему.
+			return nil, total, err
+		}
+
+		r.Status.ID = r.StatusID
+
+		reservations = append(reservations, &r)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over reservation rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	return reservations, total, nil
+}
+
+func (r *SecretGuestRepository) GetOTAReservationByID(ctx context.Context, otaReservationID uuid.UUID) (*models.OTAReservation, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		SELECT r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
+			s.slug as "status_slug", s.name as "status_name"
+		FROM ota_sg_reservations r
+		JOIN ota_sg_reservation_statuses s ON r.status_id = s.id
+		WHERE r.id = $1
+	`
+	row := r.db.QueryRow(ctx, query, otaReservationID)
+
+	reservation, err := r.scanOTAReservation(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "OTA reservation not found by ID", zap.String("reservation_id", otaReservationID.String()))
+			return nil, models.ErrOTAReservationNotFound
+		}
+		log.Error(ctx, "Failed to query OTA reservation by ID", zap.Error(err), zap.String("reservation_id", otaReservationID.String()))
+		return nil, err
+	}
+
+	return reservation, nil
+}
+
+func (r *SecretGuestRepository) UpdateOTAReservationStatus(ctx context.Context, reservationID uuid.UUID, statusID int) error {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `UPDATE ota_sg_reservations SET status_id = $1 WHERE id = $2`
+
+	ct, err := r.db.Exec(ctx, query, statusID, reservationID)
+	if err != nil {
+		log.Error(ctx, "Failed to update OTA reservation status", zap.Error(err), zap.String("reservation_id", reservationID.String()))
+		return err
+	}
+
+	if ct.RowsAffected() == 0 {
+		log.Warn(ctx, "Attempt to update reservation status failed: reservation not found",
+			zap.String("reservation_id", reservationID.String()),
+		)
+		return models.ErrOTAReservationNotFound
+	}
+
+	return nil
 }
 
 // assignments

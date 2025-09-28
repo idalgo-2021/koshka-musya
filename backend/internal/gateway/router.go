@@ -61,6 +61,10 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	staffRouter := protectedRouter.PathPrefix("/").Subrouter()
 	staffRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID, models.ModeratorRoleID))
 
+	staffRouter.HandleFunc("/sg_reservations", secretGuestHandler.GetAllOTAReservations).Methods(http.MethodGet)                           // reservations
+	staffRouter.HandleFunc("/sg_reservations/{id}", secretGuestHandler.GetOTAReservationByID).Methods(http.MethodGet)                      // reservations
+	staffRouter.HandleFunc("/sg_reservations/{id}/no-show", secretGuestHandler.UpdateOTAReservationStatusNoShow).Methods(http.MethodPatch) // reservations
+
 	staffRouter.HandleFunc("/assignments", secretGuestHandler.GetAllAssignments).Methods(http.MethodGet)              // assignments
 	staffRouter.HandleFunc("/assignments/{id}", secretGuestHandler.GetAssignmentByID_AsStaff).Methods(http.MethodGet) // assignments
 	staffRouter.HandleFunc("/assignments/{id}/cancel", secretGuestHandler.CancelAssignment).Methods(http.MethodPost)  // assignments

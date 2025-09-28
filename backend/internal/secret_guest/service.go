@@ -27,6 +27,9 @@ type SecretGuestRepository interface {
 
 	// reservations
 	CreateOTAReservation(ctx context.Context, reservation *models.OTAReservation) (uuid.UUID, error)
+	GetOTAReservations(ctx context.Context, filter repository.OTAReservationsFilter) ([]*models.OTAReservation, int, error)
+	GetOTAReservationByID(ctx context.Context, id uuid.UUID) (*models.OTAReservation, error)
+	UpdateOTAReservationStatus(ctx context.Context, reservationID uuid.UUID, statusID int) error
 
 	// assignments
 	CreateAssignment(ctx context.Context, assignment *models.Assignment) (uuid.UUID, error)
@@ -413,12 +416,12 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 
 	otaSourceMsg, err := json.Marshal(&dto)
 	if err != nil {
-		return fmt.Errorf("failed to marshal ota source msg: %w", err)
+		return fmt.Errorf("failed to marshal OTA source msg: %w", err)
 	}
 
 	otaPricing, err := json.Marshal(&dto.Reservation.Pricing)
 	if err != nil {
-		return fmt.Errorf("failed to marshal ota pricing: %w", err)
+		return fmt.Errorf("failed to marshal OTA pricing: %w", err)
 	}
 
 	var reservationStatusID int
@@ -442,10 +445,71 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 
 	_, err = s.repo.CreateOTAReservation(ctx, &otaReservation)
 	if err != nil {
-		return fmt.Errorf("failed to create ota reservation in repository: %w", err)
+		return fmt.Errorf("failed to create OTA reservation in repository: %w", err)
 	}
 
 	return nil
+}
+
+func (s *SecretGuestService) GetAllOTAReservations(ctx context.Context, dto GetAllOTAReservationsRequestDTO) (*OTAReservationsResponse, error) {
+	filter := repository.OTAReservationsFilter{
+		StatusIDs: dto.StatusIDs,
+		Limit:     dto.Limit,
+		Offset:    (dto.Page - 1) * dto.Limit,
+	}
+
+	return s.getOTAReservationsWithFilter(ctx, filter, dto.Page)
+}
+
+func (s *SecretGuestService) GetOTAReservationByID(ctx context.Context, reservationID uuid.UUID) (*OTAReservationResponseDTO, error) {
+	reservation, err := s.repo.GetOTAReservationByID(ctx, reservationID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OTA reservation by id %s: %w", reservationID.String(), err)
+	}
+
+	return toOTAReservationResponseDTO(reservation), nil
+}
+
+func (s *SecretGuestService) UpdateOTAReservationStatusNoShow(ctx context.Context, reservationID uuid.UUID) error {
+	err := s.repo.UpdateOTAReservationStatus(ctx, reservationID, models.OTAReservationStatusNoShow)
+	if err != nil {
+		return fmt.Errorf("failed to update OTA reservation status by id %s: %w", reservationID.String(), err)
+	}
+
+	return nil
+}
+
+func (s *SecretGuestService) getOTAReservationsWithFilter(ctx context.Context, filter repository.OTAReservationsFilter, page int) (*OTAReservationsResponse, error) {
+	dbReservations, total, err := s.repo.GetOTAReservations(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OTA reservations with filter: %w", err)
+	}
+
+	responseDTOs := make([]*OTAReservationResponseDTO, 0, len(dbReservations))
+	for _, r := range dbReservations {
+		responseDTOs = append(responseDTOs, toOTAReservationResponseDTO(r))
+	}
+
+	return &OTAReservationsResponse{
+		Reservations: responseDTOs,
+		Total:        total,
+		Page:         page,
+	}, nil
+}
+
+func toOTAReservationResponseDTO(r *models.OTAReservation) *OTAReservationResponseDTO {
+	return &OTAReservationResponseDTO{
+		OTAID:         r.OTAID,
+		BookingNumber: r.BookingNumber,
+		ListingID:     r.ListingID,
+		CheckinDate:   r.CheckinDate,
+		CheckoutDate:  r.CheckoutDate,
+		Status: StatusResponse{
+			ID:   r.StatusID,
+			Slug: r.Status.Slug,
+			Name: r.Status.Name,
+		},
+	}
 }
 
 // reports

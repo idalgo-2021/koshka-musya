@@ -566,6 +566,23 @@ definitions:
     - reservation
     - source
     type: object
+  secret_guest.OTAReservationResponseDTO:
+    properties:
+      bookingNumber:
+        type: string
+      checkinDate:
+        type: string
+      checkoutDate:
+        type: string
+      listingID:
+        type: string
+      ota_id:
+        type: string
+      status:
+        $ref: '#/definitions/secret_guest.StatusResponse'
+    required:
+    - ota_id
+    type: object
   secret_guest.ReportResponseDTO:
     properties:
       assignment_id:
@@ -2686,6 +2703,141 @@ paths:
       summary: Submit My Report
       tags:
       - Reports (User)
+  /sg_reservations:
+    get:
+      description: Returns a paginated list of all OTA reservations. Available for
+        staff only.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - collectionFormat: multi
+        description: Filter by one or more status IDs
+        in: query
+        items:
+          type: integer
+        name: status_id
+        type: array
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.AssignmentsResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All OTA Reservations (Staff)
+      tags:
+      - Reservations (Staff)
+  /sg_reservations/{id}:
+    get:
+      description: Returns detailed information about a single OTA reservation.
+      parameters:
+      - description: OTA Reservation ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.OTAReservationResponseDTO'
+        "400":
+          description: Invalid OTA Reservation ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: OTA Reservation not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      summary: Get OTA Reservation By ID
+      tags:
+      - Reservations (Staff)
+  /sg_reservations/{id}/no-show:
+    post:
+      description: Changes OTA Reservation status to NoShow. Available for staff only.
+      parameters:
+      - description: Reservation ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid reservation ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Reservation not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Hide an OTA Reservation (Staff)
+      tags:
+      - Reservations (Staff)
   /uploads/generate-url:
     post:
       consumes:

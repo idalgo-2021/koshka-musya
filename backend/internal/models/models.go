@@ -56,6 +56,8 @@ type OTAReservation struct {
 	Pricing       json.RawMessage `db:"pricing"`
 	StatusID      int             `db:"status_id"`
 	SourceMsg     json.RawMessage `db:"source_msg"`
+
+	Status StatusInfo `db:"-"`
 }
 
 //================================

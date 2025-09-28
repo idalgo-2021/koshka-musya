@@ -3003,6 +3003,209 @@ const docTemplate = `{
                 }
             }
         },
+        "/sg_reservations": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a paginated list of all OTA reservations. Available for staff only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reservations (Staff)"
+                ],
+                "summary": "Get All OTA Reservations (Staff)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by one or more status IDs",
+                        "name": "status_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.AssignmentsResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sg_reservations/{id}": {
+            "get": {
+                "description": "Returns detailed information about a single OTA reservation.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reservations (Staff)"
+                ],
+                "summary": "Get OTA Reservation By ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "OTA Reservation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.OTAReservationResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid OTA Reservation ID format",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "OTA Reservation not found",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/sg_reservations/{id}/no-show": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Changes OTA Reservation status to NoShow. Available for staff only.",
+                "tags": [
+                    "Reservations (Staff)"
+                ],
+                "summary": "Hide an OTA Reservation (Staff)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Reservation ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid reservation ID format",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Reservation not found",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/uploads/generate-url": {
             "post": {
                 "security": [
@@ -3974,6 +4177,32 @@ const docTemplate = `{
                 },
                 "source": {
                     "type": "string"
+                }
+            }
+        },
+        "secret_guest.OTAReservationResponseDTO": {
+            "type": "object",
+            "required": [
+                "ota_id"
+            ],
+            "properties": {
+                "bookingNumber": {
+                    "type": "string"
+                },
+                "checkinDate": {
+                    "type": "string"
+                },
+                "checkoutDate": {
+                    "type": "string"
+                },
+                "listingID": {
+                    "type": "string"
+                },
+                "ota_id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/secret_guest.StatusResponse"
                 }
             }
         },
