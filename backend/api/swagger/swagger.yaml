@@ -304,6 +304,8 @@ definitions:
         type: integer
       longitude:
         type: number
+      main_picture:
+        type: string
       title:
         type: string
     required:
@@ -443,6 +445,126 @@ definitions:
         items:
           $ref: '#/definitions/secret_guest.MediaRequirementResponse'
         type: array
+    type: object
+  secret_guest.OTAReservationDTO:
+    properties:
+      booking_number:
+        type: string
+      dates:
+        $ref: '#/definitions/secret_guest.OTAReservationDates'
+      guests:
+        $ref: '#/definitions/secret_guest.OTAReservationGuests'
+      listing:
+        $ref: '#/definitions/secret_guest.OTAReservationListingDTO'
+      ota_id:
+        type: string
+      pricing:
+        $ref: '#/definitions/secret_guest.OTAReservationPricing'
+      status:
+        type: string
+    required:
+    - booking_number
+    - dates
+    - guests
+    - listing
+    - ota_id
+    - pricing
+    - status
+    type: object
+  secret_guest.OTAReservationDates:
+    properties:
+      checkin:
+        type: string
+      checkout:
+        type: string
+    required:
+    - checkin
+    - checkout
+    type: object
+  secret_guest.OTAReservationGuests:
+    properties:
+      adults:
+        minimum: 0
+        type: integer
+      children:
+        minimum: 0
+        type: integer
+    required:
+    - adults
+    - children
+    type: object
+  secret_guest.OTAReservationListingDTO:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      country:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      latitude:
+        type: number
+      listing_type:
+        $ref: '#/definitions/secret_guest.ListingTypeResponse'
+      longitude:
+        type: number
+      main_picture:
+        type: string
+      title:
+        type: string
+    required:
+    - address
+    - city
+    - country
+    - description
+    - id
+    - latitude
+    - listing_type
+    - longitude
+    - main_picture
+    - title
+    type: object
+  secret_guest.OTAReservationPricing:
+    properties:
+      breakdown:
+        $ref: '#/definitions/secret_guest.OTAReservationPricingBreakdown'
+      currency:
+        type: string
+      total:
+        minimum: 0
+        type: integer
+    required:
+    - breakdown
+    - currency
+    - total
+    type: object
+  secret_guest.OTAReservationPricingBreakdown:
+    properties:
+      nights:
+        minimum: 0
+        type: integer
+      per_night:
+        minimum: 0
+        type: integer
+    required:
+    - nights
+    - per_night
+    type: object
+  secret_guest.OTAReservationRequestDTO:
+    properties:
+      received_at:
+        type: string
+      reservation:
+        $ref: '#/definitions/secret_guest.OTAReservationDTO'
+      source:
+        type: string
+    required:
+    - received_at
+    - reservation
+    - source
     type: object
   secret_guest.ReportResponseDTO:
     properties:
@@ -704,6 +826,51 @@ paths:
       summary: Create new Listing (Admin)
       tags:
       - Listings (Admin)
+  /admin/sg_reservations:
+    post:
+      consumes:
+      - application/json
+      description: Handles OTA Reservations Events. Available for admin only.
+      parameters:
+      - description: OTA Reservation Payload
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/secret_guest.OTAReservationRequestDTO'
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Invalid payload
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Handles OTA Reservations Events (Admin)
+      tags:
+      - Reservations (Admin)
   /answer_types:
     get:
       description: Returns a list of all Answer Types with optional filtering.

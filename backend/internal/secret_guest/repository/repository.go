@@ -111,7 +111,7 @@ func (r *SecretGuestRepository) GetListings(ctx context.Context, filter Listings
 	query := `
 		SELECT
 			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
-			l.latitude, l.longitude, l.created_at, 
+			l.latitude, l.longitude, l.created_at,
 			lt.id as "listing_type.id",
 			lt.slug as "listing_type.slug",
 			lt.name as "listing_type.name"
@@ -189,6 +189,71 @@ func (r *SecretGuestRepository) GetListingByID(ctx context.Context, id uuid.UUID
 	}
 
 	return &l, nil
+}
+
+func (r *SecretGuestRepository) GetListingByCode(ctx context.Context, code uuid.UUID) (*models.Listing, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	query := `
+		SELECT
+			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
+			l.latitude, l.longitude, l.created_at,
+			lt.id as "listing_type.id",
+			lt.slug as "listing_type.slug",
+			lt.name as "listing_type.name"
+		FROM listings l
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		WHERE l.code = $1;
+	`
+	var l models.Listing
+	err := r.db.QueryRow(ctx, query, code).Scan(
+		&l.ID, &l.Code, &l.Title, &l.Description, &l.MainPicture, &l.ListingTypeID, &l.Address, &l.City, &l.Country,
+		&l.Latitude, &l.Longitude, &l.CreatedAt,
+		&l.ListingType.ID, &l.ListingType.Slug, &l.ListingType.Name,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "Listing not found by code in DB", zap.String("code", code.String()))
+			return nil, models.ErrListingNotFound
+		}
+
+		log.Error(ctx, "Failed to query listing by code",
+			zap.Error(err),
+			zap.String("code", code.String()),
+		)
+		return nil, err
+	}
+
+	return &l, nil
+}
+
+// reservations
+
+func (r *SecretGuestRepository) CreateOTAReservation(ctx context.Context, reservation *models.OTAReservation) (uuid.UUID, error) {
+	query := `
+		INSERT INTO ota_sg_reservations (ota_id, booking_number, listing_id, checkin_date, checkout_date, pricing, status_id, source_msg)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id;
+	`
+
+	row := r.db.QueryRow(ctx, query,
+		reservation.OTAID,
+		reservation.BookingNumber,
+		reservation.ListingID,
+		reservation.CheckinDate,
+		reservation.CheckoutDate,
+		reservation.Pricing,
+		reservation.StatusID,
+		reservation.SourceMsg,
+	)
+
+	var id uuid.UUID
+	if err := row.Scan(&id); err != nil {
+		return id, err
+	}
+
+	return id, nil
 }
 
 // assignments
@@ -338,17 +403,17 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 			l.title as "listing_title",
 			l.description as "listing_description",
 
-			l.main_picture as "listing_main_picture", 
-			l.listing_type_id, 
+			l.main_picture as "listing_main_picture",
+			l.listing_type_id,
 
-			lt.slug as "listing_type_slug", 
+			lt.slug as "listing_type_slug",
 			lt.name as "listing_type_name",
 
-			l.address as "listing_address", 
-			l.city as "listing_city", 
+			l.address as "listing_address",
+			l.city as "listing_city",
 			l.country as "listing_country",
 
-			l.latitude as "listing_latitude", 
+			l.latitude as "listing_latitude",
 			l.longitude as "listing_longitude",
 
 			u.username as "reporter_username",
@@ -436,13 +501,13 @@ func (r *SecretGuestRepository) GetAssignmentByID(ctx context.Context, assignmen
 		SELECT
 			a.id, a.code, a.listing_id, a.reporter_id, a.status_id,
 			a.purpose, a.created_at, a.expires_at, a.accepted_at, a.declined_at, a.deadline, l.code as "listing_code",
-			
-			l.title as "listing_title", 
-			l.description as "listing_description", 
-			l.main_picture as "listing_main_picture", 
-			
+
+			l.title as "listing_title",
+			l.description as "listing_description",
+			l.main_picture as "listing_main_picture",
+
 			l.listing_type_id,
-			lt.slug as "listing_type_slug", 
+			lt.slug as "listing_type_slug",
 			lt.name as "listing_type_name",
 
 			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
@@ -507,10 +572,10 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 			a.id, a.code, a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, a.declined_at, a.deadline, l.code as "listing_code",
 
 			l.title as "listing_title", l.description as "listing_description", l.main_picture as "listing_main_picture",
-			
-			l.listing_type_id, 
+
+			l.listing_type_id,
 			lt.slug as "listing_type_slug", lt.name as "listing_type_name"
-			
+
 			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
 			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
 
@@ -745,11 +810,11 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 			l.code as "listing_code",
 			l.title as "listing_title",
 			l.description as "listing_description",
-			l.main_picture as "listing_main_picture", 
-			
-			l.listing_type_id, 
+			l.main_picture as "listing_main_picture",
+
+			l.listing_type_id,
 			lt.slug as "listing_type_slug", lt.name as "listing_type_name",
-						
+
 			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
 			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
 
@@ -838,13 +903,13 @@ func (r *SecretGuestRepository) GetReportByID(ctx context.Context, reportID uuid
 		SELECT
 			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
 			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
-			l.title as "listing_title", l.description as "listing_description", 
+			l.title as "listing_title", l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
-			
+
 			l.listing_type_id,
-			lt.slug as "listing_type_slug", 
-			lt.name as "listing_type_name",  
-			
+			lt.slug as "listing_type_slug",
+			lt.name as "listing_type_name",
+
 			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
 			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
 
@@ -876,13 +941,13 @@ func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, repor
 		SELECT
 			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
 			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
-			l.title as "listing_title", l.description as "listing_description", 
+			l.title as "listing_title", l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
-			
-			l.listing_type_id, 
-			lt.slug as "listing_type_slug", 
-			lt.name as "listing_type_name",  
-						
+
+			l.listing_type_id,
+			lt.slug as "listing_type_slug",
+			lt.name as "listing_type_name",
+
 			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
 			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
 
@@ -1920,8 +1985,8 @@ func (r *SecretGuestRepository) GetAllUsers(ctx context.Context, limit, offset i
 	}
 
 	query := `
-		SELECT 
-			u.id, 
+		SELECT
+			u.id,
 			u.username,
 			u.email,
 			u.password_hash,

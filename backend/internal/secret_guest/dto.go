@@ -25,6 +25,7 @@ type CreateListingRequestDTO struct {
 	Code          uuid.UUID `json:"code" validate:"required,uuid"`
 	Title         string    `json:"title" validate:"required"`
 	Description   string    `json:"description" validate:"required"`
+	MainPicture   *string   `json:"main_picture,omitempty"`
 	ListingTypeID int       `json:"listing_type_id" validate:"required,gt=0"`
 	Address       string    `json:"address" validate:"required"`
 	City          string    `json:"city" validate:"required"`
@@ -57,6 +58,57 @@ type ListingsResponse struct {
 	Listings []*ListingResponseDTO `json:"listings"`
 	Total    int                   `json:"total"`
 	Page     int                   `json:"page"`
+}
+
+// ================================
+type OTAReservationRequestDTO struct {
+	Reservation OTAReservationDTO `json:"reservation" validate:"required"`
+	Source      string            `json:"source" validate:"required"`
+	ReceivedAt  time.Time         `json:"received_at" validate:"required"`
+}
+
+type OTAReservationDTO struct {
+	OTAID         uuid.UUID                `json:"ota_id" validate:"required,uuid"`
+	BookingNumber string                   `json:"booking_number" validate:"required"`
+	Status        string                   `json:"status" validate:"required"`
+	Listing       OTAReservationListingDTO `json:"listing" validate:"required"`
+	Dates         OTAReservationDates      `json:"dates" validate:"required"`
+	Guests        OTAReservationGuests     `json:"guests" validate:"required"`
+	Pricing       OTAReservationPricing    `json:"pricing" validate:"required"`
+}
+
+type OTAReservationListingDTO struct {
+	ID          uuid.UUID           `json:"id" validate:"required,uuid"`
+	Title       string              `json:"title" validate:"required"`
+	Description string              `json:"description" validate:"required"`
+	MainPicture string              `json:"main_picture" validate:"required"`
+	ListingType ListingTypeResponse `json:"listing_type" validate:"required"`
+	Address     string              `json:"address" validate:"required"`
+	City        string              `json:"city" validate:"required"`
+	Country     string              `json:"country" validate:"required"`
+	Latitude    float64             `json:"latitude" validate:"required"`
+	Longitude   float64             `json:"longitude" validate:"required"`
+}
+
+type OTAReservationDates struct {
+	Checkin  time.Time `json:"checkin" validate:"required"`
+	Checkout time.Time `json:"checkout" validate:"required"`
+}
+
+type OTAReservationGuests struct {
+	Adults   int `json:"adults" validate:"required,gte=0"`
+	Children int `json:"children" validate:"required,gte=0"`
+}
+
+type OTAReservationPricing struct {
+	Currency  string                         `json:"currency" validate:"required"`
+	Total     int                            `json:"total" validate:"required,gte=0"`
+	Breakdown OTAReservationPricingBreakdown `json:"breakdown" validate:"required"`
+}
+
+type OTAReservationPricingBreakdown struct {
+	PerNight int `json:"per_night" validate:"required,gte=0"`
+	Nights   int `json:"nights" validate:"required,gte=0"`
 }
 
 // ================================

@@ -46,6 +46,22 @@ type ListingType struct {
 
 //================================
 
+// Reservation - бронирование
+type OTAReservation struct {
+	OTAID         uuid.UUID       `db:"ota_id"`
+	BookingNumber string          `db:"booking_number"`
+	ListingID     uuid.UUID       `db:"listing_id"`
+	CheckinDate   time.Time       `db:"checkin_date"`
+	CheckoutDate  time.Time       `db:"checkout_date"`
+	Pricing       json.RawMessage `db:"pricing"`
+	StatusID      int             `db:"status_id"`
+	SourceMsg     json.RawMessage `db:"source_msg"`
+}
+
+//================================
+
+//================================
+
 // Assignment - задание(предложения) быть ТГ и провести обследование объекта
 type Assignment struct {
 	ID         uuid.UUID  `db:"id"`
