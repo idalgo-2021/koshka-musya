@@ -243,24 +243,40 @@ func (h *SecretGuestHandler) CreateListing(w http.ResponseWriter, r *http.Reques
 // @Description  Returns a paginated list of all active listings.
 // @Tags         Listings (Public)
 // @Produce      json
-// @Param        page query int false "Page number for pagination" default(1)
-// @Param        limit query int false "Number of items per page" default(20)
+// @Param        page query int false "Page number for pagination" default(1) min(1)
+// @Param        limit query int false "Number of items per page" default(20) min(1)
+// @Param        listing_type_id query []int false "Filter by one or more listing type IDs" collectionFormat(multi)
 // @Success      200 {object} secret_guest.ListingsResponse
 // @Failure      500 {object} ErrorResponse "Internal server error"
 // @Router       /listings [get]
 func (h *SecretGuestHandler) GetListings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
+	queryParams := r.URL.Query()
 
 	page, limit := h.parsePagination(r)
-	dto := GetListingsRequestDTO{
-		Page:  page,
-		Limit: limit,
+
+	var listingTypeIDs []int
+	if idStrings, ok := queryParams["listing_type_id"]; ok {
+		for _, idStr := range idStrings {
+			parsedInt, err := strconv.Atoi(idStr)
+			if err != nil {
+				log.Warn(ctx, "Invalid listing_type_id value in query parameter, value ignored", zap.String("listing_type_id", idStr), zap.Error(err))
+				continue
+			}
+			listingTypeIDs = append(listingTypeIDs, parsedInt)
+		}
 	}
 
-	listings, err := h.service.GetActiveListings(ctx, dto)
+	dto := GetListingsRequestDTO{
+		Page:           page,
+		Limit:          limit,
+		ListingTypeIDs: listingTypeIDs,
+	}
+
+	listings, err := h.service.GetListings(ctx, dto)
 	if err != nil {
-		log.Error(ctx, "Failed to get active listings", zap.Error(err))
+		log.Error(ctx, "Failed to get listings", zap.Error(err))
 		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
@@ -2076,4 +2092,39 @@ func (h *SecretGuestHandler) GenerateUploadURL(w http.ResponseWriter, r *http.Re
 	}
 
 	h.writeJSONResponse(ctx, w, http.StatusOK, resp)
+}
+
+// users
+
+// @Summary      Get All Users (Staff)
+// @Security     BearerAuth
+// @Description  Returns a paginated list of all users. Available for staff only.
+// @Tags         Users (Staff)
+// @Produce      json
+// @Param        page query int false "Page number for pagination" default(1)
+// @Param        limit query int false "Number of items per page" default(50)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.UsersResponse
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /users [get]
+func (h *SecretGuestHandler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	page, limit := h.parsePagination(r)
+	dto := GetAllUsersRequestDTO{
+		Page:  page,
+		Limit: limit,
+	}
+
+	users, err := h.service.GetAllUsers(ctx, dto)
+	if err != nil {
+		log.Error(ctx, "Failed to get all users", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, users)
 }

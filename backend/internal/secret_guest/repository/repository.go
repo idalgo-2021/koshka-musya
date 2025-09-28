@@ -64,18 +64,46 @@ func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *mode
 	return id, nil
 }
 
-func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error) {
+type ListingsFilter struct {
+	ListingTypeIDs []int
+	Limit          int
+	Offset         int
+}
 
+func buildListingWhereClause(filter ListingsFilter) (string, []interface{}, int) {
+	conditions := []string{}
+	args := []interface{}{}
+	paramCount := 1
+
+	if len(filter.ListingTypeIDs) > 0 {
+		placeholders := make([]string, len(filter.ListingTypeIDs))
+		for i, id := range filter.ListingTypeIDs {
+			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions, fmt.Sprintf("l.listing_type_id IN (%s)", strings.Join(placeholders, ",")))
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	return whereClause, args, paramCount
+}
+
+func (r *SecretGuestRepository) GetListings(ctx context.Context, filter ListingsFilter) ([]*models.Listing, int, error) {
 	log := logger.GetLoggerFromCtx(ctx)
 
-	countQuery := `SELECT COUNT(*) FROM listings WHERE is_active = true;`
+	whereClause, args, paramCount := buildListingWhereClause(filter)
+
+	countQuery := "SELECT COUNT(*) FROM listings l" + whereClause
 	var total int
-	err := r.db.QueryRow(ctx, countQuery).Scan(&total)
-	if err != nil {
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		log.Error(ctx, "Failed to query total active listings count", zap.Error(err))
 		return nil, 0, err
 	}
-
 	if total == 0 {
 		return []*models.Listing{}, 0, nil
 	}
@@ -83,18 +111,20 @@ func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, of
 	query := `
 		SELECT
 			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
-			l.latitude, l.longitude, l.created_at, l.is_active,
+			l.latitude, l.longitude, l.created_at, 
 			lt.id as "listing_type.id",
 			lt.slug as "listing_type.slug",
 			lt.name as "listing_type.name"
 		FROM listings l
 		JOIN listing_types lt ON l.listing_type_id = lt.id
-		WHERE l.is_active = true
-		ORDER BY l.created_at DESC
-		LIMIT $1 OFFSET $2;
 	`
 
-	rows, err := r.db.Query(ctx, query, limit, offset)
+	query += whereClause
+	query += fmt.Sprintf(" ORDER BY l.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
+
+	finalArgs := append(args, filter.Limit, filter.Offset)
+
+	rows, err := r.db.Query(ctx, query, finalArgs...)
 	if err != nil {
 		log.Error(ctx, "Failed to query active listings with join", zap.Error(err))
 		return nil, total, err
@@ -106,7 +136,7 @@ func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, of
 		var l models.Listing
 		if err := rows.Scan(
 			&l.ID, &l.Code, &l.Title, &l.Description, &l.MainPicture, &l.ListingTypeID, &l.Address, &l.City, &l.Country,
-			&l.Latitude, &l.Longitude, &l.CreatedAt, &l.IsActive,
+			&l.Latitude, &l.Longitude, &l.CreatedAt,
 			&l.ListingType.ID, &l.ListingType.Slug, &l.ListingType.Name,
 		); err != nil {
 			log.Error(ctx, "Failed to scan listing row with join", zap.Error(err))
@@ -123,25 +153,25 @@ func (r *SecretGuestRepository) GetActiveListings(ctx context.Context, limit, of
 	return listings, total, nil
 }
 
-func (r *SecretGuestRepository) GetActiveListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error) {
+func (r *SecretGuestRepository) GetListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error) {
 
 	log := logger.GetLoggerFromCtx(ctx)
 
 	query := `
 		SELECT
 			l.id, l.code, l.title, l.description, l.main_picture, l.listing_type_id, l.address, l.city, l.country,
-			l.latitude, l.longitude, l.created_at, l.is_active,
+			l.latitude, l.longitude, l.created_at,
 			lt.id as "listing_type.id",
 			lt.slug as "listing_type.slug",
 			lt.name as "listing_type.name"
 		FROM listings l
 		JOIN listing_types lt ON l.listing_type_id = lt.id
-		WHERE l.id = $1 AND l.is_active = true;
+		WHERE l.id = $1;
 	`
 	var l models.Listing
 	err := r.db.QueryRow(ctx, query, id).Scan(
 		&l.ID, &l.Code, &l.Title, &l.Description, &l.MainPicture, &l.ListingTypeID, &l.Address, &l.City, &l.Country,
-		&l.Latitude, &l.Longitude, &l.CreatedAt, &l.IsActive,
+		&l.Latitude, &l.Longitude, &l.CreatedAt,
 		&l.ListingType.ID, &l.ListingType.Slug, &l.ListingType.Name,
 	)
 
@@ -1870,6 +1900,64 @@ func (r *SecretGuestRepository) DeleteChecklistItem(ctx context.Context, id int)
 		return models.ErrNotFound
 	}
 	return nil
+}
+
+// users
+
+func (r *SecretGuestRepository) GetAllUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	countQuery := `SELECT COUNT(*) FROM users;`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery).Scan(&total)
+	if err != nil {
+		log.Error(ctx, "Failed to query total users count", zap.Error(err))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.User{}, 0, nil
+	}
+
+	query := `
+		SELECT 
+			u.id, 
+			u.username,
+			u.email,
+			u.password_hash,
+			u.role_id,
+			u.created_at,
+			r.name as role_name
+		FROM users u
+		JOIN roles r ON u.role_id = r.id
+		ORDER BY u.created_at DESC
+		LIMIT $1 OFFSET $2;
+	`
+
+	rows, err := r.db.Query(ctx, query, limit, offset)
+	if err != nil {
+		log.Error(ctx, "Failed to query users", zap.Error(err))
+		return nil, total, err
+	}
+	defer rows.Close()
+
+	users := make([]*models.User, 0)
+	for rows.Next() {
+		var u models.User
+		err = rows.Scan(&u.ID, &u.Username, &u.Email, &u.PasswordHash, &u.RoleID, &u.CreatedAt, &u.RoleName)
+		if err != nil {
+			log.Error(ctx, "Failed to scan user row with role", zap.Error(err))
+			return nil, total, err
+		}
+		users = append(users, &u)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over user rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	return users, total, nil
 }
 
 // ГЕнерация отчета

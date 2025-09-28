@@ -20,8 +20,8 @@ type SecretGuestRepository interface {
 
 	// listings
 	CreateListing(ctx context.Context, listing *models.Listing) (uuid.UUID, error)
-	GetActiveListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error)
-	GetActiveListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error)
+	GetListings(ctx context.Context, filter repository.ListingsFilter) ([]*models.Listing, int, error)
+	GetListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error)
 
 	// assignments
 	CreateAssignment(ctx context.Context, assignment *models.Assignment) (uuid.UUID, error)
@@ -77,6 +77,9 @@ type SecretGuestRepository interface {
 	CreateChecklistItem(ctx context.Context, item *models.ChecklistItem) (*models.ChecklistItem, error)
 	UpdateChecklistItem(ctx context.Context, id int, item *models.ChecklistItemUpdate) error
 	DeleteChecklistItem(ctx context.Context, id int) error
+
+	// users
+	GetAllUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error)
 }
 
 type SecretGuestService struct {
@@ -121,7 +124,7 @@ func (s *SecretGuestService) CreateListing(ctx context.Context, dto CreateListin
 		return nil, fmt.Errorf("failed to create listing in repository: %w", err)
 	}
 
-	dbListing, err := s.repo.GetActiveListingByID(ctx, listingID)
+	dbListing, err := s.repo.GetListingByID(ctx, listingID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get listing by id %s from repository: %w", listingID.String(), err)
 	}
@@ -129,13 +132,17 @@ func (s *SecretGuestService) CreateListing(ctx context.Context, dto CreateListin
 	return toListingResponseDTO(dbListing), nil
 }
 
-func (s *SecretGuestService) GetActiveListings(ctx context.Context, dto GetListingsRequestDTO) (*ListingsResponse, error) {
+func (s *SecretGuestService) GetListings(ctx context.Context, dto GetListingsRequestDTO) (*ListingsResponse, error) {
 
-	offset := (dto.Page - 1) * dto.Limit
+	filter := repository.ListingsFilter{
+		ListingTypeIDs: dto.ListingTypeIDs,
+		Limit:          dto.Limit,
+		Offset:         (dto.Page - 1) * dto.Limit,
+	}
 
-	dbListings, total, err := s.repo.GetActiveListings(ctx, dto.Limit, offset)
+	dbListings, total, err := s.repo.GetListings(ctx, filter)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active listings from repository: %w", err)
+		return nil, fmt.Errorf("failed to get listings from repository: %w", err)
 	}
 
 	responseDTOs := make([]*ListingResponseDTO, 0, len(dbListings))
@@ -154,9 +161,9 @@ func (s *SecretGuestService) GetActiveListings(ctx context.Context, dto GetListi
 
 func (s *SecretGuestService) GetListingByID(ctx context.Context, id uuid.UUID) (*ListingResponseDTO, error) {
 
-	dbListing, err := s.repo.GetActiveListingByID(ctx, id)
+	dbListing, err := s.repo.GetListingByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get active listing by id %s from repository: %w", id.String(), err)
+		return nil, fmt.Errorf("failed to get listing by id %s from repository: %w", id.String(), err)
 	}
 
 	return toListingResponseDTO(dbListing), nil
@@ -909,6 +916,52 @@ func (s *SecretGuestService) DeleteChecklistItem(ctx context.Context, id int) er
 	}
 	return nil
 }
+
+// users
+
+func (s *SecretGuestService) GetAllUsers(ctx context.Context, dto GetAllUsersRequestDTO) (*UsersResponse, error) {
+
+	offset := (dto.Page - 1) * dto.Limit
+
+	dbUsers, total, err := s.repo.GetAllUsers(ctx, dto.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users from repository: %w", err)
+	}
+
+	responseDTOs := make([]*UserResponseDTO, 0, len(dbUsers))
+	for _, u := range dbUsers {
+		responseDTOs = append(responseDTOs, toUserResponseDTO(u))
+	}
+
+	response := &UsersResponse{
+		Users: responseDTOs,
+		Total: total,
+		Page:  dto.Page,
+	}
+	return response, nil
+}
+
+func toUserResponseDTO(u *models.User) *UserResponseDTO {
+	if u == nil {
+		return nil
+	}
+
+	var email *string
+	if u.Email != "" {
+		email = &u.Email
+	}
+
+	return &UserResponseDTO{
+		ID:        u.ID,
+		Username:  u.Username,
+		Email:     email,
+		RoleID:    u.RoleID,
+		RoleName:  u.RoleName,
+		CreatedAt: u.CreatedAt,
+	}
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Генерация схемы отчета
 

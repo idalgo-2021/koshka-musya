@@ -34,8 +34,9 @@ type CreateListingRequestDTO struct {
 }
 
 type GetListingsRequestDTO struct {
-	Page  int
-	Limit int
+	Page           int
+	Limit          int
+	ListingTypeIDs []int
 }
 
 type ListingResponseDTO struct {
@@ -453,4 +454,26 @@ type UpdateChecklistItemRequestDTO struct {
 	MediaMaxFiles      *int16   `json:"media_max_files,omitempty" validate:"omitempty,gte=0"`
 	SortOrder          *int     `json:"sort_order,omitempty" validate:"omitempty,gte=0"`
 	IsActive           *bool    `json:"is_active,omitempty"`
+}
+
+// ================================
+
+type GetAllUsersRequestDTO struct {
+	Page  int
+	Limit int
+}
+
+type UserResponseDTO struct {
+	ID        uuid.UUID `json:"id"`
+	Username  string    `json:"username"`
+	Email     *string   `json:"email"`
+	RoleID    int       `json:"role_id"`
+	RoleName  string    `json:"role_name"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type UsersResponse struct {
+	Users []*UserResponseDTO `json:"users"`
+	Total int                `json:"total"`
+	Page  int                `json:"page"`
 }

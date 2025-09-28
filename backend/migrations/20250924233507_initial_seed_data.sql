@@ -1,3 +1,4 @@
+
 INSERT INTO roles (id, name, description) VALUES
     (1, 'admin', 'System administrator'),
     (2, 'moderator', 'Content moderator'),
@@ -34,6 +35,15 @@ INSERT INTO media_requirements (slug, name) VALUES
     ('none', 'Не требуется'),
     ('optional', 'Необязательно'),
     ('required', 'Обязательно');
+
+
+INSERT INTO ota_sg_reservation_statuses (id, slug, name) VALUES
+    (1, 'new', 'Новое'),
+    (2, 'hold', 'Захолдировано'),
+    (3, 'booked', 'Забронировано'),
+    (4, 'no-show', 'Не обрабатывать');
+   
+
 
 --- =========== СОЗДАНИЕ ТЕСТОВЫХ ПОЛЬЗОВАТЕЛЕЙ ===========
 
@@ -102,30 +112,29 @@ INSERT INTO users (username, email, password_hash, role_id) VALUES
         'hetta',
         'hetta@example.com',
         '$2a$10$J1gEYAaWWh5xICKoUndns.9W08vjlj.JVFbPS5uWS2sSqxpNDiia.', -- bcrypt hash для '12345'
-        (SELECT id FROM roles WHERE name = 'secret_guest')
+        (SELECT id FROM roles WHERE name = 'moderator')
     )
 ON CONFLICT (username) DO NOTHING;
 
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ listings (ОБЪЕКТЫ РАЗМЕЩЕНИЯ) ===========
 
 INSERT INTO listings (
-    title, description, main_picture, listing_type_id, address, city, country,
-    latitude, longitude, is_active, code
+    title, description, main_picture, listing_type_id, address, city, country, latitude, longitude, code
 ) VALUES
 -- --- Отели (listing_type_id = 1) ---
-('Гранд Отель "Центральный"', 'Роскошный отель в самом сердце города с видом на главную площадь.', 'https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg', 1, 'ул. Тверская, д. 1', 'Москва', 'Россия', 55.7558, 37.6176, true, gen_random_uuid()),
-('Приморская Жемчужина', 'Современный отель на первой береговой линии с собственным пляжем и бассейном.', 'https://cdn.worldota.net/t/1200x616/extranet/da/58/da58a1d236fea6479dd4eb4570ebb8b7f1e1ce88.jpeg', 1, 'ул. Набережная, д. 15', 'Сочи', 'Россия', 43.5855, 39.7231, true, gen_random_uuid()),
-('Бутик-отель "Старый Город"', 'Уютный отель в историческом здании, каждый номер с уникальным дизайном.', 'https://cdn.worldota.net/t/1200x616/extranet/e4/f4/e4f479e73bb426260123ed7ad9f472ac3f8954bb.jpeg', 1, 'ул. Невский проспект, д. 45', 'Санкт-Петербург', 'Россия', 59.9343, 30.3351, false, gen_random_uuid()), -- Один неактивный для теста
+('Гранд Отель "Центральный"', 'Роскошный отель в самом сердце города с видом на главную площадь.', 'https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg', 1, 'ул. Тверская, д. 1', 'Москва', 'Россия', 55.7558, 37.6176, 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'),
+('Приморская Жемчужина', 'Современный отель на первой береговой линии с собственным пляжем и бассейном.', 'https://cdn.worldota.net/t/1200x616/extranet/da/58/da58a1d236fea6479dd4eb4570ebb8b7f1e1ce88.jpeg', 1, 'ул. Набережная, д. 15', 'Сочи', 'Россия', 43.5855, 39.7231, gen_random_uuid()),
+('Бутик-отель "Старый Город"', 'Уютный отель в историческом здании, каждый номер с уникальным дизайном.', 'https://cdn.worldota.net/t/1200x616/extranet/e4/f4/e4f479e73bb426260123ed7ad9f472ac3f8954bb.jpeg', 1, 'ул. Невский проспект, д. 45', 'Санкт-Петербург', 'Россия', 59.9343, 30.3351, gen_random_uuid()),
 -- --- Апартаменты (listing_type_id = 2) ---
-('Лофт на Красном Октябре', 'Стильные апартаменты с панорамными окнами в модном районе.', 'https://cdn.worldota.net/t/1200x616/extranet/1f/e9/1fe9eba4d88422e089f15920d90be7ed660aaba9.jpeg', 2, 'Берсеневская наб., д. 6, стр. 3', 'Москва', 'Россия', 55.7408, 37.6114, true, gen_random_uuid()),
-('Квартира у моря', 'Светлая двухкомнатная квартира с балконом и видом на море, в 5 минутах от пляжа.', 'https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg', 2, 'ул. Ленина, д. 112', 'Адлер', 'Россия', 43.4299, 39.9234, true, gen_random_uuid()),
+('Лофт на Красном Октябре', 'Стильные апартаменты с панорамными окнами в модном районе.', 'https://cdn.worldota.net/t/1200x616/extranet/1f/e9/1fe9eba4d88422e089f15920d90be7ed660aaba9.jpeg', 2, 'Берсеневская наб., д. 6, стр. 3', 'Москва', 'Россия', 55.7408, 37.6114, gen_random_uuid()),
+('Квартира у моря', 'Светлая двухкомнатная квартира с балконом и видом на море, в 5 минутах от пляжа.', 'https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg', 2, 'ул. Ленина, д. 112', 'Адлер', 'Россия', 43.4299, 39.9234, gen_random_uuid()),
 -- --- Хостелы (listing_type_id = 3) ---
-('Хостел "Друзья"', 'Веселый и современный хостел с общей кухней и игровой зоной.', 'https://cdn.worldota.net/t/1200x616/extranet/2e/8c/2e8cfffa97a4f7a39db1f4e57491f60f7a804a35.JPEG', 3, 'ул. Лиговский проспект, д. 50', 'Санкт-Петербург', 'Россия', 59.9256, 30.3587, true, gen_random_uuid()),
-('Горный Приют', 'Хостел для любителей активного отдыха у подножия гор.', NULL, 3, 'пос. Красная Поляна, ул. Защитников Кавказа, д. 77', 'Красная Поляна', 'Россия', 43.6834, 40.2045, true, gen_random_uuid()),
+('Хостел "Друзья"', 'Веселый и современный хостел с общей кухней и игровой зоной.', 'https://cdn.worldota.net/t/1200x616/extranet/2e/8c/2e8cfffa97a4f7a39db1f4e57491f60f7a804a35.JPEG', 3, 'ул. Лиговский проспект, д. 50', 'Санкт-Петербург', 'Россия', 59.9256, 30.3587, gen_random_uuid()),
+('Горный Приют', 'Хостел для любителей активного отдыха у подножия гор.', NULL, 3, 'пос. Красная Поляна, ул. Защитников Кавказа, д. 77', 'Красная Поляна', 'Россия', 43.6834, 40.2045, gen_random_uuid()),
 -- --- Гостевые дома (listing_type_id = 4) ---
-('Уютный дворик', 'Семейный гостевой дом с садом и зоной для барбекю.', 'https://cdn.worldota.net/t/1200x616/extranet/b4/5e/b45efcf3cfcb1c6ef47cae6c3427a97e18a39d5c.jpeg', 4, 'ул. Виноградная, д. 25', 'Суздаль', 'Россия', 56.4168, 40.4499, true, gen_random_uuid()),
-('Дом у озера', 'Гостевой дом на берегу живописного озера с возможностью рыбалки и проката лодок.', 'https://cdn.worldota.net/t/1200x616/extranet/7c/16/7c16d355fc7c18098445cb227620b1ff29ac1d37.jpeg', 4, 'д. Селигер, ул. Озерная, д. 1', 'Осташков', 'Россия', 57.1481, 33.1039, true, gen_random_uuid()),
-('Альпийская Вилла', 'Шале в альпийском стиле с сауной и каминным залом.', NULL, 4, 'ул. Горная, д. 5', 'Красная Поляна', 'Россия', 43.6800, 40.2050, true, gen_random_uuid());
+('Уютный дворик', 'Семейный гостевой дом с садом и зоной для барбекю.', 'https://cdn.worldota.net/t/1200x616/extranet/b4/5e/b45efcf3cfcb1c6ef47cae6c3427a97e18a39d5c.jpeg', 4, 'ул. Виноградная, д. 25', 'Суздаль', 'Россия', 56.4168, 40.4499, gen_random_uuid()),
+('Дом у озера', 'Гостевой дом на берегу живописного озера с возможностью рыбалки и проката лодок.', 'https://cdn.worldota.net/t/1200x616/extranet/7c/16/7c16d355fc7c18098445cb227620b1ff29ac1d37.jpeg', 4, 'д. Селигер, ул. Озерная, д. 1', 'Осташков', 'Россия', 57.1481, 33.1039, gen_random_uuid()),
+('Альпийская Вилла', 'Шале в альпийском стиле с сауной и каминным залом.', NULL, 4, 'ул. Горная, д. 5', 'Красная Поляна', 'Россия', 43.6800, 40.2050, gen_random_uuid());
 
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ checklist_sections (СЕКЦИИ ЧЕК-ЛИСТОВ) ===========
 
@@ -184,113 +193,29 @@ INSERT INTO checklist_items (listing_type_id, section_id, answer_type_id, media_
 (4, (SELECT id FROM checklist_sections WHERE listing_type_id = 4 AND slug = 'food'), 1, 1, ARRAY['image'], 1, 'guesthouse_breakfast_comment', 'Комментарий о завтраке', 'Если завтрак был включен, опишите его.', 10),
 (4, (SELECT id FROM checklist_sections WHERE listing_type_id = 4 AND slug = 'room'), 4, 1, ARRAY['image'], 1, 'guesthouse_soundproofing_rating', 'Звукоизоляция', 'Оцените от 1 (все слышно) до 10 (ничего не слышно).', 10);
 
--- =========== СОЗДАНИЕ ТЕСТОВЫХ ЗАДАНИЙ (ASSIGNMENTS) ===========
 
--- --- Задание 1: Новое, только что предложенное для 'alfred' ---
--- Предложение действует 3 дня с момента создания.
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
+
+-- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ ota_sg_reservations (БРОНИРОВАНИЯ) ===========
+
+-- Бронирование 1: 
+INSERT INTO ota_sg_reservations (created_at,
+                                ota_id, 
+                                booking_number, 
+                                listing_id, 
+                                checkin_date, 
+                                checkout_date,
+                                pricing, 
+                                status_id, 
+                                source_msg)
 VALUES (
-    (SELECT id FROM listings WHERE title = 'Гранд Отель "Центральный"'), -- ID отеля
-    (SELECT id FROM users WHERE username = 'alfred'),                    -- ID пользователя
-    'Стандартная проверка чистоты и сервиса',                            -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '3 days',                                           -- Срок принятия
-    gen_random_uuid()
+     NOW(),
+    'f6b1c8f4-23ab-4c32-87a1-7810e7a3e9b1', -- из source_msg
+    'TG-20250927-AB1234', -- из source_msg
+    (SELECT id FROM listings WHERE code = 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'), -- поиск по уникальному коду
+    '2025-10-05T15:00:00Z', -- из source_msg
+    '2025-10-10T12:00:00Z', -- из source_msg
+    '{"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}}'::jsonb, -- информация о стоимости
+    (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
+    '{"reservation":{"ota_id":"f6b1c8f4-23ab-4c32-87a1-7810e7a3e9b1","booking_number":"TG-20250927-AB1234","status":"reserved","listing":{"id":"b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0","title":"Гранд Отель \"Центральный\"","description":"Роскошный отель в самом сердце города с видом на главную площадь.","main_picture":"https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg","listing_type":{"id":1,"slug":"hotel","name":"Отель"},"address":"ул. Тверская, д. 1","city":"Москва","country":"Россия","latitude":55.7558,"longitude":37.6176},"dates":{"checkin":"2025-10-05T15:00:00Z","checkout":"2025-10-10T12:00:00Z"},"guests":{"adults":2,"children":1},"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}},"source":"Ostrovok.com","received_at":"2025-09-27T00:12:00Z"}'::jsonb
 );
 
--- --- Задание 2: Новое, только что предложенное для 'boris' ---
--- Предложение действует 10 дней с момента создания.
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Лофт на Красном Октябре'),   -- ID апартаментов
-    (SELECT id FROM users WHERE username = 'boris'),                     -- ID пользователя
-    'Проверка соответствия фотографиям и состояния кухни',               -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '10 days',                                          -- Срок принятия
-    gen_random_uuid()
-);
-
--- --- Задание 3: Просроченное предложение для 'celine' ---
--- Предложение было сделано 5 дней назад, срок принятия истек 2 дня назад.
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Хостел "Друзья"'),           -- ID хостела
-    (SELECT id FROM users WHERE username = 'celine'),                    -- ID пользователя
-    'Оценка атмосферы и чистоты общих зон',                              -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'expired'),         -- Статус "Просрочено"
-    NOW() - INTERVAL '2 days',                                           -- Срок принятия истек
-    gen_random_uuid()
-);
-
-
-----
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Гранд Отель "Центральный"'), -- ID отеля
-    (SELECT id FROM users WHERE username = 'alpha'),                    -- ID пользователя
-    'Стандартная проверка чистоты и сервиса',                            -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '3 days',                                           -- Срок принятия
-    gen_random_uuid()
-);
-
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Гранд Отель "Центральный"'), -- ID отеля
-    (SELECT id FROM users WHERE username = 'beta'),                    -- ID пользователя
-    'Стандартная проверка чистоты и сервиса',                            -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '3 days',                                           -- Срок принятия
-    gen_random_uuid()
-);
-
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Гранд Отель "Центральный"'), -- ID отеля
-    (SELECT id FROM users WHERE username = 'gamma'),                    -- ID пользователя
-    'Стандартная проверка чистоты и сервиса',                            -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '3 days',                                           -- Срок принятия
-    gen_random_uuid()
-);
-
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Гранд Отель "Центральный"'), -- ID отеля
-    (SELECT id FROM users WHERE username = 'delta'),                    -- ID пользователя
-    'Нестандартная проверка',                            -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '3 days',                                           -- Срок принятия
-    gen_random_uuid()
-);
-
------
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Лофт на Красном Октябре'),   -- ID апартаментов
-    (SELECT id FROM users WHERE username = 'epsilon'),                     -- ID пользователя
-    'Проверка соответствия фотографиям и состояния кухни',               -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '10 days',                                          -- Срок принятия
-    gen_random_uuid()
-);
-
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Лофт на Красном Октябре'),   -- ID апартаментов
-    (SELECT id FROM users WHERE username = 'zetta'),                     -- ID пользователя
-    'Проверка соответствия фотографиям и состояния кухни',               -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '10 days',                                          -- Срок принятия
-    gen_random_uuid()
-);
-
-INSERT INTO assignments (listing_id, reporter_id, purpose, status_id, expires_at, code)
-VALUES (
-    (SELECT id FROM listings WHERE title = 'Лофт на Красном Октябре'),   -- ID апартаментов
-    (SELECT id FROM users WHERE username = 'hetta'),                     -- ID пользователя
-    'Проверка соответствия фотографиям и состояния кухни',               -- Цель
-    (SELECT id FROM assignment_statuses WHERE slug = 'offered'),         -- Статус "Предложено"
-    NOW() + INTERVAL '10 days',                                          -- Срок принятия
-    gen_random_uuid()
-);

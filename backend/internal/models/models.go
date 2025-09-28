@@ -15,6 +15,7 @@ type User struct {
 	PasswordHash string    `json:"password_hash"`
 	RoleID       int       `json:"role_id"`
 	CreatedAt    time.Time `json:"created_at"`
+	RoleName     string    `json:"role_name" db:"role_name"`
 }
 
 //================================
@@ -33,7 +34,6 @@ type Listing struct {
 	Latitude      float64     `db:"latitude"`
 	Longitude     float64     `db:"longitude"`
 	CreatedAt     time.Time   `db:"created_at"`
-	IsActive      bool        `db:"is_active"`
 	ListingType   ListingType `db:"-"`
 }
 
