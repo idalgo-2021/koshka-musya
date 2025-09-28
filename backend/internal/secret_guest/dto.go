@@ -34,8 +34,9 @@ type CreateListingRequestDTO struct {
 }
 
 type GetListingsRequestDTO struct {
-	Page  int
-	Limit int
+	Page           int
+	Limit          int
+	ListingTypeIDs []int
 }
 
 type ListingResponseDTO struct {

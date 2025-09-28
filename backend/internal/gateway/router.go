@@ -34,8 +34,7 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	r.HandleFunc("/auth/register", authHandlers.RegisterUser).Methods(http.MethodPost)
 
 	// - - - -  PUBLIC
-	r.HandleFunc("/listings", secretGuestHandler.GetListings).Methods(http.MethodGet)         // listings
-	r.HandleFunc("/listings/{id}", secretGuestHandler.GetListingByID).Methods(http.MethodGet) // listings
+	// ....
 
 	// - - - -  FOR AUTHENTICATED
 	protectedRouter := r.PathPrefix("/").Subrouter()
@@ -59,6 +58,9 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	// - - - - FOR STUFF
 	staffRouter := protectedRouter.PathPrefix("/").Subrouter()
 	staffRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID, models.ModeratorRoleID))
+
+	staffRouter.HandleFunc("/listings", secretGuestHandler.GetListings).Methods(http.MethodGet)         // listings
+	staffRouter.HandleFunc("/listings/{id}", secretGuestHandler.GetListingByID).Methods(http.MethodGet) // listings
 
 	staffRouter.HandleFunc("/assignments", secretGuestHandler.GetAllAssignments).Methods(http.MethodGet)              // assignments
 	staffRouter.HandleFunc("/assignments/{id}", secretGuestHandler.GetAssignmentByID_AsStaff).Methods(http.MethodGet) // assignments

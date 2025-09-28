@@ -2213,6 +2213,16 @@ const docTemplate = `{
                         "description": "Number of items per page",
                         "name": "limit",
                         "in": "query"
+                    },
+                    {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "collectionFormat": "multi",
+                        "description": "Filter by one or more listing type IDs",
+                        "name": "listing_type_id",
+                        "in": "query"
                     }
                 ],
                 "responses": {

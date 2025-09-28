@@ -2039,6 +2039,13 @@ paths:
         in: query
         name: limit
         type: integer
+      - collectionFormat: multi
+        description: Filter by one or more listing type IDs
+        in: query
+        items:
+          type: integer
+        name: listing_type_id
+        type: array
       produces:
       - application/json
       responses:

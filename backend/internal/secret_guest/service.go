@@ -20,7 +20,7 @@ type SecretGuestRepository interface {
 
 	// listings
 	CreateListing(ctx context.Context, listing *models.Listing) (uuid.UUID, error)
-	GetListings(ctx context.Context, limit, offset int) ([]*models.Listing, int, error)
+	GetListings(ctx context.Context, filter repository.ListingsFilter) ([]*models.Listing, int, error)
 	GetListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error)
 
 	// assignments
@@ -134,9 +134,13 @@ func (s *SecretGuestService) CreateListing(ctx context.Context, dto CreateListin
 
 func (s *SecretGuestService) GetListings(ctx context.Context, dto GetListingsRequestDTO) (*ListingsResponse, error) {
 
-	offset := (dto.Page - 1) * dto.Limit
+	filter := repository.ListingsFilter{
+		ListingTypeIDs: dto.ListingTypeIDs,
+		Limit:          dto.Limit,
+		Offset:         (dto.Page - 1) * dto.Limit,
+	}
 
-	dbListings, total, err := s.repo.GetListings(ctx, dto.Limit, offset)
+	dbListings, total, err := s.repo.GetListings(ctx, filter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get listings from repository: %w", err)
 	}
