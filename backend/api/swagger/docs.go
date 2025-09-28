@@ -3534,6 +3534,9 @@ const docTemplate = `{
                 "longitude": {
                     "type": "number"
                 },
+                "main_picture": {
+                    "type": "string"
+                },
                 "title": {
                     "type": "string"
                 }

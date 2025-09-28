@@ -25,6 +25,7 @@ type CreateListingRequestDTO struct {
 	Code          uuid.UUID `json:"code" validate:"required,uuid"`
 	Title         string    `json:"title" validate:"required"`
 	Description   string    `json:"description" validate:"required"`
+	MainPicture   *string   `json:"main_picture,omitempty"`
 	ListingTypeID int       `json:"listing_type_id" validate:"required,gt=0"`
 	Address       string    `json:"address" validate:"required"`
 	City          string    `json:"city" validate:"required"`
