@@ -24,3 +24,10 @@ const (
 	ReportStatusRejected         = 6 // Отклонен
 	ReportStatusGenerationFailed = 7 // Ошибка генерации
 )
+
+const (
+	OTAReservationStatusNew    = 1 // Новое
+	OTAReservationStatusHold   = 2 // Зарезервировано
+	OTAReservationStatusBooked = 3 // Забронировано
+	OTAReservationStatusNoShow = 4 // Скрыто
+)

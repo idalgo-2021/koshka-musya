@@ -280,6 +280,55 @@ func (h *SecretGuestHandler) GetListingByID(w http.ResponseWriter, r *http.Reque
 	h.writeJSONResponse(ctx, w, http.StatusOK, listing)
 }
 
+// reservations
+
+// @Summary      Handles OTA Reservations Events (Admin)
+// @Security     BearerAuth
+// @Description  Handles OTA Reservations Events. Available for admin only.
+// @Tags         Reservations (Admin)
+// @Accept       json
+// @Produce      json
+// @Param        input body secret_guest.OTAReservationRequestDTO true "OTA Reservation Payload"
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} string "OK"
+// @Failure      400 {object} ErrorResponse "Invalid payload"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /admin/sg_reservations [post]
+func (h *SecretGuestHandler) HandleOTAReservation(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	var dto OTAReservationRequestDTO
+	if err := h.decodeJSONBody(ctx, r, &dto); err != nil {
+		log.Warn(ctx, "Failed to decode create OTA reservation request", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	if err := validation.StructCtx(ctx, &dto); err != nil {
+		log.Warn(ctx, "Failed to validate create OTA reservation request", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	err := h.service.HandleOTAReservation(ctx, dto)
+	if err != nil {
+		if errors.Is(err, models.ErrListingTypeNotFound) {
+			log.Info(ctx, "Listing type not found", zap.String("listing_type_id", strconv.Itoa(dto.Reservation.Listing.ListingType.ID)))
+			h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Listing type not found")
+		} else {
+			log.Error(ctx, "Failed to handle OTA reservation", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, "OK")
+}
+
 // assignments
 
 // @Summary      Create new Assignment (Admin)

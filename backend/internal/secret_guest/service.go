@@ -3,6 +3,7 @@ package secret_guest
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -22,6 +23,10 @@ type SecretGuestRepository interface {
 	CreateListing(ctx context.Context, listing *models.Listing) (uuid.UUID, error)
 	GetListings(ctx context.Context, filter repository.ListingsFilter) ([]*models.Listing, int, error)
 	GetListingByID(ctx context.Context, id uuid.UUID) (*models.Listing, error)
+	GetListingByCode(ctx context.Context, code uuid.UUID) (*models.Listing, error)
+
+	// reservations
+	CreateOTAReservation(ctx context.Context, reservation *models.OTAReservation) (uuid.UUID, error)
 
 	// assignments
 	CreateAssignment(ctx context.Context, assignment *models.Assignment) (uuid.UUID, error)
@@ -365,6 +370,81 @@ func (s *SecretGuestService) CancelAssignment(ctx context.Context, assignmentID 
 	if err != nil {
 		return fmt.Errorf("failed to cancel assignment %s: %w", assignmentID.String(), err)
 	}
+	return nil
+}
+
+// OTA reservations
+
+func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTAReservationRequestDTO) error {
+	var listingID uuid.UUID
+
+	listing, err := s.repo.GetListingByCode(ctx, dto.Reservation.OTAID)
+	if errors.Is(err, models.ErrListingNotFound) {
+		// search listing type
+		listingType, err := s.repo.GetListingTypeByID(ctx, dto.Reservation.Listing.ListingType.ID)
+		if err != nil {
+			if errors.Is(err, models.ErrNotFound) {
+				return models.ErrListingTypeNotFound
+			}
+
+			return fmt.Errorf("failed to get listing type: %w", err)
+		}
+
+		// register listing object
+		listingID, err = s.repo.CreateListing(ctx, &models.Listing{
+			Code:          dto.Reservation.OTAID,
+			Title:         dto.Reservation.Listing.Title,
+			Description:   dto.Reservation.Listing.Description,
+			ListingTypeID: listingType.ID,
+			Address:       dto.Reservation.Listing.Address,
+			City:          dto.Reservation.Listing.City,
+			Country:       dto.Reservation.Listing.Country,
+			Latitude:      dto.Reservation.Listing.Latitude,
+			Longitude:     dto.Reservation.Listing.Longitude,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to create listing %s: %w", dto.Reservation.OTAID.String(), err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to get listing by code %s from repository: %w", dto.Reservation.OTAID.String(), err)
+	} else {
+		listingID = listing.ID
+	}
+
+	otaSourceMsg, err := json.Marshal(&dto)
+	if err != nil {
+		return fmt.Errorf("failed to marshal ota source msg: %w", err)
+	}
+
+	otaPricing, err := json.Marshal(&dto.Reservation.Pricing)
+	if err != nil {
+		return fmt.Errorf("failed to marshal ota pricing: %w", err)
+	}
+
+	var reservationStatusID int
+	switch dto.Reservation.Status {
+	case "reserved":
+		reservationStatusID = models.OTAReservationStatusNew
+	default:
+		reservationStatusID = models.OTAReservationStatusNoShow
+	}
+
+	otaReservation := models.OTAReservation{
+		OTAID:         dto.Reservation.OTAID,
+		BookingNumber: dto.Reservation.BookingNumber,
+		ListingID:     listingID,
+		CheckinDate:   dto.Reservation.Dates.Checkin,
+		CheckoutDate:  dto.Reservation.Dates.Checkout,
+		Pricing:       otaPricing,
+		StatusID:      reservationStatusID,
+		SourceMsg:     otaSourceMsg,
+	}
+
+	_, err = s.repo.CreateOTAReservation(ctx, &otaReservation)
+	if err != nil {
+		return fmt.Errorf("failed to create ota reservation in repository: %w", err)
+	}
+
 	return nil
 }
 

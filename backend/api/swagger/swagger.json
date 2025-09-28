@@ -160,6 +160,76 @@
                 }
             }
         },
+        "/admin/sg_reservations": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Handles OTA Reservations Events. Available for admin only.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reservations (Admin)"
+                ],
+                "summary": "Handles OTA Reservations Events (Admin)",
+                "parameters": [
+                    {
+                        "description": "OTA Reservation Payload",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.OTAReservationRequestDTO"
+                        }
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid payload",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/answer_types": {
             "get": {
                 "security": [
@@ -3727,6 +3797,176 @@
                     "items": {
                         "$ref": "#/definitions/secret_guest.MediaRequirementResponse"
                     }
+                }
+            }
+        },
+        "secret_guest.OTAReservationDTO": {
+            "type": "object",
+            "required": [
+                "booking_number",
+                "dates",
+                "guests",
+                "listing",
+                "ota_id",
+                "pricing",
+                "status"
+            ],
+            "properties": {
+                "booking_number": {
+                    "type": "string"
+                },
+                "dates": {
+                    "$ref": "#/definitions/secret_guest.OTAReservationDates"
+                },
+                "guests": {
+                    "$ref": "#/definitions/secret_guest.OTAReservationGuests"
+                },
+                "listing": {
+                    "$ref": "#/definitions/secret_guest.OTAReservationListingDTO"
+                },
+                "ota_id": {
+                    "type": "string"
+                },
+                "pricing": {
+                    "$ref": "#/definitions/secret_guest.OTAReservationPricing"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "secret_guest.OTAReservationDates": {
+            "type": "object",
+            "required": [
+                "checkin",
+                "checkout"
+            ],
+            "properties": {
+                "checkin": {
+                    "type": "string"
+                },
+                "checkout": {
+                    "type": "string"
+                }
+            }
+        },
+        "secret_guest.OTAReservationGuests": {
+            "type": "object",
+            "required": [
+                "adults",
+                "children"
+            ],
+            "properties": {
+                "adults": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "children": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "secret_guest.OTAReservationListingDTO": {
+            "type": "object",
+            "required": [
+                "address",
+                "city",
+                "country",
+                "description",
+                "id",
+                "latitude",
+                "listing_type",
+                "longitude",
+                "main_picture",
+                "title"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "country": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "latitude": {
+                    "type": "number"
+                },
+                "listing_type": {
+                    "$ref": "#/definitions/secret_guest.ListingTypeResponse"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "main_picture": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "secret_guest.OTAReservationPricing": {
+            "type": "object",
+            "required": [
+                "breakdown",
+                "currency",
+                "total"
+            ],
+            "properties": {
+                "breakdown": {
+                    "$ref": "#/definitions/secret_guest.OTAReservationPricingBreakdown"
+                },
+                "currency": {
+                    "type": "string"
+                },
+                "total": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "secret_guest.OTAReservationPricingBreakdown": {
+            "type": "object",
+            "required": [
+                "nights",
+                "per_night"
+            ],
+            "properties": {
+                "nights": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "per_night": {
+                    "type": "integer",
+                    "minimum": 0
+                }
+            }
+        },
+        "secret_guest.OTAReservationRequestDTO": {
+            "type": "object",
+            "required": [
+                "received_at",
+                "reservation",
+                "source"
+            ],
+            "properties": {
+                "received_at": {
+                    "type": "string"
+                },
+                "reservation": {
+                    "$ref": "#/definitions/secret_guest.OTAReservationDTO"
+                },
+                "source": {
+                    "type": "string"
                 }
             }
         },

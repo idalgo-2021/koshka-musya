@@ -31,6 +31,10 @@ var (
 	ErrListingCannotBeCreated = errors.New("listing cannot be created")
 	ErrListingNotFound        = errors.New("listing not found")
 
+	ErrListingTypeNotFound = errors.New("listing type not found")
+
+	ErrOTAReservationCannotBeCreated = errors.New("ota reservation cannot be created")
+
 	ErrAssignmentCannotBeCreated = errors.New("assignment cannot be created")
 	ErrAssignmentNotFound        = errors.New("assignment not found")
 

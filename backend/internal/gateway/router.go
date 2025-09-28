@@ -106,8 +106,9 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	adminRouter := protectedRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID))
 
-	adminRouter.HandleFunc("/listings", secretGuestHandler.CreateListing).Methods(http.MethodPost)       // listings
-	adminRouter.HandleFunc("/assignments", secretGuestHandler.CreateAssignment).Methods(http.MethodPost) // assignments
+	adminRouter.HandleFunc("/listings", secretGuestHandler.CreateListing).Methods(http.MethodPost)               // listings
+	adminRouter.HandleFunc("/assignments", secretGuestHandler.CreateAssignment).Methods(http.MethodPost)         // assignments
+	adminRouter.HandleFunc("/sg_reservations", secretGuestHandler.HandleOTAReservation).Methods(http.MethodPost) // reservations
 
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
