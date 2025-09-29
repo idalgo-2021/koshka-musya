@@ -14,6 +14,7 @@ const navItems = [
   {href: '/admin/reports', label: 'Отчеты'},
   {href: '/admin/checklists', label: 'Checklists'},
   {href: '/admin/mediaRequirements', label: 'Media Requirements'},
+  {href: '/admin/users', label: 'Пользователи'},
 ]
 
 // function formatUser(user: User | null) {
