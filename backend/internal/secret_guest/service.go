@@ -40,6 +40,7 @@ type SecretGuestRepository interface {
 	CancelAssignment(ctx context.Context, assignmentID uuid.UUID) error
 	AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt, deadline time.Time) (*models.Report, error)
 	DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, declinedAt time.Time) error
+	TakeFreeAssignmentsByID(ctx context.Context, assignmentID, userID uuid.UUID, takenAt time.Time) error
 
 	// reports
 	GetReports(ctx context.Context, filter repository.ReportsFilter) ([]*models.Report, int, error)
@@ -257,6 +258,31 @@ func (s *SecretGuestService) GetFreeAssignments(ctx context.Context, dto GetFree
 
 }
 
+func (s *SecretGuestService) GetFreeAssignmentsByID(ctx context.Context, assignmentID uuid.UUID) (*AssignmentResponseDTO, error) {
+	assignment, err := s.repo.GetAssignmentByID(ctx, assignmentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assignment by id %s: %w", assignmentID.String(), err)
+	}
+
+	// TO DO: Правильнее передавать в репозиторий статус, чтобы не делать проверку здесь.
+	// Чекаем, что предложение действительно свободное
+	if assignment.ReporterID != uuid.Nil || assignment.StatusID != models.AssignmentStatusOffered {
+		return nil, models.ErrAssignmentNotFound
+	}
+
+	return toAssignmentResponseDTO(assignment), nil
+
+}
+
+func (s *SecretGuestService) TakeFreeAssignmentsByID(ctx context.Context, userID, assignmentID uuid.UUID) error {
+
+	err := s.repo.TakeFreeAssignmentsByID(ctx, assignmentID, userID, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to take assignment %s for user %s: %w", assignmentID.String(), userID.String(), err)
+	}
+	return nil
+}
+
 func (s *SecretGuestService) GetMyActiveAssignments(ctx context.Context, dto GetMyAssignmentsRequestDTO) (*AssignmentsResponse, error) {
 
 	activeStatuses := []int{models.AssignmentStatusOffered} // only offered
@@ -358,7 +384,7 @@ func (s *SecretGuestService) GetMyAssignmentByID(ctx context.Context, userID, as
 		return nil, fmt.Errorf("failed to get assignment by id %s for owner %s: %w", assignmentID.String(), userID.String(), err)
 	}
 
-	// TO DO: Возможно передавать в репозиторий статус, чтобы не делать проверку здесь?
+	// TO DO: Правильнее передавать в репозиторий статус, чтобы не делать проверку здесь.
 	if assignment.StatusID != models.AssignmentStatusOffered {
 		return nil, models.ErrAssignmentNotFound
 	}
