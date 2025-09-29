@@ -7,6 +7,7 @@ import * as React from "react"
 import ChecklistItemForm from '@/components/ChecklistItemForm';
 import ListingTypeForm from '@/components/ListingTypeForm';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { useKeyboardHooks } from '@/hooks/useKeyboardHooks';
 
 // Define modal types
 export type ModalType =
@@ -90,6 +91,12 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
       isOpen: false
     })
   }, [])
+
+  // Handle Escape key to close modal
+  useKeyboardHooks({
+    onEscape: modalState.isOpen ? closeModal : undefined,
+    isActive: modalState.isOpen
+  })
 
   const contextValue = React.useMemo(() => ({
     modalState,
