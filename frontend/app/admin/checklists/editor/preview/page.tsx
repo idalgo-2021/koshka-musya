@@ -4,6 +4,7 @@ import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
+import { useEventListeners } from '@/hooks/useEventHooks'
 
 import { Button } from '@/components/ui/button'
 import ChecklistContainer from '@/components/ChecklistContainer'
@@ -110,6 +111,26 @@ export default function ChecklistPreviewPage() {
     }
   }, [checklistSchema?.sections])
 
+  useEventListeners([
+    {
+      eventName: 'keydown',
+      handler: (event: Event) => {
+        const keyboardEvent = event as KeyboardEvent
+        const isModifierPressed = keyboardEvent.metaKey || keyboardEvent.ctrlKey
+
+        if (isModifierPressed) {
+          if (keyboardEvent.key === '[') {
+            keyboardEvent.preventDefault()
+            goToPreviousStep()
+          } else if (keyboardEvent.key === ']') {
+            keyboardEvent.preventDefault()
+            goToNextStep()
+          }
+        }
+      }
+    }
+  ])
+
   // Section toggle functions
   const toggleSection = React.useCallback((sectionId: number) => {
     setExpandedSections(prev => {
@@ -181,6 +202,7 @@ export default function ChecklistPreviewPage() {
     return Math.round((completedItems / totalItems) * 100)
   }, [checklistSchema?.sections, checks, ratings, comments, itemMedia])
   const onBack = React.useCallback(() => router.push('/admin/checklists/editor'), [router]);
+
 
   if (sectionsQuery.isLoading || itemsQuery.isLoading || listingTypesQuery.isLoading) {
     return (

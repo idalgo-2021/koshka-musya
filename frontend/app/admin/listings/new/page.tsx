@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 
 import {Input} from '@/components/ui/input'
 import {Button} from '@/components/ui/button'
+import Select from '@/components/ui/select'
 import {ListingsApi} from '@/entities/listings/api'
 import {YMaps, Map, Placemark} from '@pbe/react-yandex-maps'
 import {Label} from '@/components/ui/label'
@@ -87,15 +88,18 @@ export default function NewListingPage() {
         </FormFieldValue>
 
         <FormFieldValue title="Тип объекта" error={errors.listing_type_id}>
-          <select
-            {...form.register('listing_type_id', {valueAsNumber: true})}
-            className="border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-          >
-            <option value="">Выбрать</option>
-            {(typesQuery.data?.listing_types || []).map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
+          <Select
+            value={form.watch('listing_type_id')}
+            onChange={(value) => form.setValue('listing_type_id', value ? Number(value) : 0)}
+            placeholder="Выбрать"
+            options={[
+              { value: '', label: 'Выбрать' },
+              ...(typesQuery.data?.listing_types || []).map(t => ({
+                value: t.id.toString(),
+                label: t.name
+              }))
+            ]}
+          />
         </FormFieldValue>
 
         <div className="space-y-2">

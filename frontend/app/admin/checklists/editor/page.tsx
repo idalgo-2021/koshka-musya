@@ -11,13 +11,15 @@ import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
+import Select from '@/components/ui/select'
+import SelectRow from '@/components/ui/select-row'
 import {ChevronDown, ChevronUp, Eye, GripVertical, Plus, StepBackIcon, X} from 'lucide-react'
 import ChecklistFilterPanel from '@/components/ChecklistFilterPanel'
 import ChecklistSectionCard from '@/components/ChecklistSectionCard'
 import QueueStatusIndicator from '@/components/QueueStatusIndicator'
 import { useMutationQueue } from '@/hooks/useMutationQueue'
 import { useEventListener } from '@/hooks/useEventHooks'
-import { useConfirmation } from '@/entities/modals/ModalContext'
+import { useConfirmation, useReorderSections } from '@/entities/modals/ModalContext'
 
 import {ListingsApi} from "@/entities/listings/api";
 import {
@@ -27,7 +29,6 @@ import {
   type SectionFilters
 } from '@/entities/checklist/api'
 import {isMobileDevice} from "@/lib/browser";
-import {vibrateShort} from "@/lib/vibrate";
 
 export default function ChecklistEditorPage() {
   const router = useRouter()
@@ -49,6 +50,7 @@ export default function ChecklistEditorPage() {
   // Mutation queue for handling reorder operations
   const { addReorderOperation, setCallbacks } = useMutationQueue()
   const { confirm, closeModal } = useConfirmation()
+  const { openReorderModal } = useReorderSections()
 
   const listingTypesQuery = useQuery({
     queryKey: ['listing_types'],
@@ -105,9 +107,9 @@ export default function ChecklistEditorPage() {
       await Promise.all(updatePromises)
     },
     onSuccess: () => {
+      closeModal()
       toast.success('Порядок секций обновлен')
       queryClient.invalidateQueries({ queryKey: ['checklist_sections_full'] })
-      handleCloseReorderModal()
     },
     onError: () => {
       toast.error('Не удалось обновить порядок секций')
@@ -120,10 +122,6 @@ export default function ChecklistEditorPage() {
   const [showCreateSectionForm, setShowCreateSectionForm] = React.useState(false)
   const [collapsedSections, setCollapsedSections] = React.useState<Set<number>>(new Set())
   const [showFilters, setShowFilters] = React.useState(false)
-  const [showReorderModal, setShowReorderModal] = React.useState(false)
-  const [reorderSections, setReorderSections] = React.useState<ChecklistSection[]>([])
-  const [draggedIndex, setDraggedIndex] = React.useState<number | null>(null)
-  const [dragOverIndex, setDragOverIndex] = React.useState<number | null>(null)
 
   const sections = useMemo(() => sectionsQuery.data?.checklist_sections ?? [], [sectionsQuery.data?.checklist_sections]);
   const items = useMemo(() => itemsQuery.data?.checklist_items ?? [], [itemsQuery.data?.checklist_items]);
@@ -346,120 +344,22 @@ export default function ChecklistEditorPage() {
       ...section,
       sort_order: index + 1
     }))
-    setReorderSections(sectionsWithOrder)
-    setShowReorderModal(true)
+
+    openReorderModal(
+      sectionsWithOrder,
+      (updatedSections) => {
+        updateSectionOrderMutation.mutate(updatedSections)
+      },
+      () => {
+        // Handle cancel - modal will be closed automatically
+      },
+      {
+        isLoading: updateSectionOrderMutation.isPending,
+        getListingTypeName: (id) => getListingTypeName(id)
+      }
+    )
   }
 
-  const handleCloseReorderModal = () => {
-    setShowReorderModal(false)
-    setReorderSections([])
-    setDraggedIndex(null)
-    setDragOverIndex(null)
-  }
-
-  const moveSectionUp = (index: number) => {
-    if (index > 0) {
-      const newSections = [...reorderSections]
-      const temp = newSections[index]
-      newSections[index] = newSections[index - 1]
-      newSections[index - 1] = temp
-
-      // Update sort_order values based on new positions
-      const updatedSections = newSections.map((section, idx) => ({
-        ...section,
-        sort_order: idx + 1
-      }))
-
-      setReorderSections(updatedSections)
-    }
-  }
-
-  const moveSectionDown = (index: number) => {
-    if (index < reorderSections.length - 1) {
-      const newSections = [...reorderSections]
-      const temp = newSections[index]
-      newSections[index] = newSections[index + 1]
-      newSections[index + 1] = temp
-
-      // Update sort_order values based on new positions
-      const updatedSections = newSections.map((section, idx) => ({
-        ...section,
-        sort_order: idx + 1
-      }))
-
-      setReorderSections(updatedSections)
-    }
-  }
-
-  // Drag and drop handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    // Disable drag on mobile devices
-    if (isMobile) {
-      e.preventDefault()
-      return
-    }
-    setDraggedIndex(index)
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
-  }
-
-  const handleDragOver = (e: React.DragEvent, overIndex: number) => {
-    // Disable drag on mobile devices
-    if (isMobile) {
-      return
-    }
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-    setDragOverIndex(overIndex)
-  }
-
-  const handleDragLeave = () => {
-    // Disable drag on mobile devices
-    if (isMobile) {
-      return
-    }
-    setDragOverIndex(null)
-  }
-
-  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
-    // Disable drag on mobile devices
-    if (isMobile) {
-      return
-    }
-    e.preventDefault()
-
-    if (draggedIndex === null || draggedIndex === dropIndex) {
-      setDraggedIndex(null)
-      setDragOverIndex(null)
-      return
-    }
-
-    const newSections = [...reorderSections]
-
-    // Swap the two elements
-    const temp = newSections[draggedIndex]
-    newSections[draggedIndex] = newSections[dropIndex]
-    newSections[dropIndex] = temp
-
-    // Update sort_order values based on new positions
-    const updatedSections = newSections.map((section, idx) => ({
-      ...section,
-      sort_order: idx + 1
-    }))
-
-    setReorderSections(updatedSections)
-    setDraggedIndex(null)
-    setDragOverIndex(null)
-  }
-
-  const handleDragEnd = () => {
-    // Disable drag on mobile devices
-    if (isMobile) {
-      return
-    }
-    setDraggedIndex(null)
-    setDragOverIndex(null)
-  }
 
   // Active item handler - now handled in ChecklistSectionCard
   const handleItemClick = React.useCallback((itemId: number) => {
@@ -557,7 +457,7 @@ export default function ChecklistEditorPage() {
               </>
             )}
           </Button>
-          
+
           {/* Preview Button */}
           {sections.length > 0 && (
             <Button
@@ -569,7 +469,7 @@ export default function ChecklistEditorPage() {
               <Eye className="w-4 h-4" />
             </Button>
           )}
-          
+
           {/* {!sectionsQuery.isFetching && sections?.length && ( */}
           <>
             <Button
@@ -610,47 +510,21 @@ export default function ChecklistEditorPage() {
         </div>
 
         {/* Listing Type Filters */}
-        {listingTypes ? (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant={!filters.listing_type_id ? "default" : "ghost"}
-              size="sm"
-              onClick={() => {
-                const newFilters = {...filters}
-                delete newFilters.listing_type_id
-                setFilters(newFilters)
-              }}
-            >
-              Все
-            </Button>
-            {listingTypes.map((type) => (
-              <Button
-                key={type.id}
-                variant={filters.listing_type_id?.includes(type.id) ? "default" : "ghost"}
-                size="sm"
-                onClick={() => {
-                  const currentTypes = filters.listing_type_id || []
-                  const isSelected = currentTypes.includes(type.id)
-
-                  setFilters({
-                    ...filters,
-                    listing_type_id: isSelected ? undefined : [type.id]
-                  })
-                }}
-              >
-                {type.name}
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="ghost"
-              size="sm"
-            >
-            </Button>
-          </div>
-        )}
+        <SelectRow
+          value={filters.listing_type_id?.[0]}
+          onChange={(value) => setFilters({
+            ...filters,
+            listing_type_id: value && value !== 'all' ? [Number(value)] : undefined
+          })}
+          variant="buttons"
+          options={[
+            { value: 'all', label: 'Все' },
+            ...(listingTypes || []).map((type) => ({
+              value: type.id,
+              label: type.name
+            }))
+          ]}
+        />
       </div>
 
       {loading ? (
@@ -702,21 +576,21 @@ export default function ChecklistEditorPage() {
                       onKeyDown={(e) => e.key === 'Enter' && handleCreateSection()}
                     />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <Label htmlFor="section-listing-type">Listing Type</Label>
-                    <select
+                    <Select
                       id="section-listing-type"
-                      value={newSectionListingTypeId || ''}
-                      onChange={(e) => setNewSectionListingTypeId(e.target.value ? parseInt(e.target.value) : undefined)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Select listing type (optional)</option>
-                      {listingTypesQuery.data?.listing_types?.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </select>
+                      value={newSectionListingTypeId}
+                      onChange={(value) => setNewSectionListingTypeId(value ? Number(value) : undefined)}
+                      placeholder="Select listing type"
+                      options={[
+                        { value: '', label: 'All' },
+                        ...(listingTypesQuery.data?.listing_types?.map((type) => ({
+                          value: type.id,
+                          label: type.name
+                        })) || [])
+                      ]}
+                    />
                   </div>
                   <div className="flex flex-row items-end gap-2">
                     <Button
@@ -785,117 +659,6 @@ export default function ChecklistEditorPage() {
         </div>
       )}
 
-      {/* Reorder Sections Modal */}
-      {showReorderModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center md:items-center items-end z-50 p-0 md:p-4">
-          <Card className="w-full max-w-2xl max-h-[80vh] md:max-h-[80vh] max-h-[90vh] overflow-hidden flex flex-col md:rounded-lg rounded-t-lg">
-            <CardHeader className="flex-shrink-0">
-              <CardTitle className="flex items-center justify-between">
-                <span>Переместить секции</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleCloseReorderModal}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
-              <div className="space-y-3">
-                {reorderSections.map((section, index) => {
-                  const isDragged = draggedIndex === index
-                  // const isDragOver = dragOverIndex === index
-                  const isSwapTarget = draggedIndex !== null && draggedIndex !== index && dragOverIndex === index
-
-                  return (
-                    <div
-                      key={section.id}
-                      draggable={!isMobile}
-                      onDragStart={(e) => handleDragStart(e, index)}
-                      onDragOver={(e) => handleDragOver(e, index)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, index)}
-                      onDragEnd={handleDragEnd}
-                      className={`flex flex-col md:flex-row items-start md:items-center justify-between p-3 border rounded-lg bg-gray-50 hover:border-l-4 hover:border-l-[#4285f4] hover:bg-blue-50 transition-all duration-200 md:cursor-move cursor-default ${
-                        isDragged ? 'opacity-50 scale-95' : ''
-                      } ${
-                        isSwapTarget ? 'border-l-4 border-l-[#4285f4] bg-blue-50 transform scale-105' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="hidden md:block p-2 text-gray-400 hover:text-gray-600 cursor-move"
-                          title="Drag to reorder"
-                        >
-                        <GripVertical className="w-4 h-4 text-muted-foreground"/>
-                        </div>
-                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-sm font-medium text-blue-700">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <div className="font-medium">{section.title}</div>
-                          <div className="text-sm text-gray-500">
-                            {getListingTypeName(section.listing_type_id) || 'No listing type'}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => moveSectionUp(index)}
-                          disabled={index === 0}
-                          className="p-2"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                          </svg>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => moveSectionDown(index)}
-                          disabled={index === reorderSections.length - 1}
-                          className="p-2"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </Button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-            <div className="flex-shrink-0 border-t bg-white p-4">
-              <div className="flex items-center justify-end gap-3">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    vibrateShort()
-                    handleCloseReorderModal()
-                  }}
-                  disabled={updateSectionOrderMutation.isPending}
-                >
-                  Отмена
-                </Button>
-                <Button
-                  onClick={() => {
-                    vibrateShort()
-                    updateSectionOrderMutation.mutate(reorderSections)
-                  }}
-                  disabled={updateSectionOrderMutation.isPending}
-                >
-                  {updateSectionOrderMutation.isPending ? 'Сохранение...' : 'Сохранить порядок'}
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
     </div>
   )
 }

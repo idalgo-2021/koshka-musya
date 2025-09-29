@@ -10,6 +10,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { IOSSwitch } from '@/components/ui/switch'
+import Select from '@/components/ui/select'
+import IOSCheckbox from '@/components/ui/ios-checkbox'
 import { toast } from 'sonner'
 import { Save, X, Copy, Trash2 } from 'lucide-react'
 
@@ -259,6 +261,9 @@ export default function ChecklistItemForm({
             className="text-xl border-t-0 border-l-0 border-r-0 placeholder:text-xl laceholder:text-gray-400 px-4 py-6 w-full border-0 outline-0 focus:border-0 focus:ring-0 rounded-md bg-gray-50"
             required
             autoFocus
+            autoComplete='off'
+            autoCorrect='off'
+            autoSave='off'
           />
         </div>
 
@@ -266,20 +271,19 @@ export default function ChecklistItemForm({
           {!inline && (
             <Label htmlFor="answer_type">Тип ответа *</Label>
           )}
-          <select
+          <Select
             id="answer_type"
-            value={formData.answer_type_id || ''}
-            onChange={(e) => handleInputChange('answer_type_id', parseInt(e.target.value))}
-            className="px-3 py-3 w-full border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          >
-            <option value="">Выберите тип ответа</option>
-            {answerTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
+            value={formData.answer_type_id}
+            onChange={(value) => handleInputChange('answer_type_id', value ? Number(value) : undefined)}
+            placeholder="Выберите тип ответа"
+            options={[
+              { value: '', label: 'Выберите тип ответа' },
+              ...answerTypes.map((type) => ({
+                value: type.id,
+                label: type.name
+              }))
+            ]}
+          />
         </div>
       </div>
 
@@ -300,19 +304,19 @@ export default function ChecklistItemForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="listing_type_id">Тип объекта</Label>
-          <select
+          <Select
             id="section-listing-type"
             value={formData.listing_type_id || 1}
-            onChange={(e) => handleInputChange('listing_type_id', e.target.value ? parseInt(e.target.value) : undefined)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Select listing type (optional)</option>
-            {listingTypesQuery.data?.listing_types?.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => handleInputChange('listing_type_id', value ? Number(value) : undefined)}
+            placeholder="Select listing type (optional)"
+            options={[
+              { value: '', label: 'Select listing type (optional)' },
+              ...(listingTypesQuery.data?.listing_types?.map((type) => ({
+                value: type.id,
+                label: type.name
+              })) || [])
+            ]}
+          />
         </div>
         <div>
           <Label htmlFor="slug">Slug</Label>
@@ -338,20 +342,19 @@ export default function ChecklistItemForm({
 
         <div>
           <Label htmlFor="media_requirement">Media Requirement *</Label>
-          <select
+          <Select
             id="media_requirement"
-            value={formData.media_requirement_id || ''}
-            onChange={(e) => handleInputChange('media_requirement_id', parseInt(e.target.value))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          >
-            <option value="">Select media requirement</option>
-            {mediaRequirements.map((req) => (
-              <option key={req.id} value={req.id}>
-                {req.name}
-              </option>
-            ))}
-          </select>
+            value={formData.media_requirement_id}
+            onChange={(value) => handleInputChange('media_requirement_id', value ? Number(value) : undefined)}
+            placeholder="Select media requirement"
+            options={[
+              { value: '', label: 'Select media requirement' },
+              ...mediaRequirements.map((req) => ({
+                value: req.id,
+                label: req.name
+              }))
+            ]}
+          />
         </div>
       </div>
 
@@ -375,21 +378,20 @@ export default function ChecklistItemForm({
             <Label>Media Allowed Types</Label>
             <div className="flex gap-4 mt-2">
               {MEDIA_TYPES.map((type) => (
-                <label key={type} className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={formData.media_allowed_types?.includes(type) || false}
-                    onChange={(e) => {
-                      const current = formData.media_allowed_types || []
-                      if (e.target.checked) {
-                        handleInputChange('media_allowed_types', [...current, type])
-                      } else {
-                        handleInputChange('media_allowed_types', current.filter(t => t !== type))
-                      }
-                    }}
-                  />
-                  <span className="text-sm capitalize">{type}</span>
-                </label>
+                <IOSCheckbox
+                  key={type}
+                  checked={formData.media_allowed_types?.includes(type) || false}
+                  onChange={(checked) => {
+                    const current = formData.media_allowed_types || []
+                    if (checked) {
+                      handleInputChange('media_allowed_types', [...current, type])
+                    } else {
+                      handleInputChange('media_allowed_types', current.filter(t => t !== type))
+                    }
+                  }}
+                  size="sm"
+                  label={type}
+                />
               ))}
             </div>
           </div>
@@ -401,7 +403,7 @@ export default function ChecklistItemForm({
           checked={formData.is_active || false}
           onCheckedChange={(checked) => handleInputChange('is_active', checked)}
         />
-        <Label htmlFor="is_active" className="text-sm font-medium text-gray-700">
+        <Label htmlFor="is_active" className="text-sm font-medium text-gray-700 cursor-pointer">
           Active
         </Label>
       </div>

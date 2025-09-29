@@ -7,7 +7,9 @@ import * as React from "react"
 import ChecklistItemForm from '@/components/ChecklistItemForm';
 import ListingTypeForm from '@/components/ListingTypeForm';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ReorderSectionsModal from '@/components/ReorderSectionsModal';
 import { useKeyboardHooks } from '@/hooks/useKeyboardHooks';
+import { type ChecklistSection } from '@/entities/checklist/api';
 
 // Define modal types
 export type ModalType =
@@ -16,6 +18,7 @@ export type ModalType =
   | "listing-type-create"
   | "listing-type-edit"
   | "confirmation"
+  | "reorder-sections"
   | null
 
 export interface ChecklistItemCreatePayload {
@@ -47,12 +50,21 @@ export interface ConfirmationPayload {
   isLoading?: boolean
 }
 
+export interface ReorderSectionsPayload {
+  sections: ChecklistSection[]
+  onSave: (sections: ChecklistSection[]) => void
+  onCancel: () => void
+  isLoading?: boolean
+  getListingTypeName: (id: number) => string | null
+}
+
 export type ModalPayload =
   | ChecklistItemCreatePayload
   | ChecklistItemEditPayload
   | ListingTypeCreatePayload
   | ListingTypeEditPayload
   | ConfirmationPayload
+  | ReorderSectionsPayload
   | null
 
 export interface ModalState {
@@ -147,6 +159,30 @@ export function useConfirmation() {
   return { confirm, closeModal }
 }
 
+export function useReorderSections() {
+  const { openModal, closeModal } = useModal()
+
+  const openReorderModal = React.useCallback((
+    sections: ChecklistSection[],
+    onSave: (sections: ChecklistSection[]) => void,
+    onCancel: () => void,
+    options?: {
+      isLoading?: boolean
+      getListingTypeName: (id: number) => string | null
+    }
+  ) => {
+    openModal('reorder-sections', {
+      sections,
+      onSave,
+      onCancel,
+      isLoading: options?.isLoading || false,
+      getListingTypeName: options?.getListingTypeName || (() => null)
+    })
+  }, [openModal])
+
+  return { openReorderModal, closeModal }
+}
+
 export function ModalContent({
   type,
   payload,
@@ -214,6 +250,18 @@ export function ModalContent({
           onConfirm={confirmationPayload?.onConfirm || (() => {})}
           onCancel={onCancel || (() => {})}
           isLoading={confirmationPayload?.isLoading}
+        />
+      )
+
+    case "reorder-sections":
+      const reorderPayload = payload as ReorderSectionsPayload
+      return (
+        <ReorderSectionsModal
+          sections={reorderPayload?.sections || []}
+          onSave={reorderPayload?.onSave || (() => {})}
+          onCancel={onCancel || (() => {})}
+          isLoading={reorderPayload?.isLoading}
+          getListingTypeName={reorderPayload?.getListingTypeName || (() => null)}
         />
       )
 
