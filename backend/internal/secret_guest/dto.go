@@ -96,8 +96,10 @@ type OTAReservationDates struct {
 }
 
 type OTAReservationGuests struct {
-	Adults   int `json:"adults" validate:"required,gte=0"`
-	Children int `json:"children" validate:"required,gte=0"`
+	// Adults   int `json:"adults" validate:"required,gte=0"`
+	// Children int `json:"children" validate:"required,gte=0"`
+	Adults   int `json:"adults" validate:"gte=0"`
+	Children int `json:"children" validate:"gte=0"`
 }
 
 type OTAReservationPricing struct {
@@ -118,13 +120,15 @@ type GetAllOTAReservationsRequestDTO struct {
 }
 
 type OTAReservationResponseDTO struct {
-	ID            uuid.UUID      `json:"id" db:"ota_id"`
-	OTAID         uuid.UUID      `json:"ota_id" validate:"required,uuid"`
-	BookingNumber string         `db:"booking_number"`
-	ListingID     uuid.UUID      `db:"listing_id"`
-	CheckinDate   time.Time      `db:"checkin_date"`
-	CheckoutDate  time.Time      `db:"checkout_date"`
-	Status        StatusResponse `json:"status"`
+	ID            uuid.UUID       `json:"id" db:"ota_id"`
+	OTAID         uuid.UUID       `json:"ota_id" validate:"required,uuid"`
+	BookingNumber string          `db:"booking_number"`
+	ListingID     uuid.UUID       `db:"listing_id"`
+	CheckinDate   time.Time       `db:"checkin_date"`
+	CheckoutDate  time.Time       `db:"checkout_date"`
+	Status        StatusResponse  `json:"status"`
+	Pricing       json.RawMessage `json:"pricing" swaggertype:"object"`
+	Guests        json.RawMessage `json:"guests" swaggertype:"object"`
 }
 
 type OTAReservationsResponse struct {
@@ -156,8 +160,12 @@ type GetAllAssignmentsRequestDTO struct {
 }
 
 type AssignmentResponseDTO struct {
-	ID       uuid.UUID            `json:"id"`
-	Code     uuid.UUID            `json:"code"`
+	ID uuid.UUID `json:"id"`
+
+	OtaSgReservationID uuid.UUID       `json:"reservation_id"`
+	Pricing            json.RawMessage `json:"pricing" swaggertype:"object"`
+	Guests             json.RawMessage `json:"guests" swaggertype:"object"`
+
 	Purpose  string               `json:"purpose"`
 	Listing  ListingShortResponse `json:"listing"`
 	Reporter ReporterResponse     `json:"reporter"`

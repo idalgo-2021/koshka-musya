@@ -296,7 +296,7 @@ func (h *SecretGuestHandler) GetListingByID(w http.ResponseWriter, r *http.Reque
 // @Failure      403 {object} ErrorResponse "Forbidden"
 // @Failure      500 {object} ErrorResponse "Internal server error"
 // @Router       /admin/sg_reservations [post]
-func (h *SecretGuestHandler) HandleOTAReservation(w http.ResponseWriter, r *http.Request) {
+func (h *SecretGuestHandler) CreateOTAReservation(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
 
@@ -441,53 +441,38 @@ func (h *SecretGuestHandler) UpdateOTAReservationStatusNoShow(w http.ResponseWri
 
 // assignments
 
-// @Summary      Create new Assignment (Admin)
-// @Security     BearerAuth
-// @Description  Creates new assignment object. Available for admin only.
-// @Tags         Assignments (Admin)
-// @Accept       json
-// @Produce      json
-// @Param        input body secret_guest.CreateAssignmentRequestDTO true "Assignment Payload"
-// @Param        Authorization header string true "Bearer Access Token"
-// @Success      201 {object} secret_guest.AssignmentResponseDTO "Created"
-// @Failure      400 {object} ErrorResponse "Invalid payload"
-// @Failure      401 {object} ErrorResponse "Unauthorized"
-// @Failure      403 {object} ErrorResponse "Forbidden"
-// @Failure      409 {object} ErrorResponse "Assignment cannot be created (e.g., wrong payload)"
-// @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /admin/assignments [post]
-func (h *SecretGuestHandler) CreateAssignment(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	log := logger.GetLoggerFromCtx(ctx)
+// func (h *SecretGuestHandler) CreateAssignment(w http.ResponseWriter, r *http.Request) {
+// 	ctx := r.Context()
+// 	log := logger.GetLoggerFromCtx(ctx)
+//
+// 	var dto CreateAssignmentRequestDTO
+// 	if err := h.decodeJSONBody(ctx, r, &dto); err != nil {
+// 		log.Warn(ctx, "Failed to decode create assignment request", zap.Error(err))
+// 		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")
+// 		return
+// 	}
+//
+// 	if err := validation.StructCtx(ctx, &dto); err != nil {
+// 		log.Warn(ctx, "Failed to validate create assignment request", zap.Error(err))
+// 		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")
+// 		return
+// 	}
+//
+// 	assignment, err := h.service.CreateAssignment(ctx, dto)
+// 	if err != nil {
+// 		switch {
+// 		case errors.Is(err, models.ErrListingCannotBeCreated):
+// 			log.Info(ctx, "Assignment can not be created", zap.Error(err))
+// 			h.writeErrorResponse(ctx, w, http.StatusConflict, "Assignment can not be created")
+// 		default:
+// 			log.Error(ctx, "Failed to create assignment", zap.Error(err))
+// 			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+// 		}
+// 		return
+// 	}
 
-	var dto CreateAssignmentRequestDTO
-	if err := h.decodeJSONBody(ctx, r, &dto); err != nil {
-		log.Warn(ctx, "Failed to decode create assignment request", zap.Error(err))
-		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	if err := validation.StructCtx(ctx, &dto); err != nil {
-		log.Warn(ctx, "Failed to validate create assignment request", zap.Error(err))
-		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")
-		return
-	}
-
-	assignment, err := h.service.CreateAssignment(ctx, dto)
-	if err != nil {
-		switch {
-		case errors.Is(err, models.ErrListingCannotBeCreated):
-			log.Info(ctx, "Assignment can not be created", zap.Error(err))
-			h.writeErrorResponse(ctx, w, http.StatusConflict, "Assignment can not be created")
-		default:
-			log.Error(ctx, "Failed to create assignment", zap.Error(err))
-			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
-		}
-		return
-	}
-
-	h.writeJSONResponse(ctx, w, http.StatusCreated, assignment)
-}
+// 	h.writeJSONResponse(ctx, w, http.StatusCreated, assignment)
+// }
 
 // @Summary      Get My Assignments
 // @Security     BearerAuth

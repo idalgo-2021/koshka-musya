@@ -79,8 +79,6 @@ definitions:
     properties:
       accepted_at:
         type: string
-      code:
-        type: string
       created_at:
         type: string
       deadline:
@@ -89,14 +87,20 @@ definitions:
         type: string
       expires_at:
         type: string
+      guests:
+        type: object
       id:
         type: string
       listing:
         $ref: '#/definitions/secret_guest.ListingShortResponse'
+      pricing:
+        type: object
       purpose:
         type: string
       reporter:
         $ref: '#/definitions/secret_guest.ReporterResponse'
+      reservation_id:
+        type: string
       status:
         $ref: '#/definitions/secret_guest.StatusResponse'
     type: object
@@ -214,25 +218,6 @@ definitions:
     required:
     - name
     - slug
-    type: object
-  secret_guest.CreateAssignmentRequestDTO:
-    properties:
-      code:
-        type: string
-      expires_at:
-        type: string
-      listing_id:
-        type: string
-      purpose:
-        type: string
-      reporter_id:
-        type: string
-    required:
-    - code
-    - expires_at
-    - listing_id
-    - purpose
-    - reporter_id
     type: object
   secret_guest.CreateChecklistItemRequestDTO:
     properties:
@@ -484,14 +469,14 @@ definitions:
   secret_guest.OTAReservationGuests:
     properties:
       adults:
+        description: |-
+          Adults   int `json:"adults" validate:"required,gte=0"`
+          Children int `json:"children" validate:"required,gte=0"`
         minimum: 0
         type: integer
       children:
         minimum: 0
         type: integer
-    required:
-    - adults
-    - children
     type: object
   secret_guest.OTAReservationListingDTO:
     properties:
@@ -574,12 +559,16 @@ definitions:
         type: string
       checkoutDate:
         type: string
+      guests:
+        type: object
       id:
         type: string
       listingID:
         type: string
       ota_id:
         type: string
+      pricing:
+        type: object
       status:
         $ref: '#/definitions/secret_guest.StatusResponse'
     required:
@@ -747,55 +736,6 @@ info:
   title: Secret Guest API
   version: "1.0"
 paths:
-  /admin/assignments:
-    post:
-      consumes:
-      - application/json
-      description: Creates new assignment object. Available for admin only.
-      parameters:
-      - description: Assignment Payload
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/secret_guest.CreateAssignmentRequestDTO'
-      - description: Bearer Access Token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/secret_guest.AssignmentResponseDTO'
-        "400":
-          description: Invalid payload
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "409":
-          description: Assignment cannot be created (e.g., wrong payload)
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Create new Assignment (Admin)
-      tags:
-      - Assignments (Admin)
   /admin/listings:
     post:
       consumes:

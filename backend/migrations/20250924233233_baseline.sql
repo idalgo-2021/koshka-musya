@@ -70,16 +70,18 @@ CREATE TABLE "public"."assignment_statuses" (
 -- Create "assignments" table
 CREATE TABLE "public"."assignments" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-  "ota_sg_reservation_id" uuid NULL, -- привязка к бронированию
-  -- "code" uuid NOT NULL, -- идентификатор в системе OTA
 
+  "ota_sg_reservation_id" uuid NULL, -- привязка к бронированию
+  "pricing" jsonb NULL,  -- инфо по стоимости
+  "guests" jsonb NULL,  -- инфо по гостям
+ 
   "listing_id" uuid NOT NULL,
   "purpose" text NOT NULL,
 
   "created_at" timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   "expires_at" timestamp NOT NULL, -- после наступления этой даты, предложение протухает(становится неактивным)
   
-  "reporter_id" uuid NOT NULL, -- привязанный ТГ
+  "reporter_id" uuid NULL, -- исполнитель, т.е. ТГ
   "accepted_at" timestamp NULL, -- дата принятия предложения со стороны ТГ
   "declined_at" timestamp NULL, -- дата отклонения предложения со стороны ТГ
 
@@ -108,16 +110,25 @@ CREATE TABLE "public"."ota_sg_reservations" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "created_at" timestamp NULL DEFAULT CURRENT_TIMESTAMP,  -- дата создания записи в ota_sg_reservations
   "source_msg" jsonb NULL,   -- исходное сообщение из OTA(JSON-портянка, с указанием объекта, его типа и параметров брони)
-  
-  "ota_id" uuid NOT NULL,    -- идентификатор брони в системе OTA(читаем из sourse_msg)
-  "booking_number" text NOT NULL, -- код бронирования(ТГ показывает вахтёру при заселении)(читаем из sourse_msg)
-  
-  "listing_id" uuid NOT NULL,     -- к какому объекту относится(читаем из sourse_msg)
-  "checkin_date" timestamp NOT NULL,  -- дата начала брони, когда надо въехать(читаем из sourse_msg)
-  "checkout_date" timestamp NOT NULL, -- окончание брони, когда надо выезжать(читаем из sourse_msg)
-  "pricing" jsonb NULL,  -- инфо по стоимости
   "status_id" integer NOT NULL,
- 
+  
+  "ota_id" uuid NOT NULL,    -- идентификатор брони в системе OTA
+  "booking_number" text NOT NULL, -- код бронирования(ТГ показывает вахтёру при заселении)
+  
+  "listing_id" uuid NOT NULL,     -- к какому объекту относится
+  "checkin_date" timestamp NOT NULL,  -- дата начала брони, когда надо въехать
+  "checkout_date" timestamp NOT NULL, -- окончание брони, когда надо выезжать
+  
+  "pricing" jsonb NULL,  -- инфо по стоимости
+  "guests" jsonb NULL,  -- инфо по гостям
+  -- "adults" integer NOT NULL DEFAULT 0, -- количество взрослых
+  -- "children" integer NOT NULL DEFAULT 0, -- количество детей
+  -- "price_per_night" numeric(12,2) NOT NULL, -- цена за ночь
+  -- "total_price" numeric(12,2) NOT NULL, -- общая сумма брони
+  -- "price_currency" text NOT NULL, -- валюта брони
+  -- -- "discount_amount" -- скидка
+  -- "nights"  integer NOT NULL DEFAULT 0, -- количество ночей
+
   PRIMARY KEY ("id"),
   CONSTRAINT "ota_sg_reservations_ota_id_key" UNIQUE ("ota_id"),
   -- CONSTRAINT "ota_sg_reservations_booking_number_key" UNIQUE ("booking_number"),
