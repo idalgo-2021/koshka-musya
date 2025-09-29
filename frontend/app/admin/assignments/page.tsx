@@ -1,0 +1,222 @@
+"use client"
+
+import * as React from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { AssignmentsApi } from '@/entities/assignments/api'
+import type { Assignment } from '@/entities/assignments/types'
+import { Input } from '@/components/ui/input'
+import Link from 'next/link'
+import {Button} from "@/components/ui/button";
+import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import AssignmentCard, { getStatusBadgeClasses } from '@/components/AssignmentCard'
+import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Plus} from 'lucide-react'
+import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import {assignmentStatusOptions} from "@/entities/assignments/const";
+
+export default function AssignmentsStaffPage() {
+  const [page, setPage] = React.useState(1)
+  const [limit] = React.useState(50)
+  const [reporterId, setReporterId] = React.useState('')
+  const [statusIds, setStatusIds] = React.useState<string>('')
+  const [isShow, setIsShow] = useToggleWithStorage(false, 'assignments-view-mode') // false = card view, true = table view
+  const { user } = useAuth();
+
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey: ['assignments_staff', page, limit, reporterId, statusIds],
+    queryFn: async () => {
+      const statusId = statusIds ? Number(statusIds) : undefined
+      return AssignmentsApi.getAllAssignmentsStaff({
+        page,
+        limit,
+        reporter_id: reporterId || undefined,
+        status_id: statusId ? [statusId] : undefined
+      })
+    },
+  })
+
+  const assignments = data?.assignments ?? []
+  const total = data?.total ?? 0
+  const totalPages = Math.max(1, Math.ceil(total / limit))
+  const canPrev = page > 1
+  const canNext = page < totalPages
+
+  return (
+    <div className="container max-w-6xl py-6 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-md md:text-2xl font-semibold">Предложения на оценку</h1>
+        <div className="flex items-center gap-3">
+          <ToggleButton checked={isShow} onToggle={setIsShow} />
+          {user?.role === USER_ROLE.Admin  && (
+            <Button asChild>
+              <Link href="/admin/assignments/new">
+                <Plus className="w-4 h-4 mr-2" />
+                 Предложение
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="space-y-1">
+          <div className="text-sm text-muted-foreground">Reporter ID (uuid)</div>
+          <Input value={reporterId} onChange={(e) => setReporterId(e.target.value)} placeholder="optional" />
+        </div>
+        <div className="space-y-1">
+          <div className="text-sm text-muted-foreground">Статус</div>
+          <select
+            value={statusIds}
+            onChange={(e) => setStatusIds(e.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option value="">Все</option>
+            {assignmentStatusOptions.map((status) => (
+              <option key={status.id} value={status.id.toString()}>
+                {status.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {isLoading || isFetching ? (
+        <div>Loading...</div>
+      ) : isError ? (
+        <div className="text-destructive">Failed to load</div>
+      ) : (
+        <>
+          {isShow ? (
+            // Table View
+            <div className="rounded-md border">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Код</th>
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Репортер</th>
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">Статус</th>
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden lg:table-cell">Срок</th>
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden xl:table-cell">Объект</th>
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assignments.map((a: Assignment) => (
+                      <tr key={a.id} className="border-b transition-colors hover:bg-muted/50">
+                        <td className="p-2 md:p-4 align-middle">
+                          <Link href={`/admin/assignments/${a.id}`} className="text-sm font-medium hover:underline break-all">
+                            {a.id}
+                          </Link>
+                        </td>
+                        <td className="p-2 md:p-4 align-middle text-sm">
+                          {a.code}
+                        </td>
+                        <td className="p-2 md:p-4 align-middle text-sm hidden sm:table-cell">
+                          <div>{a.reporter?.username}</div>
+                          <div className="text-xs text-muted-foreground">{a.reporter?.id}</div>
+                        </td>
+                        <td className="p-2 md:p-4 align-middle hidden md:table-cell">
+                          <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(a.status?.id)}`}>
+                            {a.status?.name}
+                          </span>
+                        </td>
+                        <td className="p-2 md:p-4 align-middle text-sm hidden lg:table-cell">
+                          {a.deadline ? new Date(a.deadline).toLocaleDateString('ru-RU') : '-'}
+                        </td>
+                        <td className="p-2 md:p-4 align-middle text-sm hidden xl:table-cell">
+                          {a.listing?.id ? (
+                            <Link href={`/admin/listings/${a.listing.id}`} className="hover:underline">
+                              {a.listing.title}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground">{a.listing?.title || '-'}</span>
+                          )}
+                        </td>
+                        <td className="p-2 md:p-4 align-middle">
+                          <Link href={`/admin/assignments/${a.id}`} className="text-sm text-primary hover:underline">
+                            View
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {assignments.length === 0 && (
+                <div className="p-8 text-center text-sm text-muted-foreground">No assignments found.</div>
+              )}
+            </div>
+          ) : (
+            // Card View - Google Search Results Style
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {assignments.map((assignment: Assignment) => (
+                <AssignmentCard key={assignment.id} assignment={assignment} />
+              ))}
+              {assignments.length === 0 && (
+                <div className="col-span-full text-center py-8 text-sm text-muted-foreground">
+                  No assignments found.
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Pagination Navigation */}
+      {!isLoading && !isError && assignments.length > 0 && (
+        <div className="flex items-center justify-between gap-3 pt-4 border-t">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(1)}
+              disabled={!canPrev}
+            >
+              <ChevronFirstIcon />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page - 1)}
+              disabled={!canPrev}
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Назад
+            </Button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">
+              Старинца {page}/{totalPages}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              ({total} Всего
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(page + 1)}
+              disabled={!canNext}
+            >
+              Вперед
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(totalPages)}
+              disabled={!canNext}
+            >
+              <ChevronLastIcon />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+
