@@ -18,7 +18,6 @@ import ChecklistFilterPanel from '@/components/ChecklistFilterPanel'
 import ChecklistSectionCard from '@/components/ChecklistSectionCard'
 import QueueStatusIndicator from '@/components/QueueStatusIndicator'
 import { useMutationQueue } from '@/hooks/useMutationQueue'
-import { useEventListener } from '@/hooks/useEventHooks'
 import { useConfirmation, useReorderSections } from '@/entities/modals/ModalContext'
 
 import {ListingsApi} from "@/entities/listings/api";
@@ -28,25 +27,12 @@ import {
   type ChecklistSection,
   type SectionFilters
 } from '@/entities/checklist/api'
-import {isMobileDevice} from "@/lib/browser";
 import { useChecklistModals } from '@/hooks/useChecklistModals';
 
 export default function ChecklistEditorPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [filters, setFilters] = React.useState<SectionFilters>({})
-
-  // Detect if device is mobile
-  const [isMobile, setIsMobile] = React.useState(false)
-
-  React.useEffect(() => {
-    setIsMobile(isMobileDevice())
-  }, [])
-
-  // Listen for resize events to update mobile detection
-  useEventListener('resize', React.useCallback(() => {
-    setIsMobile(isMobileDevice());
-  }, []), { target: window })
 
   // Mutation queue for handling reorder operations
   const { addReorderOperation, setCallbacks } = useMutationQueue()
