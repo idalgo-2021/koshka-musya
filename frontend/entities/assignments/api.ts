@@ -70,7 +70,7 @@ export const AssignmentsApi = {
   },
 
   // Staff: Get all assignments with filters
-  async getAllAssignmentsStaff(params: { page?: number; limit?: number; reporter_id?: string; status_id?: number[] } = {}): Promise<AssignmentsResponse> {
+  async getAllAssignmentsStaff(params: { page?: number; limit?: number; reporter_id?: string; status_id?: number[]; listing_types_ids?: number[] } = {}): Promise<AssignmentsResponse> {
     const sp = new URLSearchParams();
     sp.set('page', String(params.page ?? 1));
     sp.set('limit', String(params.limit ?? 50));
@@ -79,6 +79,11 @@ export const AssignmentsApi = {
       // backend expects array in query: status_id=1&status_id=2
       sp.delete('status_id');
       params.status_id.forEach((id) => sp.append('status_id', String(id)));
+    }
+    if (params.listing_types_ids && params.listing_types_ids.length > 0) {
+      // backend expects array in query: listing_types_ids=1&listing_types_ids=2
+      sp.delete('listing_types_ids');
+      params.listing_types_ids.forEach((id) => sp.append('listing_types_ids', String(id)));
     }
     return api.get<AssignmentsResponse>(`/assignments?${sp.toString()}`, true);
   },
