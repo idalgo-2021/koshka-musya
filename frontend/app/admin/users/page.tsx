@@ -17,6 +17,7 @@ import { useUsersQuery } from '@/entities/users/query'
 import { getRoleBadgeVariant, getRoleDisplayName } from "@/entities/users/util"
 import { useConfirmation, useResetPassword } from '@/entities/modals/ModalContext'
 import { MoreVertical, ChevronDown } from 'lucide-react'
+import { UserAvatar } from "@/components/UserAvatar"
 
 export default function UsersPage() {
   const [page, setPage] = React.useState(1)
@@ -141,12 +142,12 @@ export default function UsersPage() {
       {isShow ? (
         // Table View
         <div className="rounded-md border">
-          <div className="overflow-x-auto">
+          <div className="">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-muted/50">
-                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
                   <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Имя пользователя</th>
+                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
                   <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Email</th>
                   <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">Роль</th>
                   <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden lg:table-cell">Дата создания</th>
@@ -156,12 +157,17 @@ export default function UsersPage() {
               <tbody>
                 {users.map((user: User) => (
                   <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
+                    <td className="p-2 md:p-4 align-middle">
+                        <div className="flex items-center gap-2">
+                          <UserAvatar size="md" />
+                          <div>
+                            <div className="font-medium">{user.username}</div>
+                            <div className="text-xs text-muted-foreground sm:hidden">{user.email}</div>
+                          </div>
+                        </div>
+                    </td>
                     <td className="p-2 md:p-4 align-middle text-sm font-mono">
                       {user.id}
-                    </td>
-                    <td className="p-2 md:p-4 align-middle">
-                      <div className="font-medium">{user.username}</div>
-                      <div className="text-xs text-muted-foreground sm:hidden">{user.email}</div>
                     </td>
                     <td className="p-2 md:p-4 align-middle text-sm text-muted-foreground hidden sm:table-cell">
                       {user.email}
@@ -222,8 +228,11 @@ export default function UsersPage() {
           {users.map((user: User) => (
             <Card key={user.id}>
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{user.username}</CardTitle>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <UserAvatar size="md" />
+                      <CardTitle className="text-lg">{user.username}</CardTitle>
+                    </div>
                   <Dropdown
                     trigger={
                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0">

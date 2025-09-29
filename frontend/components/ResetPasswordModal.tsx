@@ -49,7 +49,7 @@ export default function ResetPasswordModal({
   })
 
   const resetPasswordMutation = useMutation({
-    mutationFn: (data: { new_password: string }) => 
+    mutationFn: (data: { new_password: string }) =>
       UsersApi.resetUserPassword(userId, data),
     onSuccess: () => {
       form.reset()
@@ -70,17 +70,15 @@ export default function ResetPasswordModal({
   const isSubmitting = isLoading || resetPasswordMutation.isPending
 
   return (
-    <Modal isOpen onClose={onCancel}>
-      <Card className="w-full max-w-md">
+    <Modal isOpen size='sm' onClose={onCancel}>
+      <Card className="w-full max-w-md border-0 shadow-none mx-auto">
         <CardHeader>
-          <CardTitle>Сброс пароля</CardTitle>
+          <CardTitle>
+            Сброс пароля для пользователя: <strong>{username}</strong>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="text-sm text-muted-foreground">
-              Сброс пароля для пользователя: <strong>{username}</strong>
-            </div>
-            
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="new_password">Новый пароль</Label>
@@ -112,7 +110,7 @@ export default function ResetPasswordModal({
                 )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-start gap-2 pt-4">
                 <Button
                   type="button"
                   variant="outline"
@@ -124,7 +122,6 @@ export default function ResetPasswordModal({
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="min-w-24"
                 >
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
