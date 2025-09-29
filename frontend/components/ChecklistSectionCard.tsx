@@ -13,6 +13,7 @@ import ChecklistItemCard from '@/components/ChecklistItemCard'
 
 import { type ChecklistSection, type ChecklistItemFull } from '@/entities/checklist/api'
 import { useEscapeKey } from '@/hooks/useEventHooks'
+import { useChecklistModals } from '@/hooks/useChecklistModals'
 
 interface ChecklistSectionCardProps {
   index: number
@@ -69,6 +70,7 @@ function ChecklistSectionCard({
   isDeleteItemPending,
   onReorderItems
 } : ChecklistSectionCardProps) {
+
   // Local state for item editing within this section
   const [localActiveItemId, setLocalActiveItemId] = React.useState<number | null>(null)
   const [localShowAddItemForm, setLocalShowAddItemForm] = React.useState<number | null>(null)
@@ -109,9 +111,13 @@ function ChecklistSectionCard({
     setLocalActiveItemId(null)
     onEditCancel()
   }, [onEditCancel])
-
+  const { openCreateItemModal } = useChecklistModals()
   // Handle start add item with local state management
   const handleStartAddItem = React.useCallback(() => {
+    if (window.innerWidth < 767) {
+      openCreateItemModal(section.id);
+      return;
+    }
     // If section is collapsed, expand it first
     if (collapsed) {
       onToggleCollapse(section.id)
