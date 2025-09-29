@@ -14,6 +14,8 @@ const navItems = [
   {href: '/admin/reports', label: 'Отчеты'},
   {href: '/admin/checklists', label: 'Checklists'},
   {href: '/admin/mediaRequirements', label: 'Media Requirements'},
+  {href: '/admin/users', label: 'Пользователи'},
+  {href: '/admin/sg_reservations', label: 'SG Reservations'},
 ]
 
 // function formatUser(user: User | null) {

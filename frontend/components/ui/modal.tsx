@@ -7,7 +7,7 @@ import { Button } from "./button"
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
 
 interface ModalProps {
-  isOpen: boolean
+  isOpen?: boolean
   onClose: () => void
   title?: string
   children: React.ReactNode
@@ -15,7 +15,7 @@ interface ModalProps {
   position?: "center" | "right"
 }
 
-export function Modal({ isOpen, onClose, title, children, size = "lg", position = "center" }: ModalProps) {
+export function Modal({ isOpen = false, onClose, title, children, size = "lg", position = "center" }: ModalProps) {
   React.useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'

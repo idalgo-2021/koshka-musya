@@ -8,6 +8,7 @@ import ChecklistItemForm from '@/components/ChecklistItemForm';
 import ListingTypeForm from '@/components/ListingTypeForm';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import ReorderSectionsModal from '@/components/ReorderSectionsModal';
+import ResetPasswordModal from '@/components/ResetPasswordModal';
 import { useKeyboardHooks } from '@/hooks/useKeyboardHooks';
 import { type ChecklistSection } from '@/entities/checklist/api';
 
@@ -19,6 +20,7 @@ export type ModalType =
   | "listing-type-edit"
   | "confirmation"
   | "reorder-sections"
+  | "reset-password"
   | null
 
 export interface ChecklistItemCreatePayload {
@@ -58,6 +60,14 @@ export interface ReorderSectionsPayload {
   getListingTypeName: (id: number) => string | null
 }
 
+export interface ResetPasswordPayload {
+  userId: string
+  username: string
+  onSuccess: () => void
+  onCancel: () => void
+  isLoading?: boolean
+}
+
 export type ModalPayload =
   | ChecklistItemCreatePayload
   | ChecklistItemEditPayload
@@ -65,6 +75,7 @@ export type ModalPayload =
   | ListingTypeEditPayload
   | ConfirmationPayload
   | ReorderSectionsPayload
+  | ResetPasswordPayload
   | null
 
 export interface ModalState {
@@ -183,6 +194,30 @@ export function useReorderSections() {
   return { openReorderModal, closeModal }
 }
 
+export function useResetPassword() {
+  const { openModal, closeModal } = useModal()
+
+  const openResetPasswordModal = React.useCallback((
+    userId: string,
+    username: string,
+    onSuccess: () => void,
+    onCancel: () => void,
+    options?: {
+      isLoading?: boolean
+    }
+  ) => {
+    openModal('reset-password', {
+      userId,
+      username,
+      onSuccess,
+      onCancel,
+      isLoading: options?.isLoading || false
+    })
+  }, [openModal])
+
+  return { openResetPasswordModal, closeModal }
+}
+
 export function ModalContent({
   type,
   payload,
@@ -262,6 +297,18 @@ export function ModalContent({
           onCancel={onCancel || (() => {})}
           isLoading={reorderPayload?.isLoading}
           getListingTypeName={reorderPayload?.getListingTypeName || (() => null)}
+        />
+      )
+
+    case "reset-password":
+      const resetPasswordPayload = payload as ResetPasswordPayload
+      return (
+        <ResetPasswordModal
+          userId={resetPasswordPayload?.userId || ''}
+          username={resetPasswordPayload?.username || ''}
+          onSuccess={resetPasswordPayload?.onSuccess || (() => {})}
+          onCancel={onCancel || (() => {})}
+          isLoading={resetPasswordPayload?.isLoading}
         />
       )
 
