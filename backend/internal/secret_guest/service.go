@@ -35,6 +35,7 @@ type SecretGuestRepository interface {
 	CreateAssignment(ctx context.Context, assignment *models.Assignment) (uuid.UUID, error)
 	GetAssignments(ctx context.Context, filter repository.AssignmentsFilter) ([]*models.Assignment, int, error)
 	GetAssignmentByID(ctx context.Context, assignmentID uuid.UUID) (*models.Assignment, error)
+	GetFreeAssignments(ctx context.Context, filter repository.AssignmentsFilter) ([]*models.Assignment, int, error)
 	GetAssignmentByIDAndOwner(ctx context.Context, assignmentID, reporterID uuid.UUID) (*models.Assignment, error)
 	CancelAssignment(ctx context.Context, assignmentID uuid.UUID) error
 	AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt, deadline time.Time) (*models.Report, error)
@@ -226,6 +227,36 @@ func toListingResponseDTO(l *models.Listing) *ListingResponseDTO {
 // 	return toAssignmentResponseDTO(dbAssignment), nil
 // }
 
+func (s *SecretGuestService) GetFreeAssignments(ctx context.Context, dto GetFreeAssignmentsRequestDTO) (*AssignmentsResponse, error) {
+
+	filter := repository.AssignmentsFilter{
+		StatusIDs:      []int{models.AssignmentStatusOffered}, // только Offered
+		ListingTypeIDs: dto.ListingTypeIDs,
+		Limit:          dto.Limit,
+		Offset:         (dto.Page - 1) * dto.Limit,
+	}
+
+	// return s.getAssignmentsWithFilter(ctx, filter, dto.Page)
+
+	dbAssignments, total, err := s.repo.GetFreeAssignments(ctx, filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get free assignments with filter: %w", err)
+	}
+
+	responseDTOs := make([]*AssignmentResponseDTO, 0, len(dbAssignments))
+	for _, a := range dbAssignments {
+		responseDTOs = append(responseDTOs, toAssignmentResponseDTO(a))
+	}
+
+	response := &AssignmentsResponse{
+		Assignments: responseDTOs,
+		Total:       total,
+		Page:        dto.Page,
+	}
+	return response, nil
+
+}
+
 func (s *SecretGuestService) GetMyActiveAssignments(ctx context.Context, dto GetMyAssignmentsRequestDTO) (*AssignmentsResponse, error) {
 
 	activeStatuses := []int{models.AssignmentStatusOffered} // only offered
@@ -243,10 +274,11 @@ func (s *SecretGuestService) GetMyActiveAssignments(ctx context.Context, dto Get
 func (s *SecretGuestService) GetAllAssignments(ctx context.Context, dto GetAllAssignmentsRequestDTO) (*AssignmentsResponse, error) {
 
 	filter := repository.AssignmentsFilter{
-		ReporterID: dto.ReporterID,
-		StatusIDs:  dto.StatusIDs,
-		Limit:      dto.Limit,
-		Offset:     (dto.Page - 1) * dto.Limit,
+		ReporterID:     dto.ReporterID,
+		StatusIDs:      dto.StatusIDs,
+		ListingTypeIDs: dto.ListingTypeIDs,
+		Limit:          dto.Limit,
+		Offset:         (dto.Page - 1) * dto.Limit,
 	}
 
 	return s.getAssignmentsWithFilter(ctx, filter, dto.Page)
@@ -314,7 +346,6 @@ func toAssignmentResponseDTO(a *models.Assignment) *AssignmentResponseDTO {
 		},
 		CreatedAt:  a.CreatedAt,
 		AcceptedAt: a.AcceptedAt,
-		DeclinedAt: a.DeclinedAt,
 		ExpiresAt:  a.ExpiresAt,
 		Deadline:   a.Deadline,
 	}
@@ -455,9 +486,6 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 
 		Pricing: otaPricing,
 		Guests:  otaGuests,
-		// Adults:        dto.Reservation.Guests.Adults,
-		// Children: 	dto.Reservation.Guests.Children,
-		// PricePerNight: dto.Reservation.Pricing.PricePerNight,
 	}
 
 	reservationID, err := s.repo.CreateOTAReservation(ctx, &otaReservation)
@@ -466,7 +494,12 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 	}
 
 	// TODO: Нужно вынести создание предложения в отдельную фоновую задачу
-	s.createAssignmentFromOTAReservation(ctx, reservationID)
+	if dto.Reservation.Status == "reserved" {
+		s.createAssignmentFromOTAReservation(ctx, reservationID)
+	} else {
+		log := logger.GetLoggerFromCtx(ctx)
+		log.Info(ctx, "OTA reservation status is not reserved(assignment not created)", zap.Error(err))
+	}
 
 	return nil
 }

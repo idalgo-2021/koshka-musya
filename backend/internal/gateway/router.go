@@ -43,10 +43,11 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	protectedRouter.HandleFunc("/listings", secretGuestHandler.GetListings).Methods(http.MethodGet)         // listings
 	protectedRouter.HandleFunc("/listings/{id}", secretGuestHandler.GetListingByID).Methods(http.MethodGet) // listings
 
-	protectedRouter.HandleFunc("/assignments/my", secretGuestHandler.GetMyAssignments).Methods(http.MethodGet)                  // assignments
-	protectedRouter.HandleFunc("/assignments/my/{id}", secretGuestHandler.GetMyAssignmentByID).Methods(http.MethodGet)          // assignments
-	protectedRouter.HandleFunc("/assignments/my/{id}/accept", secretGuestHandler.AcceptMyAssignment).Methods(http.MethodPost)   // assignments
-	protectedRouter.HandleFunc("/assignments/my/{id}/decline", secretGuestHandler.DeclineMyAssignment).Methods(http.MethodPost) // assignments
+	protectedRouter.HandleFunc("/assignments", secretGuestHandler.GetFreeAssignments).Methods(http.MethodGet)                    // assignments
+	protectedRouter.HandleFunc("/assignments/my", secretGuestHandler.GetMyAssignments).Methods(http.MethodGet)                   // assignments
+	protectedRouter.HandleFunc("/assignments/my/{id}", secretGuestHandler.GetMyAssignmentByID).Methods(http.MethodGet)           // assignments
+	protectedRouter.HandleFunc("/assignments/my/{id}/accept", secretGuestHandler.AcceptMyAssignment).Methods(http.MethodPatch)   // assignments
+	protectedRouter.HandleFunc("/assignments/my/{id}/decline", secretGuestHandler.DeclineMyAssignment).Methods(http.MethodPatch) // assignments
 
 	protectedRouter.HandleFunc("/reports/my", secretGuestHandler.GetMyReports).Methods(http.MethodGet)                // reports
 	protectedRouter.HandleFunc("/reports/my/{id}", secretGuestHandler.GetMyReportByID).Methods(http.MethodGet)        // reports
@@ -57,17 +58,17 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	// - - - - UPLOADS
 	protectedRouter.HandleFunc("/uploads/generate-url", secretGuestHandler.GenerateUploadURL).Methods(http.MethodPost)
 
-	// - - - - FOR STUFF
-	staffRouter := protectedRouter.PathPrefix("/").Subrouter()
+	// - - - - FOR STAFF
+	staffRouter := protectedRouter.PathPrefix("/staff").Subrouter()
 	staffRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID, models.ModeratorRoleID))
 
-	staffRouter.HandleFunc("/sg_reservations", secretGuestHandler.GetAllOTAReservations).Methods(http.MethodGet)                          // reservations
-	staffRouter.HandleFunc("/sg_reservations/{id}", secretGuestHandler.GetOTAReservationByID).Methods(http.MethodGet)                     // reservations
-	staffRouter.HandleFunc("/sg_reservations/{id}/no-show", secretGuestHandler.UpdateOTAReservationStatusNoShow).Methods(http.MethodPost) // reservations
+	staffRouter.HandleFunc("/sg_reservations", secretGuestHandler.GetAllOTAReservations).Methods(http.MethodGet)                           // reservations
+	staffRouter.HandleFunc("/sg_reservations/{id}", secretGuestHandler.GetOTAReservationByID).Methods(http.MethodGet)                      // reservations
+	staffRouter.HandleFunc("/sg_reservations/{id}/no-show", secretGuestHandler.UpdateOTAReservationStatusNoShow).Methods(http.MethodPatch) // reservations
 
 	staffRouter.HandleFunc("/assignments", secretGuestHandler.GetAllAssignments).Methods(http.MethodGet)              // assignments
 	staffRouter.HandleFunc("/assignments/{id}", secretGuestHandler.GetAssignmentByID_AsStaff).Methods(http.MethodGet) // assignments
-	staffRouter.HandleFunc("/assignments/{id}/cancel", secretGuestHandler.CancelAssignment).Methods(http.MethodPost)  // assignments
+	staffRouter.HandleFunc("/assignments/{id}/cancel", secretGuestHandler.CancelAssignment).Methods(http.MethodPatch) // assignments
 
 	staffRouter.HandleFunc("/reports", secretGuestHandler.GetAllReports).Methods(http.MethodGet)               // reports
 	staffRouter.HandleFunc("/reports/{id}", secretGuestHandler.GetReportByID_AsStaff).Methods(http.MethodGet)  // reports
@@ -110,8 +111,7 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	adminRouter := protectedRouter.PathPrefix("/admin").Subrouter()
 	adminRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID))
 
-	adminRouter.HandleFunc("/listings", secretGuestHandler.CreateListing).Methods(http.MethodPost) // listings
-	// adminRouter.HandleFunc("/assignments", secretGuestHandler.CreateAssignment).Methods(http.MethodPost)         // assignments
+	adminRouter.HandleFunc("/listings", secretGuestHandler.CreateListing).Methods(http.MethodPost)               // listings
 	adminRouter.HandleFunc("/sg_reservations", secretGuestHandler.CreateOTAReservation).Methods(http.MethodPost) // reservations
 
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)

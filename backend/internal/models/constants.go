@@ -7,6 +7,12 @@ const (
 )
 
 const (
+	MediaRequirementNone     = "none"
+	MediaRequirementOptional = "optional"
+	MediaRequirementRequired = "required"
+)
+
+const (
 	AssignmentStatusOffered   = 1 // Предложено
 	AssignmentStatusAccepted  = 2 // Принято клиентом
 	AssignmentStatusCancelled = 3 // Отменено стафом
