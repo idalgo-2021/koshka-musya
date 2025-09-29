@@ -36,8 +36,8 @@ export type UpdateListingTypeRequest = {
 export const ListingsApi = {
   async getPublicListings(page = 1, limit = 20): Promise<{ listings: Array<{ id: string; title: string; description: string; code: string; address: string; city: string; country: string; latitude: number; longitude: number; mainPicture?: string; listing_type: { id: number; name: string; slug: string } }>; page: number; total: number }> {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) })
-    let data = await api.get(`/listings?${params.toString()}`, true);
-    data = camelCaseKeysDeep(data);
+    const data = await api.get(`/listings?${params.toString()}`, true);
+    // data = camelCaseKeysDeep(data);
     // @ts-ignore
     return data;
   },
