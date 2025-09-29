@@ -1,3 +1,4 @@
+import * as React from "react"
 import { useModal } from "@/entities/modals/ModalContext"
 
 /**
@@ -7,17 +8,27 @@ import { useModal } from "@/entities/modals/ModalContext"
 export function useChecklistModals() {
   const { openModal, closeModal } = useModal()
 
-  const openCreateItemModal = (sectionId: number) => {
+  const openCreateItemModal = React.useCallback((sectionId: number) => {
     openModal("checklist-item-create", { sectionId })
-  }
+  }, [openModal])
 
-  const openEditItemModal = (itemId: number, sectionId?: number) => {
+  const openEditItemModal = React.useCallback((itemId: number, sectionId?: number) => {
     openModal("checklist-item-edit", { itemId, sectionId })
-  }
+  }, [openModal])
+
+  const openCreateSectionModal = React.useCallback(() => {
+    openModal("checklist-section-create", {})
+  }, [openModal])
+
+  const openEditSectionModal = React.useCallback((sectionId: number) => {
+    openModal("checklist-section-edit", { sectionId })
+  }, [openModal])
 
   return {
     openCreateItemModal,
     openEditItemModal,
+    openCreateSectionModal,
+    openEditSectionModal,
     closeModal
   }
 }

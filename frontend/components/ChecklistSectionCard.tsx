@@ -128,8 +128,13 @@ function ChecklistSectionCard({
     onStartAddItem(section.id)
   }, [section.id, collapsed, onToggleCollapse, onStartAddItem])
 
+  const { openEditSectionModal } = useChecklistModals();
   // Section editing handlers
   const handleStartSectionEdit = React.useCallback(() => {
+    if (window.innerWidth < 767) {
+      openEditSectionModal(section.id);
+      return;
+    }
     setIsEditingSection(true)
     setSectionTitle(section.title)
     setSectionSlug(section.slug)
