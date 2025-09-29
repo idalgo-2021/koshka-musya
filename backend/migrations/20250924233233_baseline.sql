@@ -191,6 +191,7 @@ CREATE TABLE "public"."report_statuses" (
 CREATE TABLE "public"."reports" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "assignment_id" uuid NOT NULL,
+  "purpose" text NOT NULL,
   "listing_id" uuid NOT NULL,
   "reporter_id" uuid NOT NULL,
   "created_at" timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -198,7 +199,6 @@ CREATE TABLE "public"."reports" (
   "submitted_at" timestamp NULL,
   "status_id" integer NOT NULL DEFAULT 1,
   "checklist_schema" jsonb NULL,
-  "purpose" text NOT NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "reports_assignment_id_key" UNIQUE ("assignment_id"),
   CONSTRAINT "reports_assignment_id_fkey" FOREIGN KEY ("assignment_id") REFERENCES "public"."assignments" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,

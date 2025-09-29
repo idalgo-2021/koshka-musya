@@ -574,6 +574,8 @@ definitions:
         type: string
       checkoutDate:
         type: string
+      id:
+        type: string
       listingID:
         type: string
       ota_id:

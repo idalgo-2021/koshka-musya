@@ -4195,6 +4195,9 @@ const docTemplate = `{
                 "checkoutDate": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "listingID": {
                     "type": "string"
                 },

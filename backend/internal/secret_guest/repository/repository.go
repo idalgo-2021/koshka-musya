@@ -258,6 +258,7 @@ func buildOTAReservationsWhereClause(filter OTAReservationsFilter) (string, []in
 func (r *SecretGuestRepository) scanOTAReservation(row pgx.Row) (*models.OTAReservation, error) {
 	var rs models.OTAReservation
 	if err := row.Scan(
+		&rs.ID,
 		&rs.OTAID,
 		&rs.BookingNumber,
 		&rs.ListingID,
@@ -325,7 +326,7 @@ func (r *SecretGuestRepository) GetOTAReservations(ctx context.Context, filter O
 	}
 
 	baseQuery := `
-		SELECT r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
+		SELECT r.id, r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
 			s.slug as "status_slug", s.name as "status_name"
 		FROM ota_sg_reservations r
 		JOIN ota_sg_reservation_statuses s ON r.status_id = s.id
@@ -336,11 +337,11 @@ func (r *SecretGuestRepository) GetOTAReservations(ctx context.Context, filter O
 		query += " WHERE " + whereClause
 	}
 
-	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT %d OFFSET %d", filter.Limit, filter.Offset)
+	query += fmt.Sprintf(" ORDER BY r.created_at DESC LIMIT %d OFFSET %d", filter.Limit, filter.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		log.Error(ctx, "Failed to query assignments with filter", zap.Error(err), zap.Any("filter", filter))
+		log.Error(ctx, "Failed to query reservations with filter", zap.Error(err), zap.Any("filter", filter))
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -350,6 +351,7 @@ func (r *SecretGuestRepository) GetOTAReservations(ctx context.Context, filter O
 	for rows.Next() {
 		var r models.OTAReservation
 		if err := rows.Scan(
+			&r.ID,
 			&r.OTAID,
 			&r.BookingNumber,
 			&r.ListingID,
@@ -377,25 +379,25 @@ func (r *SecretGuestRepository) GetOTAReservations(ctx context.Context, filter O
 	return reservations, total, nil
 }
 
-func (r *SecretGuestRepository) GetOTAReservationByID(ctx context.Context, otaReservationID uuid.UUID) (*models.OTAReservation, error) {
+func (r *SecretGuestRepository) GetOTAReservationByID(ctx context.Context, ReservationID uuid.UUID) (*models.OTAReservation, error) {
 	log := logger.GetLoggerFromCtx(ctx)
 
 	query := `
-		SELECT r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
+		SELECT r.id, r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
 			s.slug as "status_slug", s.name as "status_name"
 		FROM ota_sg_reservations r
 		JOIN ota_sg_reservation_statuses s ON r.status_id = s.id
 		WHERE r.id = $1
 	`
-	row := r.db.QueryRow(ctx, query, otaReservationID)
+	row := r.db.QueryRow(ctx, query, ReservationID)
 
 	reservation, err := r.scanOTAReservation(row)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			log.Info(ctx, "OTA reservation not found by ID", zap.String("reservation_id", otaReservationID.String()))
+			log.Info(ctx, "OTA reservation not found by ID", zap.String("reservation_id", ReservationID.String()))
 			return nil, models.ErrOTAReservationNotFound
 		}
-		log.Error(ctx, "Failed to query OTA reservation by ID", zap.Error(err), zap.String("reservation_id", otaReservationID.String()))
+		log.Error(ctx, "Failed to query OTA reservation by ID", zap.Error(err), zap.String("reservation_id", ReservationID.String()))
 		return nil, err
 	}
 
