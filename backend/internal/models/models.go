@@ -54,9 +54,17 @@ type OTAReservation struct {
 	ListingID     uuid.UUID       `db:"listing_id"`
 	CheckinDate   time.Time       `db:"checkin_date"`
 	CheckoutDate  time.Time       `db:"checkout_date"`
-	Pricing       json.RawMessage `db:"pricing"`
 	StatusID      int             `db:"status_id"`
 	SourceMsg     json.RawMessage `db:"source_msg"`
+
+	Pricing json.RawMessage `db:"pricing"`
+	Guests  json.RawMessage `db:"guests"`
+	// Adults        int     `db:"adults"`
+	// Children      int     `db:"children"`
+	// PricePerNight float64 `db:"price_per_night"`
+	// TotalPrice    float64 `db:"total_price"`
+	// PriceCurrency string  `db:"price_currency"`
+	// Nights        int     `db:"nights"`
 
 	Status StatusInfo `db:"-"`
 }
@@ -67,8 +75,12 @@ type OTAReservation struct {
 
 // Assignment - задание(предложения) быть ТГ и провести обследование объекта
 type Assignment struct {
-	ID         uuid.UUID  `db:"id"`
-	Code       uuid.UUID  `db:"code"`
+	ID uuid.UUID `db:"id"`
+
+	OtaSgReservationID uuid.UUID       `db:"ota_sg_reservation_id"`
+	Pricing            json.RawMessage `db:"pricing"`
+	Guests             json.RawMessage `db:"guests"`
+
 	Purpose    string     `db:"purpose"`
 	CreatedAt  time.Time  `db:"created_at"`
 	ExpiresAt  time.Time  `db:"expires_at"`
@@ -105,6 +117,7 @@ type ListingShortInfo struct {
 type UserShortInfo struct {
 	ID       uuid.UUID `db:"reporter_id"`
 	Username string    `db:"reporter_username"`
+	// Username sql.NullString `db:"reporter_username"`
 }
 
 type StatusInfo struct {

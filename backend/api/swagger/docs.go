@@ -15,82 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/admin/assignments": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates new assignment object. Available for admin only.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Assignments (Admin)"
-                ],
-                "summary": "Create new Assignment (Admin)",
-                "parameters": [
-                    {
-                        "description": "Assignment Payload",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.CreateAssignmentRequestDTO"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.AssignmentResponseDTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid payload",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Assignment cannot be created (e.g., wrong payload)",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/admin/listings": {
             "post": {
                 "security": [
@@ -3460,9 +3384,6 @@ const docTemplate = `{
                 "accepted_at": {
                     "type": "string"
                 },
-                "code": {
-                    "type": "string"
-                },
                 "created_at": {
                     "type": "string"
                 },
@@ -3475,17 +3396,26 @@ const docTemplate = `{
                 "expires_at": {
                     "type": "string"
                 },
+                "guests": {
+                    "type": "object"
+                },
                 "id": {
                     "type": "string"
                 },
                 "listing": {
                     "$ref": "#/definitions/secret_guest.ListingShortResponse"
                 },
+                "pricing": {
+                    "type": "object"
+                },
                 "purpose": {
                     "type": "string"
                 },
                 "reporter": {
                     "$ref": "#/definitions/secret_guest.ReporterResponse"
+                },
+                "reservation_id": {
+                    "type": "string"
                 },
                 "status": {
                     "$ref": "#/definitions/secret_guest.StatusResponse"
@@ -3664,33 +3594,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "slug": {
-                    "type": "string"
-                }
-            }
-        },
-        "secret_guest.CreateAssignmentRequestDTO": {
-            "type": "object",
-            "required": [
-                "code",
-                "expires_at",
-                "listing_id",
-                "purpose",
-                "reporter_id"
-            ],
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "expires_at": {
-                    "type": "string"
-                },
-                "listing_id": {
-                    "type": "string"
-                },
-                "purpose": {
-                    "type": "string"
-                },
-                "reporter_id": {
                     "type": "string"
                 }
             }
@@ -4062,12 +3965,9 @@ const docTemplate = `{
         },
         "secret_guest.OTAReservationGuests": {
             "type": "object",
-            "required": [
-                "adults",
-                "children"
-            ],
             "properties": {
                 "adults": {
+                    "description": "Adults   int ` + "`" + `json:\"adults\" validate:\"required,gte=0\"` + "`" + `\nChildren int ` + "`" + `json:\"children\" validate:\"required,gte=0\"` + "`" + `",
                     "type": "integer",
                     "minimum": 0
                 },
@@ -4195,6 +4095,9 @@ const docTemplate = `{
                 "checkoutDate": {
                     "type": "string"
                 },
+                "guests": {
+                    "type": "object"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -4203,6 +4106,9 @@ const docTemplate = `{
                 },
                 "ota_id": {
                     "type": "string"
+                },
+                "pricing": {
+                    "type": "object"
                 },
                 "status": {
                     "$ref": "#/definitions/secret_guest.StatusResponse"

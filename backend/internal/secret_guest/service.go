@@ -204,27 +204,27 @@ func toListingResponseDTO(l *models.Listing) *ListingResponseDTO {
 
 // assignments
 
-func (s *SecretGuestService) CreateAssignment(ctx context.Context, dto CreateAssignmentRequestDTO) (*AssignmentResponseDTO, error) {
-
-	assignment := models.Assignment{
-		Purpose:    dto.Purpose,
-		ListingID:  dto.ListingID,
-		ReporterID: dto.ReporterID,
-		ExpiresAt:  dto.ExpiresAt,
-	}
-
-	assignmentID, err := s.repo.CreateAssignment(ctx, &assignment)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create assignment in repository: %w", err)
-	}
-
-	dbAssignment, err := s.repo.GetAssignmentByID(ctx, assignmentID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get assignment by id %s from repository: %w", assignmentID.String(), err)
-	}
-
-	return toAssignmentResponseDTO(dbAssignment), nil
-}
+// func (s *SecretGuestService) CreateAssignment(ctx context.Context, dto CreateAssignmentRequestDTO) (*AssignmentResponseDTO, error) {
+//
+// 	assignment := models.Assignment{
+// 		Purpose:    dto.Purpose,
+// 		ListingID:  dto.ListingID,
+// 		ReporterID: dto.ReporterID,
+// 		ExpiresAt:  dto.ExpiresAt,
+// 	}
+//
+// 	assignmentID, err := s.repo.CreateAssignment(ctx, &assignment)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to create assignment in repository: %w", err)
+// 	}
+//
+// 	dbAssignment, err := s.repo.GetAssignmentByID(ctx, assignmentID)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to get assignment by id %s from repository: %w", assignmentID.String(), err)
+// 	}
+//
+// 	return toAssignmentResponseDTO(dbAssignment), nil
+// }
 
 func (s *SecretGuestService) GetMyActiveAssignments(ctx context.Context, dto GetMyAssignmentsRequestDTO) (*AssignmentsResponse, error) {
 
@@ -279,8 +279,12 @@ func toAssignmentResponseDTO(a *models.Assignment) *AssignmentResponseDTO {
 		return nil
 	}
 	return &AssignmentResponseDTO{
-		ID:      a.ID,
-		Code:    a.Code,
+		ID: a.ID,
+
+		OtaSgReservationID: a.OtaSgReservationID,
+		Pricing:            a.Pricing,
+		Guests:             a.Guests,
+
 		Purpose: a.Purpose,
 		Listing: ListingShortResponse{
 			ID:          a.Listing.ID,
@@ -390,6 +394,9 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 				return models.ErrListingTypeNotFound
 			}
 
+			// TODO: условились, что во всех бронях от OTA типы объектов согласованы и у нас есть все их коды.
+			// Если типа не обнаружено, то правильнее сообщения перекидывать в DLQ
+
 			return fmt.Errorf("failed to get listing type: %w", err)
 		}
 
@@ -424,6 +431,11 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 		return fmt.Errorf("failed to marshal OTA pricing: %w", err)
 	}
 
+	otaGuests, err := json.Marshal(&dto.Reservation.Guests)
+	if err != nil {
+		return fmt.Errorf("failed to marshal OTA guests: %w", err)
+	}
+
 	var reservationStatusID int
 	switch dto.Reservation.Status {
 	case "reserved":
@@ -438,17 +450,74 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 		ListingID:     listingID,
 		CheckinDate:   dto.Reservation.Dates.Checkin,
 		CheckoutDate:  dto.Reservation.Dates.Checkout,
-		Pricing:       otaPricing,
 		StatusID:      reservationStatusID,
 		SourceMsg:     otaSourceMsg,
+
+		Pricing: otaPricing,
+		Guests:  otaGuests,
+		// Adults:        dto.Reservation.Guests.Adults,
+		// Children: 	dto.Reservation.Guests.Children,
+		// PricePerNight: dto.Reservation.Pricing.PricePerNight,
 	}
 
-	_, err = s.repo.CreateOTAReservation(ctx, &otaReservation)
+	reservationID, err := s.repo.CreateOTAReservation(ctx, &otaReservation)
 	if err != nil {
 		return fmt.Errorf("failed to create OTA reservation in repository: %w", err)
 	}
 
+	// TODO: Нужно вынести создание предложения в отдельную фоновую задачу
+	s.createAssignmentFromOTAReservation(ctx, reservationID)
+
 	return nil
+}
+
+func (s *SecretGuestService) createAssignmentFromOTAReservation(ctx context.Context, reservationID uuid.UUID) {
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
+
+		bgCtx := context.Background()
+		bgCtx = logger.ContextWithLogger(bgCtx, logger.GetLoggerFromCtx(ctx))
+		log := logger.GetLoggerFromCtx(bgCtx)
+
+		taskCtx, cancel := context.WithTimeout(bgCtx, 1*time.Minute)
+		defer cancel()
+
+		log.Info(taskCtx, "Starting background creation of assignment from OTA reservation",
+			zap.String("reservation_id", reservationID.String()),
+		)
+
+		otaReservation, err := s.repo.GetOTAReservationByID(taskCtx, reservationID)
+		if err != nil {
+			log.Error(taskCtx, "failed to get OTA reservation by id for assignment creation",
+				zap.String("reservation_id", reservationID.String()),
+				zap.Error(err),
+			)
+			return
+		}
+
+		assignment := models.Assignment{
+			OtaSgReservationID: reservationID,
+			Pricing:            otaReservation.Pricing,
+			Guests:             otaReservation.Guests,
+			ListingID:          otaReservation.ListingID,
+
+			Purpose:   "Проверка объекта по бронированию от OTA",
+			CreatedAt: time.Now(),
+			ExpiresAt: otaReservation.CheckoutDate, // актуально до даты выезда
+		}
+
+		assignmentID, err := s.repo.CreateAssignment(taskCtx, &assignment)
+		if err != nil {
+			log.Error(taskCtx, "Failed to create assignment from OTA reservation", zap.Error(err))
+			return
+		}
+
+		log.Info(taskCtx, "Successfully created assignment from OTA reservation",
+			zap.String("assignment_id", assignmentID.String()),
+			zap.String("reservation_id", reservationID.String()),
+		)
+	}()
 }
 
 func (s *SecretGuestService) GetAllOTAReservations(ctx context.Context, dto GetAllOTAReservationsRequestDTO) (*OTAReservationsResponse, error) {
@@ -510,6 +579,8 @@ func toOTAReservationResponseDTO(r *models.OTAReservation) *OTAReservationRespon
 			Slug: r.Status.Slug,
 			Name: r.Status.Name,
 		},
+		Pricing: r.Pricing,
+		Guests:  r.Guests,
 	}
 }
 
