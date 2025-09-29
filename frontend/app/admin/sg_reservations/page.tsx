@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label'
 import Select from '@/components/ui/select'
 import { RefreshCw } from 'lucide-react'
 
-import { SGReservationsApi, SG_RESERVATION_STATUSES, type CreateSGReservationRequest, type SGReservationStatus } from '@/entities/sgReservations/api'
+import { SGReservationsApi, SG_RESERVATION_STATUSES, type CreateSGReservationRequest } from '@/entities/sgReservations/api'
 import { useAuth, USER_ROLE } from '@/entities/auth/useAuth'
 import { ListingsApi } from '@/entities/listings/api'
 
@@ -49,10 +49,10 @@ export default function SGReservationsPage() {
   }, [user])
 
   // Fetch listing types and listings
-  const { data: listingTypesData } = useQuery({
-    queryKey: ['listing_types'],
-    queryFn: () => ListingsApi.getListingTypes(),
-  })
+  // const { data: listingTypesData } = useQuery({
+  //   queryKey: ['listing_types'],
+  //   queryFn: () => ListingsApi.getListingTypes(),
+  // })
 
   const { data: listingsData } = useQuery({
     queryKey: ['listings'],

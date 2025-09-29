@@ -25,7 +25,7 @@ export default function SelectRowMulti({
   value = [],
   onChange,
   options,
-  placeholder = 'Select options',
+  // placeholder = 'Select options',
   className,
   size = 'sm',
   disabled = false
@@ -35,7 +35,7 @@ export default function SelectRowMulti({
 
     const currentValue = value || []
     const isSelected = currentValue.includes(optionValue)
-    
+
     // Special handling for "all" option
     if (optionValue === 'all') {
       if (isSelected) {
@@ -49,7 +49,7 @@ export default function SelectRowMulti({
       // For other options, remove "all" if it exists and handle normal selection
       const valueWithoutAll = currentValue.filter(v => v !== 'all')
       const isOtherSelected = valueWithoutAll.includes(optionValue)
-      
+
       if (isOtherSelected) {
         // Remove from selection
         onChange(valueWithoutAll.filter(v => v !== optionValue))
