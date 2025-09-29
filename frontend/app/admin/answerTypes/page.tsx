@@ -48,6 +48,7 @@ export default function AnswerTypesListPage() {
               <th className="px-3 py-2 text-left font-medium">Действия</th>
             </tr>
           </thead>
+
           <tbody>
             {items.map((t) => (
               <tr key={t.id} className="border-t">
