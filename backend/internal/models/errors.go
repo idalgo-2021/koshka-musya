@@ -41,6 +41,7 @@ var (
 
 	ErrAssignmentCannotBeAccepted = errors.New("assignment cannot be accepted")
 	ErrAssignmentCannotBeDeclined = errors.New("assignment cannot be declined")
+	ErrAssignmentCannotBeTaken    = errors.New("assignment cannot be taken")
 
 	ErrReportNotFound         = errors.New("report not found")
 	ErrForbidden              = errors.New("forbidden")

@@ -992,8 +992,14 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 
 	updateQuery := `
 		UPDATE assignments
-		SET status_id = $1, accepted_at = $2, deadline = $3
-		WHERE id = $4 AND reporter_id = $5 AND status_id = $6
+		SET 
+			status_id = $1, 
+			accepted_at = $2, 
+			deadline = $3
+		WHERE 
+			id = $4 
+			AND reporter_id = $5 
+			AND status_id = $6
 		RETURNING listing_id, purpose`
 
 	var listingID uuid.UUID
@@ -1096,6 +1102,69 @@ func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignm
 
 	return nil
 
+}
+
+func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, assignmentID, userID uuid.UUID, takenAt time.Time) error {
+
+	// TODO: добавить временную метку taken_at в assignments, или отдльную таблицу и т.п.
+
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// Проверяем, что у пользователя нет других предложений Offered
+	var count int
+	err = tx.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM 
+			assignments
+		WHERE 
+			reporter_id = $1 
+			AND status_id = $2
+	`, userID, models.AssignmentStatusOffered).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check existing offered assignments: %w", err)
+	}
+	if count > 0 {
+		// return models.ErrAssignmentCannotBeTaken
+		return fmt.Errorf("user %s already has %d active assignments", userID, count)
+	}
+
+	updateQuery := `
+		UPDATE assignments
+		SET 
+			reporter_id = $1, 
+			status_id = $2 
+		WHERE 
+			id = $3
+		  	AND status_id = $4
+		  	AND reporter_id IS NULL
+		RETURNING id
+	`
+
+	var id uuid.UUID
+	err = tx.QueryRow(ctx, updateQuery,
+		userID,
+		models.AssignmentStatusOffered, // новый статус, пока пусть тот же
+		//  accepted_at = $3  takenAt,
+		assignmentID,
+		models.AssignmentStatusOffered, // текущий статус
+	).Scan(&id)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.ErrAssignmentCannotBeTaken
+		}
+		return fmt.Errorf("failed to update assignment: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 // reports

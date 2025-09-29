@@ -43,17 +43,20 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	protectedRouter.HandleFunc("/listings", secretGuestHandler.GetListings).Methods(http.MethodGet)         // listings
 	protectedRouter.HandleFunc("/listings/{id}", secretGuestHandler.GetListingByID).Methods(http.MethodGet) // listings
 
-	protectedRouter.HandleFunc("/assignments", secretGuestHandler.GetFreeAssignments).Methods(http.MethodGet)                    // assignments
 	protectedRouter.HandleFunc("/assignments/my", secretGuestHandler.GetMyAssignments).Methods(http.MethodGet)                   // assignments
 	protectedRouter.HandleFunc("/assignments/my/{id}", secretGuestHandler.GetMyAssignmentByID).Methods(http.MethodGet)           // assignments
 	protectedRouter.HandleFunc("/assignments/my/{id}/accept", secretGuestHandler.AcceptMyAssignment).Methods(http.MethodPatch)   // assignments
 	protectedRouter.HandleFunc("/assignments/my/{id}/decline", secretGuestHandler.DeclineMyAssignment).Methods(http.MethodPatch) // assignments
 
-	protectedRouter.HandleFunc("/reports/my", secretGuestHandler.GetMyReports).Methods(http.MethodGet)                // reports
-	protectedRouter.HandleFunc("/reports/my/{id}", secretGuestHandler.GetMyReportByID).Methods(http.MethodGet)        // reports
-	protectedRouter.HandleFunc("/reports/my/{id}", secretGuestHandler.UpdateMyReport).Methods(http.MethodPatch)       // reports
-	protectedRouter.HandleFunc("/reports/my/{id}/submit", secretGuestHandler.SubmitMyReport).Methods(http.MethodPost) // reports
-	protectedRouter.HandleFunc("/reports/my/{id}/refuse", secretGuestHandler.RefuseMyReport).Methods(http.MethodPost) // reports
+	protectedRouter.HandleFunc("/assignments", secretGuestHandler.GetFreeAssignments).Methods(http.MethodGet)                  // assignments
+	protectedRouter.HandleFunc("/assignments/{id}", secretGuestHandler.GetFreeAssignmentsByID).Methods(http.MethodGet)         // assignments
+	protectedRouter.HandleFunc("/assignments/{id}/take", secretGuestHandler.TakeFreeAssignmentsByID).Methods(http.MethodPatch) // assignments
+
+	protectedRouter.HandleFunc("/reports/my", secretGuestHandler.GetMyReports).Methods(http.MethodGet)                 // reports
+	protectedRouter.HandleFunc("/reports/my/{id}", secretGuestHandler.GetMyReportByID).Methods(http.MethodGet)         // reports
+	protectedRouter.HandleFunc("/reports/my/{id}", secretGuestHandler.UpdateMyReport).Methods(http.MethodPost)         // reports
+	protectedRouter.HandleFunc("/reports/my/{id}/submit", secretGuestHandler.SubmitMyReport).Methods(http.MethodPatch) // reports
+	protectedRouter.HandleFunc("/reports/my/{id}/refuse", secretGuestHandler.RefuseMyReport).Methods(http.MethodPatch) // reports
 
 	// - - - - UPLOADS
 	protectedRouter.HandleFunc("/uploads/generate-url", secretGuestHandler.GenerateUploadURL).Methods(http.MethodPost)
@@ -70,10 +73,10 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	staffRouter.HandleFunc("/assignments/{id}", secretGuestHandler.GetAssignmentByID_AsStaff).Methods(http.MethodGet) // assignments
 	staffRouter.HandleFunc("/assignments/{id}/cancel", secretGuestHandler.CancelAssignment).Methods(http.MethodPatch) // assignments
 
-	staffRouter.HandleFunc("/reports", secretGuestHandler.GetAllReports).Methods(http.MethodGet)               // reports
-	staffRouter.HandleFunc("/reports/{id}", secretGuestHandler.GetReportByID_AsStaff).Methods(http.MethodGet)  // reports
-	staffRouter.HandleFunc("/reports/{id}/approve", secretGuestHandler.ApproveReport).Methods(http.MethodPost) // reports
-	staffRouter.HandleFunc("/reports/{id}/reject", secretGuestHandler.RejectReport).Methods(http.MethodPost)   // reports
+	staffRouter.HandleFunc("/reports", secretGuestHandler.GetAllReports).Methods(http.MethodGet)                // reports
+	staffRouter.HandleFunc("/reports/{id}", secretGuestHandler.GetReportByID_AsStaff).Methods(http.MethodGet)   // reports
+	staffRouter.HandleFunc("/reports/{id}/approve", secretGuestHandler.ApproveReport).Methods(http.MethodPatch) // reports
+	staffRouter.HandleFunc("/reports/{id}/reject", secretGuestHandler.RejectReport).Methods(http.MethodPatch)   // reports
 
 	staffRouter.HandleFunc("/users", secretGuestHandler.GetAllUsers).Methods(http.MethodGet) // users
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -513,6 +514,43 @@ func (h *SecretGuestHandler) GetFreeAssignments(w http.ResponseWriter, r *http.R
 	h.writeJSONResponse(ctx, w, http.StatusOK, assignments)
 }
 
+// @Summary      Get Free Assignment By ID
+// @Security     BearerAuth
+// @Description  Returns details of a specific "free" assignment that can be taken.
+// @Tags         Assignments (User)
+// @Produce      json
+// @Param        id path string true "Assignment ID" format(uuid)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.AssignmentResponseDTO
+// @Failure      400 {object} ErrorResponse "Invalid assignment ID format"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "Assignment not found or is not available"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /assignments/{id} [get]
+func (h *SecretGuestHandler) GetFreeAssignmentsByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	assignmentID, ok := h.parseUUIDFromPath(w, r, "id")
+	if !ok {
+		return
+	}
+
+	assignment, err := h.service.GetFreeAssignmentsByID(ctx, assignmentID)
+	if err != nil {
+		if errors.Is(err, models.ErrAssignmentNotFound) {
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found")
+		} else {
+			log.Error(ctx, "Failed to get assignment by ID as secret guest", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, assignment)
+}
+
 // @Summary      Get My Assignments
 // @Security     BearerAuth
 // @Description  Returns a paginated list of assignments for the current user.
@@ -751,13 +789,52 @@ func (h *SecretGuestHandler) DeclineMyAssignment(w http.ResponseWriter, r *http.
 	if err != nil {
 		switch {
 		case errors.Is(err, models.ErrAssignmentNotFound), errors.Is(err, models.ErrForbidden):
-			log.Info(ctx, "Assignment not found by ID", zap.String("report_id", assignmentID.String()))
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
 			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found or access denied")
 		case errors.Is(err, models.ErrAssignmentCannotBeDeclined):
 			log.Info(ctx, "Assignment can not be declined", zap.Error(err))
 			h.writeErrorResponse(ctx, w, http.StatusConflict, "Assignment can not be declined")
 		default:
 			log.Error(ctx, "Failed to decline assignment", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *SecretGuestHandler) TakeFreeAssignmentsByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUserAndID(w, r)
+	if !ok {
+		return
+	}
+
+	assignmentID, ok := h.parseUUIDFromPath(w, r, "id")
+	if !ok {
+		return
+	}
+
+	err := h.service.TakeFreeAssignmentsByID(ctx, userID, assignmentID)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrAssignmentNotFound), errors.Is(err, models.ErrForbidden):
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found or access denied")
+		case errors.Is(err, models.ErrAssignmentCannotBeDeclined):
+			log.Info(ctx, "Assignment can not be taked", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusConflict, "Assignment can not be taked")
+
+		case strings.Contains(err.Error(), "already has"):
+			log.Info(ctx, "User already has active assignments", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusConflict, "User already has active assignments")
+
+		default:
+			log.Info(ctx, "Failed to take assignment", zap.Error(err))
 			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
 		}
 
