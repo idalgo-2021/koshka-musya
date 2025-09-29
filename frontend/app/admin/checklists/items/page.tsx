@@ -13,11 +13,13 @@ import { Input } from '@/components/ui/input'
 
 import {ChecklistApi, type ChecklistItem, ChecklistSection} from '@/entities/checklist/api'
 import { useChecklistModals } from '@/hooks/useChecklistModals'
+import { useConfirmation } from '@/entities/modals/ModalContext'
 
 export default function ChecklistItemsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { openCreateItemModal, openEditItemModal } = useChecklistModals()
+  const { confirm, closeModal } = useConfirmation()
 
   const [searchTerm, setSearchTerm] = React.useState('')
 
@@ -29,6 +31,7 @@ export default function ChecklistItemsPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => ChecklistApi.deleteItem(id),
     onSuccess: () => {
+      closeModal();
       toast.success('Item deleted successfully')
       queryClient.invalidateQueries({ queryKey: ['checklist_items_full'] })
     },
@@ -74,9 +77,16 @@ export default function ChecklistItemsPage() {
   }, [filteredItems]);
 
   const handleDelete = (id: number, title: string) => {
-    if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
-      deleteMutation.mutate(id)
-    }
+    confirm(
+      'Delete Item',
+      `Are you sure you want to delete "${title}"?`,
+      () => deleteMutation.mutate(id),
+      {
+        type: 'danger',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      }
+    )
   }
 
   const handleAddItemToSection = (sectionId: number) => {

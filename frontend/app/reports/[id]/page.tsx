@@ -7,6 +7,7 @@ import {useMutation} from "@tanstack/react-query";
 import {useAuth} from '@/entities/auth/useAuth';
 import {ReportsApi} from '@/entities/reports/api';
 import type {ChecklistSchema, Report} from '@/entities/reports/types';
+import { useConfirmation } from '@/entities/modals/ModalContext';
 
 import DashboardHeader from '@/components/DashboardHeader';
 import ReportHeader from '@/components/ReportHeader';
@@ -35,6 +36,7 @@ export default function ReportPage() {
   const router = useRouter();
   const reportId = String(params?.id ?? '');
   const { user, logout } = useAuth();
+  const { confirm, closeModal } = useConfirmation();
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [report, setReport] = React.useState<Report | null>(null);
@@ -386,6 +388,7 @@ export default function ReportPage() {
     onError: (error) => {
       console.log(error);
       toast.error(error instanceof Error ? error.message : 'Не удалось отказаться от отчета');
+      closeModal();
     },
     onSuccess: () => {
       console.log('success refuse report');
@@ -403,7 +406,7 @@ export default function ReportPage() {
     //   return;
     // }
     try {
-      refuseReportMutation.mutate(reportId);
+      await refuseReportMutation.mutateAsync (reportId);
     } catch (error) {
       console.error('Error rejecting report:', error);
       toast.error('Ошибка при отклонении отчета');
@@ -544,9 +547,16 @@ export default function ReportPage() {
             progress={progress}
             isPendingRefuse={refuseReportMutation.isPending}
             onRefuse={() => {
-              if (window.confirm(`Вы действительно хотите отказать от заполнения отчета?`)) {
-                handleRefuseReport(reportId)
-              }
+              confirm(
+                'Отказ от отчета',
+                'Вы действительно хотите отказать от заполнения отчета?',
+                () => handleRefuseReport(reportId),
+                {
+                  type: 'warning',
+                  confirmText: 'Отказаться',
+                  cancelText: 'Отмена'
+                }
+              );
             }}
             onSave={handleSave}
             onComplete={handleComplete}

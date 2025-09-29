@@ -11,11 +11,13 @@ import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
 import {Plus, Search, Edit, Trash2, Save, X, StepBackIcon} from 'lucide-react'
 import { useListingTypeModals } from '@/hooks/useListingTypeModals'
+import { useConfirmation } from '@/entities/modals/ModalContext'
 
 export default function ListingTypesPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { openCreateModal, openEditModal } = useListingTypeModals()
+  const { confirm, closeModal } = useConfirmation()
 
   const [searchTerm, setSearchTerm] = React.useState('')
   const [editingId, setEditingId] = React.useState<number | null>(null)
@@ -29,6 +31,7 @@ export default function ListingTypesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: number) => ListingsApi.deleteListingType(id),
     onSuccess: () => {
+      closeModal()
       toast.success('Listing type deleted successfully')
       queryClient.invalidateQueries({ queryKey: ['listing_types'] })
     },
@@ -68,9 +71,16 @@ export default function ListingTypesPage() {
   }, [listingTypes, searchTerm])
 
   const handleDelete = (id: number, name: string) => {
-    if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
-      deleteMutation.mutate(id)
-    }
+    confirm(
+      'Delete Listing Type',
+      `Are you sure you want to delete "${name}"?`,
+      () => deleteMutation.mutate(id),
+      {
+        type: 'danger',
+        confirmText: 'Delete',
+        cancelText: 'Cancel'
+      }
+    )
   }
 
   const handleCreateNew = () => {
