@@ -38,7 +38,7 @@ type SecretGuestRepository interface {
 	GetFreeAssignments(ctx context.Context, filter repository.AssignmentsFilter) ([]*models.Assignment, int, error)
 	GetAssignmentByIDAndOwner(ctx context.Context, assignmentID, reporterID uuid.UUID) (*models.Assignment, error)
 	CancelAssignment(ctx context.Context, assignmentID uuid.UUID) error
-	AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt, deadline time.Time) (*models.Report, error)
+	AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt time.Time) (*models.Report, error)
 	DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, declinedAt time.Time) error
 	TakeFreeAssignmentsByID(ctx context.Context, assignmentID, userID uuid.UUID, takenAt time.Time) error
 
@@ -342,6 +342,10 @@ func toAssignmentResponseDTO(a *models.Assignment) *AssignmentResponseDTO {
 		OtaSgReservationID: a.OtaSgReservationID,
 		Pricing:            a.Pricing,
 		Guests:             a.Guests,
+		Dates: AssignmentReservationDates{
+			Checkin:  a.CheckinDate,
+			Checkout: a.CheckoutDate,
+		},
 
 		Purpose: a.Purpose,
 		Listing: ListingShortResponse{
@@ -404,12 +408,24 @@ func (s *SecretGuestService) GetAssignmentByID_AsStaff(ctx context.Context, assi
 
 func (s *SecretGuestService) AcceptMyAssignment(ctx context.Context, userID, assignmentID uuid.UUID) error {
 
-	// TO DO: прояснить нужен ли дедлайн предложению вообще?
-	deadlineDuration := time.Duration(s.cfg.AssignmentDeadlineDays) * 24 * time.Hour
-	now := time.Now()
-	deadline := now.Add(deadlineDuration)
+	// как в GetMyAssignmentByID
+	assignment, err := s.repo.GetAssignmentByIDAndOwner(ctx, assignmentID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to get assignment by id %s for owner %s: %w", assignmentID.String(), userID.String(), err)
+	}
+	if assignment.StatusID != models.AssignmentStatusOffered {
+		return models.ErrAssignmentNotFound
+	}
 
-	report, err := s.repo.AcceptMyAssignment(ctx, assignmentID, userID, now, deadline)
+	now := time.Now()
+	maxBeforeCheckin := time.Duration(s.cfg.AssignmentDeadlineHours) * time.Hour
+	timeUntilCheckin := assignment.ExpiresAt.Sub(now)
+	if timeUntilCheckin > maxBeforeCheckin {
+		// return fmt.Errorf("accept is allowed only within %s hours before check-in: %w", maxBeforeCheckin, err)
+		return fmt.Errorf("accept is allowed only within %d hours before check-in", s.cfg.AssignmentDeadlineHours)
+	}
+
+	report, err := s.repo.AcceptMyAssignment(ctx, assignmentID, userID, now)
 	if err != nil {
 		return fmt.Errorf("failed to accept assignment %s for user %s: %w", assignmentID.String(), userID.String(), err)
 	}
@@ -509,9 +525,8 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 		CheckoutDate:  dto.Reservation.Dates.Checkout,
 		StatusID:      reservationStatusID,
 		SourceMsg:     otaSourceMsg,
-
-		Pricing: otaPricing,
-		Guests:  otaGuests,
+		Pricing:       otaPricing,
+		Guests:        otaGuests,
 	}
 
 	reservationID, err := s.repo.CreateOTAReservation(ctx, &otaReservation)
@@ -560,10 +575,12 @@ func (s *SecretGuestService) createAssignmentFromOTAReservation(ctx context.Cont
 			Pricing:            otaReservation.Pricing,
 			Guests:             otaReservation.Guests,
 			ListingID:          otaReservation.ListingID,
+			CheckinDate:        otaReservation.CheckinDate,
+			CheckoutDate:       otaReservation.CheckoutDate,
 
 			Purpose:   "Проверка объекта по бронированию от OTA",
 			CreatedAt: time.Now(),
-			ExpiresAt: otaReservation.CheckoutDate, // актуально до даты выезда
+			ExpiresAt: otaReservation.CheckinDate,
 		}
 
 		assignmentID, err := s.repo.CreateAssignment(taskCtx, &assignment)

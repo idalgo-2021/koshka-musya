@@ -166,12 +166,18 @@ type GetAllAssignmentsRequestDTO struct {
 	ListingTypeIDs []int
 }
 
+type AssignmentReservationDates struct {
+	Checkin  time.Time `json:"checkin" validate:"required"`
+	Checkout time.Time `json:"checkout" validate:"required"`
+}
+
 type AssignmentResponseDTO struct {
 	ID uuid.UUID `json:"id"`
 
-	OtaSgReservationID uuid.UUID       `json:"reservation_id"`
-	Pricing            json.RawMessage `json:"pricing" swaggertype:"object"`
-	Guests             json.RawMessage `json:"guests" swaggertype:"object"`
+	OtaSgReservationID uuid.UUID                  `json:"reservation_id"`
+	Pricing            json.RawMessage            `json:"pricing" swaggertype:"object"`
+	Guests             json.RawMessage            `json:"guests" swaggertype:"object"`
+	Dates              AssignmentReservationDates `json:"dates" validate:"required"`
 
 	Purpose  string               `json:"purpose"`
 	Listing  ListingShortResponse `json:"listing"`

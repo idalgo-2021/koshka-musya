@@ -74,6 +74,8 @@ CREATE TABLE "public"."assignments" (
   "ota_sg_reservation_id" uuid NULL, -- привязка к бронированию
   "pricing" jsonb NULL,  -- инфо по стоимости
   "guests" jsonb NULL,  -- инфо по гостям
+  "checkin_date" timestamp NOT NULL,  -- дата начала брони, когда надо въехать
+  "checkout_date" timestamp NOT NULL, -- окончание брони, когда надо выезжать
  
   "listing_id" uuid NOT NULL,
   "purpose" text NOT NULL,
