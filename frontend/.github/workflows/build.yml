@@ -1,0 +1,32 @@
+name: CI/CD Build
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Чекаут кода
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+#      # 3. Сборка Backend
+#      - name: Build Backend
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: ./backend
+#          tags: ghcr.io/idalgo-2021/proto-fish-backend:${{ github.sha }}
+
+      # 4. Сборка Frontend
+      - name: Build Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          tags: ghcr.io/idalgo-2021/proto-fish-frontend:${{ github.sha }}
