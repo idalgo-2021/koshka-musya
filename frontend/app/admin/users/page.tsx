@@ -1,13 +1,13 @@
 "use client"
 
 import * as React from 'react'
-import { useQuery, keepPreviousData } from '@tanstack/react-query'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
 import { Badge } from '@/components/ui/badge'
 
-import { UsersApi, type User } from '@/entities/users/api'
+import { type User } from '@/entities/users/api'
+import { useUsersQuery } from '@/entities/users/query'
 import {getRoleBadgeVariant, getRoleDisplayName} from "@/entities/users/util";
 
 export default function UsersPage() {
@@ -15,11 +15,7 @@ export default function UsersPage() {
   const limit = 12
   const [isShow, setIsShow] = useToggleWithStorage(false, 'users-view-mode');
 
-  const { data, isLoading, isError, error } = useQuery({
-    queryKey: ['users', { page, limit }],
-    queryFn: () => UsersApi.getAllUsers(page, limit),
-    placeholderData: keepPreviousData,
-  })
+  const { data, isLoading, isError, error } = useUsersQuery(page, limit)
 
   if (isLoading) return <div className="p-6">Loading...</div>
   if (isError) return <div className="p-6 text-red-600 text-sm">{(error as Error)?.message || 'Failed to load users'}</div>
