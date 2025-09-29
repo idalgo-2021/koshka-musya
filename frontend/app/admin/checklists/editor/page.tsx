@@ -11,6 +11,8 @@ import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
 import {Input} from '@/components/ui/input'
 import {Label} from '@/components/ui/label'
+import Select from '@/components/ui/select'
+import SelectRow from '@/components/ui/select-row'
 import {ChevronDown, ChevronUp, Eye, GripVertical, Plus, StepBackIcon, X} from 'lucide-react'
 import ChecklistFilterPanel from '@/components/ChecklistFilterPanel'
 import ChecklistSectionCard from '@/components/ChecklistSectionCard'
@@ -508,47 +510,21 @@ export default function ChecklistEditorPage() {
         </div>
 
         {/* Listing Type Filters */}
-        {listingTypes ? (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant={!filters.listing_type_id ? "default" : "ghost"}
-              size="sm"
-              onClick={() => {
-                const newFilters = {...filters}
-                delete newFilters.listing_type_id
-                setFilters(newFilters)
-              }}
-            >
-              Все
-            </Button>
-            {listingTypes.map((type) => (
-              <Button
-                key={type.id}
-                variant={filters.listing_type_id?.includes(type.id) ? "default" : "ghost"}
-                size="sm"
-                onClick={() => {
-                  const currentTypes = filters.listing_type_id || []
-                  const isSelected = currentTypes.includes(type.id)
-
-                  setFilters({
-                    ...filters,
-                    listing_type_id: isSelected ? undefined : [type.id]
-                  })
-                }}
-              >
-                {type.name}
-              </Button>
-            ))}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              variant="ghost"
-              size="sm"
-            >
-            </Button>
-          </div>
-        )}
+        <SelectRow
+          value={filters.listing_type_id?.[0]}
+          onChange={(value) => setFilters({
+            ...filters,
+            listing_type_id: value && value !== 'all' ? [Number(value)] : undefined
+          })}
+          variant="buttons"
+          options={[
+            { value: 'all', label: 'Все' },
+            ...(listingTypes || []).map((type) => ({
+              value: type.id,
+              label: type.name
+            }))
+          ]}
+        />
       </div>
 
       {loading ? (
@@ -600,21 +576,21 @@ export default function ChecklistEditorPage() {
                       onKeyDown={(e) => e.key === 'Enter' && handleCreateSection()}
                     />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <Label htmlFor="section-listing-type">Listing Type</Label>
-                    <select
+                    <Select
                       id="section-listing-type"
-                      value={newSectionListingTypeId || ''}
-                      onChange={(e) => setNewSectionListingTypeId(e.target.value ? parseInt(e.target.value) : undefined)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Select listing type (optional)</option>
-                      {listingTypesQuery.data?.listing_types?.map((type) => (
-                        <option key={type.id} value={type.id}>
-                          {type.name}
-                        </option>
-                      ))}
-                    </select>
+                      value={newSectionListingTypeId}
+                      onChange={(value) => setNewSectionListingTypeId(value ? Number(value) : undefined)}
+                      placeholder="Select listing type"
+                      options={[
+                        { value: '', label: 'All' },
+                        ...(listingTypesQuery.data?.listing_types?.map((type) => ({
+                          value: type.id,
+                          label: type.name
+                        })) || [])
+                      ]}
+                    />
                   </div>
                   <div className="flex flex-row items-end gap-2">
                     <Button

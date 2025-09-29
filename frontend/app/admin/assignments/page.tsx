@@ -7,6 +7,7 @@ import type { Assignment } from '@/entities/assignments/types'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import {Button} from "@/components/ui/button";
+import Select from '@/components/ui/select'
 import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
 import AssignmentCard, { getStatusBadgeClasses } from '@/components/AssignmentCard'
 import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Plus} from 'lucide-react'
@@ -63,18 +64,18 @@ export default function AssignmentsStaffPage() {
         </div>
         <div className="space-y-1">
           <div className="text-sm text-muted-foreground">Статус</div>
-          <select
+          <Select
             value={statusIds}
-            onChange={(e) => setStatusIds(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="">Все</option>
-            {assignmentStatusOptions.map((status) => (
-              <option key={status.id} value={status.id.toString()}>
-                {status.name}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setStatusIds(value ? String(value) : '')}
+            placeholder="Все"
+            options={[
+              { value: '', label: 'Все' },
+              ...assignmentStatusOptions.map((status) => ({
+                value: status.id.toString(),
+                label: status.name
+              }))
+            ]}
+          />
         </div>
       </div>
 

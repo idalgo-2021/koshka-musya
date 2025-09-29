@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Dropdown, DropdownItem, DropdownSeparator } from '@/components/ui/dropdown'
+import Select from '@/components/ui/select'
 import ChecklistItemForm from '@/components/ChecklistItemForm'
 import ChecklistItemCard from '@/components/ChecklistItemCard'
 
@@ -306,18 +307,20 @@ function ChecklistSectionCard({
                   placeholder="section-slug"
                   className="flex-1"
                 />
-                <select
-                  value={sectionListingTypeId || ''}
-                  onChange={(e) => setSectionListingTypeId(e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select listing type (optional)</option>
-                  {listingTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <Select
+                    value={sectionListingTypeId}
+                    onChange={(value) => setSectionListingTypeId(value ? Number(value) : undefined)}
+                    placeholder="Select listing typ"
+                    options={[
+                      { value: '', label: 'Select listing type' },
+                      ...listingTypes.map((type) => ({
+                        value: type.id,
+                        label: type.name
+                      }))
+                    ]}
+                  />
+                </div>
                 <Button
                   size="sm"
                   onClick={handleSaveSectionEdit}
