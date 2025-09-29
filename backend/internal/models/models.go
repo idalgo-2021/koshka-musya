@@ -48,6 +48,7 @@ type ListingType struct {
 
 // Reservation - бронирование
 type OTAReservation struct {
+	ID            uuid.UUID       `db:"ota_id"`
 	OTAID         uuid.UUID       `db:"ota_id"`
 	BookingNumber string          `db:"booking_number"`
 	ListingID     uuid.UUID       `db:"listing_id"`

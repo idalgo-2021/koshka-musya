@@ -118,6 +118,7 @@ type GetAllOTAReservationsRequestDTO struct {
 }
 
 type OTAReservationResponseDTO struct {
+	ID            uuid.UUID      `json:"id" db:"ota_id"`
 	OTAID         uuid.UUID      `json:"ota_id" validate:"required,uuid"`
 	BookingNumber string         `db:"booking_number"`
 	ListingID     uuid.UUID      `db:"listing_id"`

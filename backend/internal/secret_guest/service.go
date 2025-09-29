@@ -499,6 +499,7 @@ func (s *SecretGuestService) getOTAReservationsWithFilter(ctx context.Context, f
 
 func toOTAReservationResponseDTO(r *models.OTAReservation) *OTAReservationResponseDTO {
 	return &OTAReservationResponseDTO{
+		ID:            r.ID,
 		OTAID:         r.OTAID,
 		BookingNumber: r.BookingNumber,
 		ListingID:     r.ListingID,

@@ -1,0 +1,1709 @@
+[1mdiff --git a/backend/api/swagger/docs.go b/backend/api/swagger/docs.go[m
+[1mindex 303d190..5ef342c 100644[m
+[1m--- a/backend/api/swagger/docs.go[m
+[1m+++ b/backend/api/swagger/docs.go[m
+[36m@@ -167,76 +167,6 @@[m [mconst docTemplate = `{[m
+                 }[m
+             }[m
+         },[m
+[31m-        "/admin/sg_reservations": {[m
+[31m-            "post": {[m
+[31m-                "security": [[m
+[31m-                    {[m
+[31m-                        "BearerAuth": [][m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "description": "Handles OTA Reservations Events. Available for admin only.",[m
+[31m-                "consumes": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "produces": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Admin)"[m
+[31m-                ],[m
+[31m-                "summary": "Handles OTA Reservations Events (Admin)",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "description": "OTA Reservation Payload",[m
+[31m-                        "name": "input",[m
+[31m-                        "in": "body",[m
+[31m-                        "required": true,[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.OTAReservationRequestDTO"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "200": {[m
+[31m-                        "description": "OK",[m
+[31m-                        "schema": {[m
+[31m-                            "type": "string"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "400": {[m
+[31m-                        "description": "Invalid payload",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "403": {[m
+[31m-                        "description": "Forbidden",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+         "/answer_types": {[m
+             "get": {[m
+                 "security": [[m
+[36m@@ -3003,209 +2933,6 @@[m [mconst docTemplate = `{[m
+                 }[m
+             }[m
+         },[m
+[31m-        "/sg_reservations": {[m
+[31m-            "get": {[m
+[31m-                "security": [[m
+[31m-                    {[m
+[31m-                        "BearerAuth": [][m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "description": "Returns a paginated list of all OTA reservations. Available for staff only.",[m
+[31m-                "produces": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Staff)"[m
+[31m-                ],[m
+[31m-                "summary": "Get All OTA Reservations (Staff)",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "type": "integer",[m
+[31m-                        "default": 1,[m
+[31m-                        "description": "Page number for pagination",[m
+[31m-                        "name": "page",[m
+[31m-                        "in": "query"[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "integer",[m
+[31m-                        "default": 50,[m
+[31m-                        "description": "Number of items per page",[m
+[31m-                        "name": "limit",[m
+[31m-                        "in": "query"[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "array",[m
+[31m-                        "items": {[m
+[31m-                            "type": "integer"[m
+[31m-                        },[m
+[31m-                        "collectionFormat": "multi",[m
+[31m-                        "description": "Filter by one or more status IDs",[m
+[31m-                        "name": "status_id",[m
+[31m-                        "in": "query"[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "200": {[m
+[31m-                        "description": "OK",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.AssignmentsResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "403": {[m
+[31m-                        "description": "Forbidden",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "/sg_reservations/{id}": {[m
+[31m-            "get": {[m
+[31m-                "description": "Returns detailed information about a single OTA reservation.",[m
+[31m-                "produces": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Staff)"[m
+[31m-                ],[m
+[31m-                "summary": "Get OTA Reservation By ID",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "format": "uuid",[m
+[31m-                        "description": "OTA Reservation ID",[m
+[31m-                        "name": "id",[m
+[31m-                        "in": "path",[m
+[31m-                        "required": true[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "200": {[m
+[31m-                        "description": "OK",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.OTAReservationResponseDTO"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "400": {[m
+[31m-                        "description": "Invalid OTA Reservation ID format",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "404": {[m
+[31m-                        "description": "OTA Reservation not found",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "/sg_reservations/{id}/no-show": {[m
+[31m-            "post": {[m
+[31m-                "security": [[m
+[31m-                    {[m
+[31m-                        "BearerAuth": [][m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "description": "Changes OTA Reservation status to NoShow. Available for staff only.",[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Staff)"[m
+[31m-                ],[m
+[31m-                "summary": "Hide an OTA Reservation (Staff)",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "format": "uuid",[m
+[31m-                        "description": "Reservation ID",[m
+[31m-                        "name": "id",[m
+[31m-                        "in": "path",[m
+[31m-                        "required": true[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "204": {[m
+[31m-                        "description": "No Content"[m
+[31m-                    },[m
+[31m-                    "400": {[m
+[31m-                        "description": "Invalid reservation ID format",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "403": {[m
+[31m-                        "description": "Forbidden",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "404": {[m
+[31m-                        "description": "Reservation not found",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+         "/uploads/generate-url": {[m
+             "post": {[m
+                 "security": [[m
+[36m@@ -3807,9 +3534,6 @@[m [mconst docTemplate = `{[m
+                 "longitude": {[m
+                     "type": "number"[m
+                 },[m
+[31m-                "main_picture": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+                 "title": {[m
+                     "type": "string"[m
+                 }[m
+[36m@@ -4010,202 +3734,6 @@[m [mconst docTemplate = `{[m
+                 }[m
+             }[m
+         },[m
+[31m-        "secret_guest.OTAReservationDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "booking_number",[m
+[31m-                "dates",[m
+[31m-                "guests",[m
+[31m-                "listing",[m
+[31m-                "ota_id",[m
+[31m-                "pricing",[m
+[31m-                "status"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "booking_number": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "dates": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationDates"[m
+[31m-                },[m
+[31m-                "guests": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationGuests"[m
+[31m-                },[m
+[31m-                "listing": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationListingDTO"[m
+[31m-                },[m
+[31m-                "ota_id": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "pricing": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationPricing"[m
+[31m-                },[m
+[31m-                "status": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationDates": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "checkin",[m
+[31m-                "checkout"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "checkin": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "checkout": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationGuests": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "adults",[m
+[31m-                "children"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "adults": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                },[m
+[31m-                "children": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationListingDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "address",[m
+[31m-                "city",[m
+[31m-                "country",[m
+[31m-                "description",[m
+[31m-                "id",[m
+[31m-                "latitude",[m
+[31m-                "listing_type",[m
+[31m-                "longitude",[m
+[31m-                "main_picture",[m
+[31m-                "title"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "address": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "city": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "country": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "description": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "id": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "latitude": {[m
+[31m-                    "type": "number"[m
+[31m-                },[m
+[31m-                "listing_type": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.ListingTypeResponse"[m
+[31m-                },[m
+[31m-                "longitude": {[m
+[31m-                    "type": "number"[m
+[31m-                },[m
+[31m-                "main_picture": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "title": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationPricing": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "breakdown",[m
+[31m-                "currency",[m
+[31m-                "total"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "breakdown": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationPricingBreakdown"[m
+[31m-                },[m
+[31m-                "currency": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "total": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationPricingBreakdown": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "nights",[m
+[31m-                "per_night"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "nights": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                },[m
+[31m-                "per_night": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationRequestDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "received_at",[m
+[31m-                "reservation",[m
+[31m-                "source"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "received_at": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "reservation": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationDTO"[m
+[31m-                },[m
+[31m-                "source": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationResponseDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "ota_id"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "bookingNumber": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "checkinDate": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "checkoutDate": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "listingID": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "ota_id": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "status": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.StatusResponse"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+         "secret_guest.ReportResponseDTO": {[m
+             "type": "object",[m
+             "properties": {[m
+[1mdiff --git a/backend/api/swagger/swagger.json b/backend/api/swagger/swagger.json[m
+[1mindex e96db02..316c8f9 100644[m
+[1m--- a/backend/api/swagger/swagger.json[m
+[1m+++ b/backend/api/swagger/swagger.json[m
+[36m@@ -160,76 +160,6 @@[m
+                 }[m
+             }[m
+         },[m
+[31m-        "/admin/sg_reservations": {[m
+[31m-            "post": {[m
+[31m-                "security": [[m
+[31m-                    {[m
+[31m-                        "BearerAuth": [][m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "description": "Handles OTA Reservations Events. Available for admin only.",[m
+[31m-                "consumes": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "produces": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Admin)"[m
+[31m-                ],[m
+[31m-                "summary": "Handles OTA Reservations Events (Admin)",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "description": "OTA Reservation Payload",[m
+[31m-                        "name": "input",[m
+[31m-                        "in": "body",[m
+[31m-                        "required": true,[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.OTAReservationRequestDTO"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "200": {[m
+[31m-                        "description": "OK",[m
+[31m-                        "schema": {[m
+[31m-                            "type": "string"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "400": {[m
+[31m-                        "description": "Invalid payload",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "403": {[m
+[31m-                        "description": "Forbidden",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+         "/answer_types": {[m
+             "get": {[m
+                 "security": [[m
+[36m@@ -2996,209 +2926,6 @@[m
+                 }[m
+             }[m
+         },[m
+[31m-        "/sg_reservations": {[m
+[31m-            "get": {[m
+[31m-                "security": [[m
+[31m-                    {[m
+[31m-                        "BearerAuth": [][m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "description": "Returns a paginated list of all OTA reservations. Available for staff only.",[m
+[31m-                "produces": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Staff)"[m
+[31m-                ],[m
+[31m-                "summary": "Get All OTA Reservations (Staff)",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "type": "integer",[m
+[31m-                        "default": 1,[m
+[31m-                        "description": "Page number for pagination",[m
+[31m-                        "name": "page",[m
+[31m-                        "in": "query"[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "integer",[m
+[31m-                        "default": 50,[m
+[31m-                        "description": "Number of items per page",[m
+[31m-                        "name": "limit",[m
+[31m-                        "in": "query"[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "array",[m
+[31m-                        "items": {[m
+[31m-                            "type": "integer"[m
+[31m-                        },[m
+[31m-                        "collectionFormat": "multi",[m
+[31m-                        "description": "Filter by one or more status IDs",[m
+[31m-                        "name": "status_id",[m
+[31m-                        "in": "query"[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "200": {[m
+[31m-                        "description": "OK",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.AssignmentsResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "403": {[m
+[31m-                        "description": "Forbidden",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "/sg_reservations/{id}": {[m
+[31m-            "get": {[m
+[31m-                "description": "Returns detailed information about a single OTA reservation.",[m
+[31m-                "produces": [[m
+[31m-                    "application/json"[m
+[31m-                ],[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Staff)"[m
+[31m-                ],[m
+[31m-                "summary": "Get OTA Reservation By ID",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "format": "uuid",[m
+[31m-                        "description": "OTA Reservation ID",[m
+[31m-                        "name": "id",[m
+[31m-                        "in": "path",[m
+[31m-                        "required": true[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "200": {[m
+[31m-                        "description": "OK",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.OTAReservationResponseDTO"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "400": {[m
+[31m-                        "description": "Invalid OTA Reservation ID format",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "404": {[m
+[31m-                        "description": "OTA Reservation not found",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "/sg_reservations/{id}/no-show": {[m
+[31m-            "post": {[m
+[31m-                "security": [[m
+[31m-                    {[m
+[31m-                        "BearerAuth": [][m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "description": "Changes OTA Reservation status to NoShow. Available for staff only.",[m
+[31m-                "tags": [[m
+[31m-                    "Reservations (Staff)"[m
+[31m-                ],[m
+[31m-                "summary": "Hide an OTA Reservation (Staff)",[m
+[31m-                "parameters": [[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "format": "uuid",[m
+[31m-                        "description": "Reservation ID",[m
+[31m-                        "name": "id",[m
+[31m-                        "in": "path",[m
+[31m-                        "required": true[m
+[31m-                    },[m
+[31m-                    {[m
+[31m-                        "type": "string",[m
+[31m-                        "description": "Bearer Access Token",[m
+[31m-                        "name": "Authorization",[m
+[31m-                        "in": "header",[m
+[31m-                        "required": true[m
+[31m-                    }[m
+[31m-                ],[m
+[31m-                "responses": {[m
+[31m-                    "204": {[m
+[31m-                        "description": "No Content"[m
+[31m-                    },[m
+[31m-                    "400": {[m
+[31m-                        "description": "Invalid reservation ID format",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "401": {[m
+[31m-                        "description": "Unauthorized",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "403": {[m
+[31m-                        "description": "Forbidden",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "404": {[m
+[31m-                        "description": "Reservation not found",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    },[m
+[31m-                    "500": {[m
+[31m-                        "description": "Internal server error",[m
+[31m-                        "schema": {[m
+[31m-                            "$ref": "#/definitions/secret_guest.ErrorResponse"[m
+[31m-                        }[m
+[31m-                    }[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+         "/uploads/generate-url": {[m
+             "post": {[m
+                 "security": [[m
+[36m@@ -3800,9 +3527,6 @@[m
+                 "longitude": {[m
+                     "type": "number"[m
+                 },[m
+[31m-                "main_picture": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+                 "title": {[m
+                     "type": "string"[m
+                 }[m
+[36m@@ -4003,202 +3727,6 @@[m
+                 }[m
+             }[m
+         },[m
+[31m-        "secret_guest.OTAReservationDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "booking_number",[m
+[31m-                "dates",[m
+[31m-                "guests",[m
+[31m-                "listing",[m
+[31m-                "ota_id",[m
+[31m-                "pricing",[m
+[31m-                "status"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "booking_number": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "dates": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationDates"[m
+[31m-                },[m
+[31m-                "guests": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationGuests"[m
+[31m-                },[m
+[31m-                "listing": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationListingDTO"[m
+[31m-                },[m
+[31m-                "ota_id": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "pricing": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationPricing"[m
+[31m-                },[m
+[31m-                "status": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationDates": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "checkin",[m
+[31m-                "checkout"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "checkin": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "checkout": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationGuests": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "adults",[m
+[31m-                "children"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "adults": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                },[m
+[31m-                "children": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationListingDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "address",[m
+[31m-                "city",[m
+[31m-                "country",[m
+[31m-                "description",[m
+[31m-                "id",[m
+[31m-                "latitude",[m
+[31m-                "listing_type",[m
+[31m-                "longitude",[m
+[31m-                "main_picture",[m
+[31m-                "title"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "address": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "city": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "country": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "description": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "id": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "latitude": {[m
+[31m-                    "type": "number"[m
+[31m-                },[m
+[31m-                "listing_type": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.ListingTypeResponse"[m
+[31m-                },[m
+[31m-                "longitude": {[m
+[31m-                    "type": "number"[m
+[31m-                },[m
+[31m-                "main_picture": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "title": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationPricing": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "breakdown",[m
+[31m-                "currency",[m
+[31m-                "total"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "breakdown": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationPricingBreakdown"[m
+[31m-                },[m
+[31m-                "currency": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "total": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationPricingBreakdown": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "nights",[m
+[31m-                "per_night"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "nights": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                },[m
+[31m-                "per_night": {[m
+[31m-                    "type": "integer",[m
+[31m-                    "minimum": 0[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationRequestDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "received_at",[m
+[31m-                "reservation",[m
+[31m-                "source"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "received_at": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "reservation": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.OTAReservationDTO"[m
+[31m-                },[m
+[31m-                "source": {[m
+[31m-                    "type": "string"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+[31m-        "secret_guest.OTAReservationResponseDTO": {[m
+[31m-            "type": "object",[m
+[31m-            "required": [[m
+[31m-                "ota_id"[m
+[31m-            ],[m
+[31m-            "properties": {[m
+[31m-                "bookingNumber": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "checkinDate": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "checkoutDate": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "listingID": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "ota_id": {[m
+[31m-                    "type": "string"[m
+[31m-                },[m
+[31m-                "status": {[m
+[31m-                    "$ref": "#/definitions/secret_guest.StatusResponse"[m
+[31m-                }[m
+[31m-            }[m
+[31m-        },[m
+         "secret_guest.ReportResponseDTO": {[m
+             "type": "object",[m
+             "properties": {[m
+[1mdiff --git a/backend/api/swagger/swagger.yaml b/backend/api/swagger/swagger.yaml[m
+[1mindex 860776e..ed85ea0 100644[m
+[1m--- a/backend/api/swagger/swagger.yaml[m
+[1m+++ b/backend/api/swagger/swagger.yaml[m
+[36m@@ -304,8 +304,6 @@[m [mdefinitions:[m
+         type: integer[m
+       longitude:[m
+         type: number[m
+[31m-      main_picture:[m
+[31m-        type: string[m
+       title:[m
+         type: string[m
+     required:[m
+[36m@@ -446,143 +444,6 @@[m [mdefinitions:[m
+           $ref: '#/definitions/secret_guest.MediaRequirementResponse'[m
+         type: array[m
+     type: object[m
+[31m-  secret_guest.OTAReservationDTO:[m
+[31m-    properties:[m
+[31m-      booking_number:[m
+[31m-        type: string[m
+[31m-      dates:[m
+[31m-        $ref: '#/definitions/secret_guest.OTAReservationDates'[m
+[31m-      guests:[m
+[31m-        $ref: '#/definitions/secret_guest.OTAReservationGuests'[m
+[31m-      listing:[m
+[31m-        $ref: '#/definitions/secret_guest.OTAReservationListingDTO'[m
+[31m-      ota_id:[m
+[31m-        type: string[m
+[31m-      pricing:[m
+[31m-        $ref: '#/definitions/secret_guest.OTAReservationPricing'[m
+[31m-      status:[m
+[31m-        type: string[m
+[31m-    required:[m
+[31m-    - booking_number[m
+[31m-    - dates[m
+[31m-    - guests[m
+[31m-    - listing[m
+[31m-    - ota_id[m
+[31m-    - pricing[m
+[31m-    - status[m
+[31m-    type: object[m
+[31m-  secret_guest.OTAReservationDates:[m
+[31m-    properties:[m
+[31m-      checkin:[m
+[31m-        type: string[m
+[31m-      checkout:[m
+[31m-        type: string[m
+[31m-    required:[m
+[31m-    - checkin[m
+[31m-    - checkout[m
+[31m-    type: object[m
+[31m-  secret_guest.OTAReservationGuests:[m
+[31m-    properties:[m
+[31m-      adults:[m
+[31m-        minimum: 0[m
+[31m-        type: integer[m
+[31m-      children:[m
+[31m-        minimum: 0[m
+[31m-        type: integer[m
+[31m-    required:[m
+[31m-    - adults[m
+[31m-    - children[m
+[31m-    type: object[m
+[31m-  secret_guest.OTAReservationListingDTO:[m
+[31m-    properties:[m
+[31m-      address:[m
+[31m-        type: string[m
+[31m-      city:[m
+[31m-        type: string[m
+[31m-      country:[m
+[31m-        type: string[m
+[31m-      description:[m
+[31m-        type: string[m
+[31m-      id:[m
+[31m-        type: string[m
+[31m-      latitude:[m
+[31m-        type: number[m
+[31m-      listing_type:[m
+[31m-        $ref: '#/definitions/secret_guest.ListingTypeResponse'[m
+[31m-      longitude:[m
+[31m-        type: number[m
+[31m-      main_picture:[m
+[31m-        type: string[m
+[31m-      title:[m
+[31m-        type: string[m
+[31m-    required:[m
+[31m-    - address[m
+[31m-    - city[m
+[31m-    - country[m
+[31m-    - description[m
+[31m-    - id[m
+[31m-    - latitude[m
+[31m-    - listing_type[m
+[31m-    - longitude[m
+[31m-    - main_picture[m
+[31m-    - title[m
+[31m-    type: object[m
+[31m-  secret_guest.OTAReservationPricing:[m
+[31m-    properties:[m
+[31m-      breakdown:[m
+[31m-        $ref: '#/definitions/secret_guest.OTAReservationPricingBreakdown'[m
+[31m-      currency:[m
+[31m-        type: string[m
+[31m-      total:[m
+[31m-        minimum: 0[m
+[31m-        type: integer[m
+[31m-    required:[m
+[31m-    - breakdown[m
+[31m-    - currency[m
+[31m-    - total[m
+[31m-    type: object[m
+[31m-  secret_guest.OTAReservationPricingBreakdown:[m
+[31m-    properties:[m
+[31m-      nights:[m
+[31m-        minimum: 0[m
+[31m-        type: integer[m
+[31m-      per_night:[m
+[31m-        minimum: 0[m
+[31m-        type: integer[m
+[31m-    required:[m
+[31m-    - nights[m
+[31m-    - per_night[m
+[31m-    type: object[m
+[31m-  secret_guest.OTAReservationRequestDTO:[m
+[31m-    properties:[m
+[31m-      received_at:[m
+[31m-        type: string[m
+[31m-      reservation:[m
+[31m-        $ref: '#/definitions/secret_guest.OTAReservationDTO'[m
+[31m-      source:[m
+[31m-        type: string[m
+[31m-    required:[m
+[31m-    - received_at[m
+[31m-    - reservation[m
+[31m-    - source[m
+[31m-    type: object[m
+[31m-  secret_guest.OTAReservationResponseDTO:[m
+[31m-    properties:[m
+[31m-      bookingNumber:[m
+[31m-        type: string[m
+[31m-      checkinDate:[m
+[31m-        type: string[m
+[31m-      checkoutDate:[m
+[31m-        type: string[m
+[31m-      listingID:[m
+[31m-        type: string[m
+[31m-      ota_id:[m
+[31m-        type: string[m
+[31m-      status:[m
+[31m-        $ref: '#/definitions/secret_guest.StatusResponse'[m
+[31m-    required:[m
+[31m-    - ota_id[m
+[31m-    type: object[m
+   secret_guest.ReportResponseDTO:[m
+     properties:[m
+       assignment_id:[m
+[36m@@ -843,51 +704,6 @@[m [mpaths:[m
+       summary: Create new Listing (Admin)[m
+       tags:[m
+       - Listings (Admin)[m
+[31m-  /admin/sg_reservations:[m
+[31m-    post:[m
+[31m-      consumes:[m
+[31m-      - application/json[m
+[31m-      description: Handles OTA Reservations Events. Available for admin only.[m
+[31m-      parameters:[m
+[31m-      - description: OTA Reservation Payload[m
+[31m-        in: body[m
+[31m-        name: input[m
+[31m-        required: true[m
+[31m-        schema:[m
+[31m-          $ref: '#/definitions/secret_guest.OTAReservationRequestDTO'[m
+[31m-      - description: Bearer Access Token[m
+[31m-        in: header[m
+[31m-        name: Authorization[m
+[31m-        required: true[m
+[31m-        type: string[m
+[31m-      produces:[m
+[31m-      - application/json[m
+[31m-      responses:[m
+[31m-        "200":[m
+[31m-          description: OK[m
+[31m-          schema:[m
+[31m-            type: string[m
+[31m-        "400":[m
+[31m-          description: Invalid payload[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "401":[m
+[31m-          description: Unauthorized[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "403":[m
+[31m-          description: Forbidden[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "500":[m
+[31m-          description: Internal server error[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-      security:[m
+[31m-      - BearerAuth: [][m
+[31m-      summary: Handles OTA Reservations Events (Admin)[m
+[31m-      tags:[m
+[31m-      - Reservations (Admin)[m
+   /answer_types:[m
+     get:[m
+       description: Returns a list of all Answer Types with optional filtering.[m
+[36m@@ -2703,141 +2519,6 @@[m [mpaths:[m
+       summary: Submit My Report[m
+       tags:[m
+       - Reports (User)[m
+[31m-  /sg_reservations:[m
+[31m-    get:[m
+[31m-      description: Returns a paginated list of all OTA reservations. Available for[m
+[31m-        staff only.[m
+[31m-      parameters:[m
+[31m-      - default: 1[m
+[31m-        description: Page number for pagination[m
+[31m-        in: query[m
+[31m-        name: page[m
+[31m-        type: integer[m
+[31m-      - default: 50[m
+[31m-        description: Number of items per page[m
+[31m-        in: query[m
+[31m-        name: limit[m
+[31m-        type: integer[m
+[31m-      - collectionFormat: multi[m
+[31m-        description: Filter by one or more status IDs[m
+[31m-        in: query[m
+[31m-        items:[m
+[31m-          type: integer[m
+[31m-        name: status_id[m
+[31m-        type: array[m
+[31m-      - description: Bearer Access Token[m
+[31m-        in: header[m
+[31m-        name: Authorization[m
+[31m-        required: true[m
+[31m-        type: string[m
+[31m-      produces:[m
+[31m-      - application/json[m
+[31m-      responses:[m
+[31m-        "200":[m
+[31m-          description: OK[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.AssignmentsResponse'[m
+[31m-        "401":[m
+[31m-          description: Unauthorized[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "403":[m
+[31m-          description: Forbidden[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "500":[m
+[31m-          description: Internal server error[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-      security:[m
+[31m-      - BearerAuth: [][m
+[31m-      summary: Get All OTA Reservations (Staff)[m
+[31m-      tags:[m
+[31m-      - Reservations (Staff)[m
+[31m-  /sg_reservations/{id}:[m
+[31m-    get:[m
+[31m-      description: Returns detailed information about a single OTA reservation.[m
+[31m-      parameters:[m
+[31m-      - description: OTA Reservation ID[m
+[31m-        format: uuid[m
+[31m-        in: path[m
+[31m-        name: id[m
+[31m-        required: true[m
+[31m-        type: string[m
+[31m-      - description: Bearer Access Token[m
+[31m-        in: header[m
+[31m-        name: Authorization[m
+[31m-        required: true[m
+[31m-        type: string[m
+[31m-      produces:[m
+[31m-      - application/json[m
+[31m-      responses:[m
+[31m-        "200":[m
+[31m-          description: OK[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.OTAReservationResponseDTO'[m
+[31m-        "400":[m
+[31m-          description: Invalid OTA Reservation ID format[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "401":[m
+[31m-          description: Unauthorized[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "404":[m
+[31m-          description: OTA Reservation not found[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "500":[m
+[31m-          description: Internal server error[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-      summary: Get OTA Reservation By ID[m
+[31m-      tags:[m
+[31m-      - Reservations (Staff)[m
+[31m-  /sg_reservations/{id}/no-show:[m
+[31m-    post:[m
+[31m-      description: Changes OTA Reservation status to NoShow. Available for staff only.[m
+[31m-      parameters:[m
+[31m-      - description: Reservation ID[m
+[31m-        format: uuid[m
+[31m-        in: path[m
+[31m-        name: id[m
+[31m-        required: true[m
+[31m-        type: string[m
+[31m-      - description: Bearer Access Token[m
+[31m-        in: header[m
+[31m-        name: Authorization[m
+[31m-        required: true[m
+[31m-        type: string[m
+[31m-      responses:[m
+[31m-        "204":[m
+[31m-          description: No Content[m
+[31m-        "400":[m
+[31m-          description: Invalid reservation ID format[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "401":[m
+[31m-          description: Unauthorized[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "403":[m
+[31m-          description: Forbidden[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "404":[m
+[31m-          description: Reservation not found[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-        "500":[m
+[31m-          description: Internal server error[m
+[31m-          schema:[m
+[31m-            $ref: '#/definitions/secret_guest.ErrorResponse'[m
+[31m-      security:[m
+[31m-      - BearerAuth: [][m
+[31m-      summary: Hide an OTA Reservation (Staff)[m
+[31m-      tags:[m
+[31m-      - Reservations (Staff)[m
+   /uploads/generate-url:[m
+     post:[m
+       consumes:[m
+[1mdiff --git a/backend/internal/gateway/router.go b/backend/internal/gateway/router.go[m
+[1mindex 4d8abeb..2b712bd 100644[m
+[1m--- a/backend/internal/gateway/router.go[m
+[1m+++ b/backend/internal/gateway/router.go[m
+[36m@@ -61,10 +61,6 @@[m [mfunc NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH[m
+ 	staffRouter := protectedRouter.PathPrefix("/").Subrouter()[m
+ 	staffRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID, models.ModeratorRoleID))[m
+ [m
+[31m-	staffRouter.HandleFunc("/sg_reservations", secretGuestHandler.GetAllOTAReservations).Methods(http.MethodGet)                           // reservations[m
+[31m-	staffRouter.HandleFunc("/sg_reservations/{id}", secretGuestHandler.GetOTAReservationByID).Methods(http.MethodGet)                      // reservations[m
+[31m-	staffRouter.HandleFunc("/sg_reservations/{id}/no-show", secretGuestHandler.UpdateOTAReservationStatusNoShow).Methods(http.MethodPatch) // reservations[m
+[31m-[m
+ 	staffRouter.HandleFunc("/assignments", secretGuestHandler.GetAllAssignments).Methods(http.MethodGet)              // assignments[m
+ 	staffRouter.HandleFunc("/assignments/{id}", secretGuestHandler.GetAssignmentByID_AsStaff).Methods(http.MethodGet) // assignments[m
+ 	staffRouter.HandleFunc("/assignments/{id}/cancel", secretGuestHandler.CancelAssignment).Methods(http.MethodPost)  // assignments[m
+[36m@@ -110,9 +106,8 @@[m [mfunc NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH[m
+ 	adminRouter := protectedRouter.PathPrefix("/admin").Subrouter()[m
+ 	adminRouter.Use(authHandlers.RoleRequiredMiddleware(models.AdminRoleID))[m
+ [m
+[31m-	adminRouter.HandleFunc("/listings", secretGuestHandler.CreateListing).Methods(http.MethodPost)               // listings[m
+[31m-	adminRouter.HandleFunc("/assignments", secretGuestHandler.CreateAssignment).Methods(http.MethodPost)         // assignments[m
+[31m-	adminRouter.HandleFunc("/sg_reservations", secretGuestHandler.HandleOTAReservation).Methods(http.MethodPost) // reservations[m
+[32m+[m	[32madminRouter.HandleFunc("/listings", secretGuestHandler.CreateListing).Methods(http.MethodPost)       // listings[m
+[32m+[m	[32madminRouter.HandleFunc("/assignments", secretGuestHandler.CreateAssignment).Methods(http.MethodPost) // assignments[m
+ [m
+ 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)[m
+ [m
+[1mdiff --git a/backend/internal/models/constants.go b/backend/internal/models/constants.go[m
+[1mindex ec1e37f..4d47c88 100644[m
+[1m--- a/backend/internal/models/constants.go[m
+[1m+++ b/backend/internal/models/constants.go[m
+[36m@@ -24,10 +24,3 @@[m [mconst ([m
+ 	ReportStatusRejected         = 6 // Отклонен[m
+ 	ReportStatusGenerationFailed = 7 // Ошибка генерации[m
+ )[m
+[31m-[m
+[31m-const ([m
+[31m-	OTAReservationStatusNew    = 1 // Новое[m
+[31m-	OTAReservationStatusHold   = 2 // Зарезервировано[m
+[31m-	OTAReservationStatusBooked = 3 // Забронировано[m
+[31m-	OTAReservationStatusNoShow = 4 // Скрыто[m
+[31m-)[m
+[1mdiff --git a/backend/internal/models/errors.go b/backend/internal/models/errors.go[m
+[1mindex a9ce830..8dadc7e 100644[m
+[1m--- a/backend/internal/models/errors.go[m
+[1m+++ b/backend/internal/models/errors.go[m
+[36m@@ -31,11 +31,6 @@[m [mvar ([m
+ 	ErrListingCannotBeCreated = errors.New("listing cannot be created")[m
+ 	ErrListingNotFound        = errors.New("listing not found")[m
+ [m
+[31m-	ErrListingTypeNotFound = errors.New("listing type not found")[m
+[31m-[m
+[31m-	ErrOTAReservationCannotBeCreated = errors.New("OTA reservation cannot be created")[m
+[31m-	ErrOTAReservationNotFound        = errors.New("OTA reservation not found")[m
+[31m-[m
+ 	ErrAssignmentCannotBeCreated = errors.New("assignment cannot be created")[m
+ 	ErrAssignmentNotFound        = errors.New("assignment not found")[m
+ [m
+[1mdiff --git a/backend/internal/models/models.go b/backend/internal/models/models.go[m
+[1mindex 8cc84eb..c2f1f54 100644[m
+[1m--- a/backend/internal/models/models.go[m
+[1m+++ b/backend/internal/models/models.go[m
+[36m@@ -46,24 +46,6 @@[m [mtype ListingType struct {[m
+ [m
+ //================================[m
+ [m
+[31m-// Reservation - бронирование[m
+[31m-type OTAReservation struct {[m
+[31m-	OTAID         uuid.UUID       `db:"ota_id"`[m
+[31m-	BookingNumber string          `db:"booking_number"`[m
+[31m-	ListingID     uuid.UUID       `db:"listing_id"`[m
+[31m-	CheckinDate   time.Time       `db:"checkin_date"`[m
+[31m-	CheckoutDate  time.Time       `db:"checkout_date"`[m
+[31m-	Pricing       json.RawMessage `db:"pricing"`[m
+[31m-	StatusID      int             `db:"status_id"`[m
+[31m-	SourceMsg     json.RawMessage `db:"source_msg"`[m
+[31m-[m
+[31m-	Status StatusInfo `db:"-"`[m
+[31m-}[m
+[31m-[m
+[31m-//================================[m
+[31m-[m
+[31m-//================================[m
+[31m-[m
+ // Assignment - задание(предложения) быть ТГ и провести обследование объекта[m
+ type Assignment struct {[m
+ 	ID         uuid.UUID  `db:"id"`[m
+[1mdiff --git a/backend/internal/secret_guest/dto.go b/backend/internal/secret_guest/dto.go[m
+[1mindex ea9a4f7..221799f 100644[m
+[1m--- a/backend/internal/secret_guest/dto.go[m
+[1m+++ b/backend/internal/secret_guest/dto.go[m
+[36m@@ -25,7 +25,6 @@[m [mtype CreateListingRequestDTO struct {[m
+ 	Code          uuid.UUID `json:"code" validate:"required,uuid"`[m
+ 	Title         string    `json:"title" validate:"required"`[m
+ 	Description   string    `json:"description" validate:"required"`[m
+[31m-	MainPicture   *string   `json:"main_picture,omitempty"`[m
+ 	ListingTypeID int       `json:"listing_type_id" validate:"required,gt=0"`[m
+ 	Address       string    `json:"address" validate:"required"`[m
+ 	City          string    `json:"city" validate:"required"`[m
+[36m@@ -60,78 +59,6 @@[m [mtype ListingsResponse struct {[m
+ 	Page     int                   `json:"page"`[m
+ }[m
+ [m
+[31m-// ================================[m
+[31m-type OTAReservationRequestDTO struct {[m
+[31m-	Reservation OTAReservationDTO `json:"reservation" validate:"required"`[m
+[31m-	Source      string            `json:"source" validate:"required"`[m
+[31m-	ReceivedAt  time.Time         `json:"received_at" validate:"required"`[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationDTO struct {[m
+[31m-	OTAID         uuid.UUID                `json:"ota_id" validate:"required,uuid"`[m
+[31m-	BookingNumber string                   `json:"booking_number" validate:"required"`[m
+[31m-	Status        string                   `json:"status" validate:"required"`[m
+[31m-	Listing       OTAReservationListingDTO `json:"listing" validate:"required"`[m
+[31m-	Dates         OTAReservationDates      `json:"dates" validate:"required"`[m
+[31m-	Guests        OTAReservationGuests     `json:"guests" validate:"required"`[m
+[31m-	Pricing       OTAReservationPricing    `json:"pricing" validate:"required"`[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationListingDTO struct {[m
+[31m-	ID          uuid.UUID           `json:"id" validate:"required,uuid"`[m
+[31m-	Title       string              `json:"title" validate:"required"`[m
+[31m-	Description string              `json:"description" validate:"required"`[m
+[31m-	MainPicture string              `json:"main_picture" validate:"required"`[m
+[31m-	ListingType ListingTypeResponse `json:"listing_type" validate:"required"`[m
+[31m-	Address     string              `json:"address" validate:"required"`[m
+[31m-	City        string              `json:"city" validate:"required"`[m
+[31m-	Country     string              `json:"country" validate:"required"`[m
+[31m-	Latitude    float64             `json:"latitude" validate:"required"`[m
+[31m-	Longitude   float64             `json:"longitude" validate:"required"`[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationDates struct {[m
+[31m-	Checkin  time.Time `json:"checkin" validate:"required"`[m
+[31m-	Checkout time.Time `json:"checkout" validate:"required"`[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationGuests struct {[m
+[31m-	Adults   int `json:"adults" validate:"required,gte=0"`[m
+[31m-	Children int `json:"children" validate:"required,gte=0"`[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationPricing struct {[m
+[31m-	Currency  string                         `json:"currency" validate:"required"`[m
+[31m-	Total     int                            `json:"total" validate:"required,gte=0"`[m
+[31m-	Breakdown OTAReservationPricingBreakdown `json:"breakdown" validate:"required"`[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationPricingBreakdown struct {[m
+[31m-	PerNight int `json:"per_night" validate:"required,gte=0"`[m
+[31m-	Nights   int `json:"nights" validate:"required,gte=0"`[m
+[31m-}[m
+[31m-[m
+[31m-type GetAllOTAReservationsRequestDTO struct {[m
+[31m-	StatusIDs []int[m
+[31m-	Page      int[m
+[31m-	Limit     int[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationResponseDTO struct {[m
+[31m-	OTAID         uuid.UUID      `json:"ota_id" validate:"required,uuid"`[m
+[31m-	BookingNumber string         `db:"booking_number"`[m
+[31m-	ListingID     uuid.UUID      `db:"listing_id"`[m
+[31m-	CheckinDate   time.Time      `db:"checkin_date"`[m
+[31m-	CheckoutDate  time.Time      `db:"checkout_date"`[m
+[31m-	Status        StatusResponse `json:"status"`[m
+[31m-}[m
+[31m-[m
+[31m-type OTAReservationsResponse struct {[m
+[31m-	Reservations []*OTAReservationResponseDTO `json:"reservations"`[m
+[31m-	Total        int                          `json:"total"`[m
+[31m-	Page         int                          `json:"page"`[m
+[31m-}[m
+[31m-[m
+ // ================================[m
+ type CreateAssignmentRequestDTO struct {[m
+ 	Code       uuid.UUID `json:"code" validate:"required,uuid"`[m
+[1mdiff --git a/backend/internal/secret_guest/handler.go b/backend/internal/secret_guest/handler.go[m
+[1mindex 94e6779..9bdeadd 100644[m
+[1m--- a/backend/internal/secret_guest/handler.go[m
+[1m+++ b/backend/internal/secret_guest/handler.go[m
+[36m@@ -280,165 +280,6 @@[m [mfunc (h *SecretGuestHandler) GetListingByID(w http.ResponseWriter, r *http.Reque[m
+ 	h.writeJSONResponse(ctx, w, http.StatusOK, listing)[m
+ }[m
+ [m
+[31m-// reservations[m
+[31m-[m
+[31m-// @Summary      Handles OTA Reservations Events (Admin)[m
+[31m-// @Security     BearerAuth[m
+[31m-// @Description  Handles OTA Reservations Events. Available for admin only.[m
+[31m-// @Tags         Reservations (Admin)[m
+[31m-// @Accept       json[m
+[31m-// @Produce      json[m
+[31m-// @Param        input body secret_guest.OTAReservationRequestDTO true "OTA Reservation Payload"[m
+[31m-// @Param        Authorization header string true "Bearer Access Token"[m
+[31m-// @Success      200 {object} string "OK"[m
+[31m-// @Failure      400 {object} ErrorResponse "Invalid payload"[m
+[31m-// @Failure      401 {object} ErrorResponse "Unauthorized"[m
+[31m-// @Failure      403 {object} ErrorResponse "Forbidden"[m
+[31m-// @Failure      500 {object} ErrorResponse "Internal server error"[m
+[31m-// @Router       /admin/sg_reservations [post][m
+[31m-func (h *SecretGuestHandler) HandleOTAReservation(w http.ResponseWriter, r *http.Request) {[m
+[31m-	ctx := r.Context()[m
+[31m-	log := logger.GetLoggerFromCtx(ctx)[m
+[31m-[m
+[31m-	var dto OTAReservationRequestDTO[m
+[31m-	if err := h.decodeJSONBody(ctx, r, &dto); err != nil {[m
+[31m-		log.Warn(ctx, "Failed to decode create OTA reservation request", zap.Error(err))[m
+[31m-		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	if err := validation.StructCtx(ctx, &dto); err != nil {[m
+[31m-		log.Warn(ctx, "Failed to validate create OTA reservation request", zap.Error(err))[m
+[31m-		h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Invalid request body")[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	err := h.service.HandleOTAReservation(ctx, dto)[m
+[31m-	if err != nil {[m
+[31m-		if errors.Is(err, models.ErrListingTypeNotFound) {[m
+[31m-			log.Info(ctx, "Listing type not found", zap.String("listing_type_id", strconv.Itoa(dto.Reservation.Listing.ListingType.ID)))[m
+[31m-			h.writeErrorResponse(ctx, w, http.StatusBadRequest, "Listing type not found")[m
+[31m-		} else {[m
+[31m-			log.Error(ctx, "Failed to handle OTA reservation", zap.Error(err))[m
+[31m-			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")[m
+[31m-		}[m
+[31m-[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	h.writeJSONResponse(ctx, w, http.StatusOK, "OK")[m
+[31m-}[m
+[31m-[m
+[31m-// @Summary      Get All OTA Reservations (Staff)[m
+[31m-// @Security     BearerAuth[m
+[31m-// @Description  Returns a paginated list of all OTA reservations. Available for staff only.[m
+[31m-// @Tags         Reservations (Staff)[m
+[31m-// @Produce      json[m
+[31m-// @Param        page query int false "Page number for pagination" default(1)[m
+[31m-// @Param        limit query int false "Number of items per page" default(50)[m
+[31m-// @Param        status_id query []int false "Filter by one or more status IDs" collectionFormat(multi)[m
+[31m-// @Param Authorization header string true "Bearer Access Token"[m
+[31m-// @Success      200 {object} secret_guest.AssignmentsResponse[m
+[31m-// @Failure      401 {object} ErrorResponse "Unauthorized"[m
+[31m-// @Failure      403 {object} ErrorResponse "Forbidden"[m
+[31m-// @Failure      500 {object} ErrorResponse "Internal server error"[m
+[31m-// @Router       /sg_reservations [get][m
+[31m-func (h *SecretGuestHandler) GetAllOTAReservations(w http.ResponseWriter, r *http.Request) {[m
+[31m-	ctx := r.Context()[m
+[31m-	log := logger.GetLoggerFromCtx(ctx)[m
+[31m-[m
+[31m-	page, limit := h.parsePagination(r)[m
+[31m-	_, statusIDs := h.parseFilterParams(r)[m
+[31m-[m
+[31m-	dto := GetAllOTAReservationsRequestDTO{[m
+[31m-		StatusIDs: statusIDs,[m
+[31m-		Page:      page,[m
+[31m-		Limit:     limit,[m
+[31m-	}[m
+[31m-[m
+[31m-	reservations, err := h.service.GetAllOTAReservations(ctx, dto)[m
+[31m-	if err != nil {[m
+[31m-		log.Error(ctx, "Failed to get all OTA reservations", zap.Error(err))[m
+[31m-		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	h.writeJSONResponse(ctx, w, http.StatusOK, reservations)[m
+[31m-}[m
+[31m-[m
+[31m-// @Summary      Get OTA Reservation By ID[m
+[31m-// @Description  Returns detailed information about a single OTA reservation.[m
+[31m-// @Tags         Reservations (Staff)[m
+[31m-// @Produce      json[m
+[31m-// @Param        id path string true "OTA Reservation ID" format(uuid)[m
+[31m-// @Param Authorization header string true "Bearer Access Token"[m
+[31m-// @Success      200 {object} secret_guest.OTAReservationResponseDTO[m
+[31m-// @Failure      400 {object} ErrorResponse "Invalid OTA Reservation ID format"[m
+[31m-// @Failure      401 {object} ErrorResponse "Unauthorized"[m
+[31m-// @Failure      404 {object} ErrorResponse "OTA Reservation not found"[m
+[31m-// @Failure      500 {object} ErrorResponse "Internal server error"[m
+[31m-// @Router       /sg_reservations/{id} [get][m
+[31m-func (h *SecretGuestHandler) GetOTAReservationByID(w http.ResponseWriter, r *http.Request) {[m
+[31m-	ctx := r.Context()[m
+[31m-	log := logger.GetLoggerFromCtx(ctx)[m
+[31m-[m
+[31m-	reservationID, ok := h.parseUUIDFromPath(w, r, "id")[m
+[31m-	if !ok {[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	reservation, err := h.service.GetOTAReservationByID(ctx, reservationID)[m
+[31m-	if err != nil {[m
+[31m-		if errors.Is(err, models.ErrOTAReservationNotFound) {[m
+[31m-			log.Info(ctx, "OTA reservation not found by ID", zap.String("reservation_id", reservationID.String()))[m
+[31m-			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found")[m
+[31m-		} else {[m
+[31m-			log.Error(ctx, "Failed to get OTA reservation by ID", zap.Error(err))[m
+[31m-			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")[m
+[31m-		}[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	h.writeJSONResponse(ctx, w, http.StatusOK, reservation)[m
+[31m-}[m
+[31m-[m
+[31m-// @Summary      Hide an OTA Reservation (Staff)[m
+[31m-// @Security     BearerAuth[m
+[31m-// @Description  Changes OTA Reservation status to NoShow. Available for staff only.[m
+[31m-// @Tags         Reservations (Staff)[m
+[31m-// @Param        id path string true "Reservation ID" format(uuid)[m
+[31m-// @Param Authorization header string true "Bearer Access Token"[m
+[31m-// @Success      204 "No Content"[m
+[31m-// @Failure      400 {object} ErrorResponse "Invalid reservation ID format"[m
+[31m-// @Failure      401 {object} ErrorResponse "Unauthorized"[m
+[31m-// @Failure      403 {object} ErrorResponse "Forbidden"[m
+[31m-// @Failure      404 {object} ErrorResponse "Reservation not found"[m
+[31m-// @Failure      500 {object} ErrorResponse "Internal server error"[m
+[31m-// @Router       /sg_reservations/{id}/no-show [post][m
+[31m-func (h *SecretGuestHandler) UpdateOTAReservationStatusNoShow(w http.ResponseWriter, r *http.Request) {[m
+[31m-	ctx := r.Context()[m
+[31m-	log := logger.GetLoggerFromCtx(ctx)[m
+[31m-[m
+[31m-	reservationID, ok := h.parseUUIDFromPath(w, r, "id")[m
+[31m-	if !ok {[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	err := h.service.UpdateOTAReservationStatusNoShow(ctx, reservationID)[m
+[31m-	if err != nil {[m
+[31m-		if errors.Is(err, models.ErrOTAReservationNotFound) {[m
+[31m-			log.Info(ctx, "OTA reservation not found by ID", zap.String("reservation_id", reservationID.String()))[m
+[31m-			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found")[m
+[31m-		} else {[m
+[31m-			log.Error(ctx, "Failed to update OTA reservation status", zap.Error(err))[m
+[31m-			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")[m
+[31m-		}[m
+[31m-		return[m
+[31m-	}[m
+[31m-[m
+[31m-	w.WriteHeader(http.StatusNoContent)[m
+[31m-}[m
+[31m-[m
+ // assignments[m
+ [m
+ // @Summary      Create new Assignment (Admin)[m
+[1mdiff --git a/backend/internal/secret_guest/repository/repository.go b/backend/internal/secret_guest/repository/repository.go[m
+[1mindex d571391..6fa00ec 10
