@@ -10,7 +10,7 @@ export function useAssignments() {
   const [error, setError] = React.useState<string | null>(null);
   const [retryCount, setRetryCount] = React.useState(0);
   const [declinedAssignments, setDeclinedAssignments] = React.useState<Set<string>>(new Set());
-  
+
   const { handleError, handleSilentError } = useErrorHandler();
 
   const fetchAssignments = React.useCallback(async (page = 1, limit = 20, retry = false) => {
@@ -18,20 +18,20 @@ export function useAssignments() {
       setLoading(true);
       setError(null);
     }
-    
+
     try {
       console.log("Fetching assignments with params:", { page, limit });
-      
+
       // Логируем информацию о пользователе
       const token = localStorage.getItem('access_token');
       console.log("Current access token:", token ? `${token.substring(0, 20)}...` : 'No token');
-      
+
       // Получаем предложенные задания (offered) через /assignments/my
       const offeredResponse = await AssignmentsApi.getMyAssignments(page, limit);
       console.log("=== OFFERED ASSIGNMENTS ===");
       console.log("Offered assignments:", offeredResponse.assignments);
       console.log("Offered count:", offeredResponse.assignments.length);
-      
+
       // Логируем детали каждого предложенного задания
       offeredResponse.assignments.forEach((assignment, index) => {
         console.log(`Offered assignment ${index}:`, {
@@ -42,7 +42,7 @@ export function useAssignments() {
           listing: assignment.listing
         });
       });
-      
+
       // Получаем принятые задания через /reports/my (отчеты в статусе draft)
       let acceptedAssignments: Assignment[] = [];
       try {
@@ -50,12 +50,12 @@ export function useAssignments() {
         console.log("=== REPORTS (ACCEPTED ASSIGNMENTS) ===");
         console.log("Reports:", reportsResponse.reports);
         console.log("Reports count:", reportsResponse.reports.length);
-        
+
         // Преобразуем отчеты в формат заданий
         console.log("=== FILTERING REPORTS ===");
         console.log("All reports:", reportsResponse.reports);
         console.log("Declined assignments:", [...declinedAssignments]);
-        
+
         acceptedAssignments = reportsResponse.reports
           .filter(report => {
             const hasAssignmentId = !!report.assignment_id;
@@ -71,6 +71,8 @@ export function useAssignments() {
               slug: 'accepted',
               name: 'Принято'
             },
+            guests: undefined,
+            pricing: undefined,
             listing: {
               id: report.listing?.id || '',
               title: report.listing?.title || '',
@@ -95,11 +97,11 @@ export function useAssignments() {
             created_at: report.created_at || new Date().toISOString(),
             expires_at: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString() // +10 дней
           }));
-        
+
         console.log("=== CONVERTED ACCEPTED ASSIGNMENTS ===");
         console.log("Accepted assignments:", acceptedAssignments);
         console.log("Accepted count:", acceptedAssignments.length);
-        
+
         // Логируем детали каждого принятого задания
         acceptedAssignments.forEach((assignment, index) => {
           console.log(`Accepted assignment ${index}:`, {
@@ -113,19 +115,19 @@ export function useAssignments() {
         console.log("No reports or error:", reportsErr);
         // Игнорируем ошибку для отчетов
       }
-      
+
       // Объединяем все задания
       const allAssignments = [...offeredResponse.assignments, ...acceptedAssignments];
       console.log("=== COMBINED ASSIGNMENTS ===");
       console.log("All assignments:", allAssignments);
       console.log("Total count:", allAssignments.length);
-      
+
       setAssignments(allAssignments);
       setRetryCount(0);
     } catch (err) {
       const appError = handleSilentError(err, 'fetchAssignments');
       setError(appError.message);
-      
+
       // Автоматический retry для сетевых ошибок
       if (appError.status === 0 || (appError.status && appError.status >= 500)) {
         setRetryCount(prev => {
@@ -139,7 +141,7 @@ export function useAssignments() {
         });
         return;
       }
-      
+
       // Не показываем ошибку для 409 - это нормальное поведение
       if (appError.status === 409) {
         setError(null);
@@ -154,11 +156,11 @@ export function useAssignments() {
     try {
       console.log("Calling AssignmentsApi.acceptAssignment for:", id);
       console.log("Before API call - assignment status should be updated");
-      
+
       // Добавляем логирование для поиска существующего отчета
       console.log("Searching for existing report with assignment_id:", id);
       console.log("Current assignments state:", assignments);
-      
+
       console.log("Making API call to accept assignment...");
       const result = await AssignmentsApi.acceptAssignment(id);
       console.log("AssignmentsApi.acceptAssignment completed successfully:", result);
@@ -171,10 +173,10 @@ export function useAssignments() {
       console.log("Error in acceptAssignment:", err);
       console.log("Error type:", typeof err);
       console.log("Error message:", err instanceof Error ? err.message : String(err));
-      
+
       // Не показываем ошибку для 409/500 - это нормальное поведение для уже принятых заданий
       if (err instanceof Error && (
-        err.message.includes('409') || 
+        err.message.includes('409') ||
         err.message.includes('500') ||
         err.message.includes('Assignment can not be accepted') ||
         err.message.includes('Internal server error')
@@ -182,7 +184,7 @@ export function useAssignments() {
         console.log("Throwing error (409/500) without handling:", err.message);
         throw err;
       }
-      
+
       console.log("Handling error with handleError");
       handleError(err, 'acceptAssignment');
       throw err;
@@ -192,16 +194,16 @@ export function useAssignments() {
   const declineAssignment = React.useCallback(async (id: string) => {
     console.log("=== DECLINE ASSIGNMENT ===");
     console.log("Declining assignment ID:", id);
-    
+
     try {
       console.log("Making API call to decline assignment...");
       await AssignmentsApi.declineAssignment(id);
       console.log("AssignmentsApi.declineAssignment completed successfully");
-      
+
       // Добавляем задание в список отклоненных для локального состояния
       setDeclinedAssignments(prev => new Set([...prev, id]));
       console.log("Added assignment to declined list:", id);
-      
+
       // Обновляем список заданий после успешного отклонения
       console.log("Fetching updated assignments...");
       await fetchAssignments();
@@ -211,18 +213,18 @@ export function useAssignments() {
       console.log("Error in declineAssignment:", err);
       console.log("Error type:", typeof err);
       console.log("Error message:", err instanceof Error ? err.message : String(err));
-      
+
       // Не показываем ошибку для 409 - это нормальное поведение
       if (err instanceof Error && (err.message.includes('409') || err.message.includes('Assignment can not be declined'))) {
         console.log("Throwing 409 error without handling:", err.message);
         throw err;
       }
-      
+
       console.log("Handling error with handleError");
       handleError(err, 'declineAssignment');
       throw err;
     }
-    
+
     console.log("=== END DECLINE ASSIGNMENT ===");
   }, [fetchAssignments, handleError]);
 
