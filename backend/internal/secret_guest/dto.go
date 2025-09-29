@@ -152,11 +152,18 @@ type GetMyAssignmentsRequestDTO struct {
 	Limit  int
 }
 
+type GetFreeAssignmentsRequestDTO struct {
+	Page           int
+	Limit          int
+	ListingTypeIDs []int
+}
+
 type GetAllAssignmentsRequestDTO struct {
-	Page       int
-	Limit      int
-	ReporterID *uuid.UUID
-	StatusIDs  []int
+	Page           int
+	Limit          int
+	ReporterID     *uuid.UUID
+	StatusIDs      []int
+	ListingTypeIDs []int
 }
 
 type AssignmentResponseDTO struct {
@@ -173,7 +180,6 @@ type AssignmentResponseDTO struct {
 
 	CreatedAt  time.Time  `json:"created_at"`
 	AcceptedAt *time.Time `json:"accepted_at,omitempty"`
-	DeclinedAt *time.Time `json:"declined_at,omitempty"`
 
 	ExpiresAt time.Time  `json:"expires_at"`
 	Deadline  *time.Time `json:"deadline,omitempty"`

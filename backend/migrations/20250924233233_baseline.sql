@@ -83,7 +83,7 @@ CREATE TABLE "public"."assignments" (
   
   "reporter_id" uuid NULL, -- исполнитель, т.е. ТГ
   "accepted_at" timestamp NULL, -- дата принятия предложения со стороны ТГ
-  "declined_at" timestamp NULL, -- дата отклонения предложения со стороны ТГ
+
 
   "deadline" timestamp NULL, -- Дедлайн(дата) СДАЧИ отчета (устанавливается после accepted_at)
 
@@ -95,6 +95,17 @@ CREATE TABLE "public"."assignments" (
   CONSTRAINT "assignments_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "public"."users" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT "assignments_status_id_fkey" FOREIGN KEY ("status_id") REFERENCES "public"."assignment_statuses" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+
+
+
+CREATE TABLE assignment_declines (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    assignment_id UUID NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
+    reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    declined_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+
 
 
 -- Create "ota_sg_reservation_statuses" table

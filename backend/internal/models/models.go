@@ -85,7 +85,6 @@ type Assignment struct {
 	CreatedAt  time.Time  `db:"created_at"`
 	ExpiresAt  time.Time  `db:"expires_at"`
 	AcceptedAt *time.Time `db:"accepted_at"`
-	DeclinedAt *time.Time `db:"declined_at"`
 	Deadline   *time.Time `db:"deadline"`
 
 	Listing  ListingShortInfo `db:"-"`
@@ -223,10 +222,3 @@ type ChecklistItemUpdate struct {
 type ChecklistSchema map[string]interface{}
 
 ////
-
-// MediaRequirementSlugs - константы для слагов требований к медиафайлам.
-const (
-	MediaRequirementNone     = "none"
-	MediaRequirementOptional = "optional"
-	MediaRequirementRequired = "required"
-)

@@ -113,7 +113,7 @@ func (h *SecretGuestHandler) parsePagination(r *http.Request) (page, limit int) 
 	return page, limit
 }
 
-func (h *SecretGuestHandler) parseFilterParams(r *http.Request) (*uuid.UUID, []int) {
+func (h *SecretGuestHandler) parseFilterParams(r *http.Request) (*uuid.UUID, []int, []int) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
 	queryParams := r.URL.Query()
@@ -145,7 +145,23 @@ func (h *SecretGuestHandler) parseFilterParams(r *http.Request) (*uuid.UUID, []i
 		}
 	}
 
-	return reporterID, statusIDs
+	var listingTypeIDs []int
+	if listingTypeIDStrings, ok := queryParams["listing_type_id"]; ok {
+		listingTypeIDs = make([]int, 0, len(listingTypeIDStrings))
+		for _, idStr := range listingTypeIDStrings {
+			parsedInt, err := strconv.Atoi(idStr)
+			if err != nil {
+				log.Warn(ctx, "Invalid listing_type_id value in query parameter, value ignored",
+					zap.String("listing_type_id", idStr),
+					zap.Error(err),
+				)
+				continue
+			}
+			listingTypeIDs = append(listingTypeIDs, parsedInt)
+		}
+	}
+
+	return reporterID, statusIDs, listingTypeIDs
 }
 
 // listings
@@ -348,7 +364,7 @@ func (h *SecretGuestHandler) GetAllOTAReservations(w http.ResponseWriter, r *htt
 	log := logger.GetLoggerFromCtx(ctx)
 
 	page, limit := h.parsePagination(r)
-	_, statusIDs := h.parseFilterParams(r)
+	_, statusIDs, _ := h.parseFilterParams(r)
 
 	dto := GetAllOTAReservationsRequestDTO{
 		StatusIDs: statusIDs,
@@ -470,9 +486,32 @@ func (h *SecretGuestHandler) UpdateOTAReservationStatusNoShow(w http.ResponseWri
 // 		}
 // 		return
 // 	}
-
+//
 // 	h.writeJSONResponse(ctx, w, http.StatusCreated, assignment)
 // }
+
+func (h *SecretGuestHandler) GetFreeAssignments(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	page, limit := h.parsePagination(r)
+	_, _, listingTypeIDs := h.parseFilterParams(r)
+
+	dto := GetFreeAssignmentsRequestDTO{
+		Page:           page,
+		Limit:          limit,
+		ListingTypeIDs: listingTypeIDs,
+	}
+
+	assignments, err := h.service.GetFreeAssignments(ctx, dto)
+	if err != nil {
+		log.Error(ctx, "Failed to get free assignments", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, assignments)
+}
 
 // @Summary      Get My Assignments
 // @Security     BearerAuth
@@ -532,13 +571,14 @@ func (h *SecretGuestHandler) GetAllAssignments(w http.ResponseWriter, r *http.Re
 	log := logger.GetLoggerFromCtx(ctx)
 
 	page, limit := h.parsePagination(r)
-	reporterID, statusIDs := h.parseFilterParams(r)
+	reporterID, statusIDs, listingTypeIDs := h.parseFilterParams(r)
 
 	dto := GetAllAssignmentsRequestDTO{
-		Page:       page,
-		Limit:      limit,
-		ReporterID: reporterID,
-		StatusIDs:  statusIDs,
+		Page:           page,
+		Limit:          limit,
+		ReporterID:     reporterID,
+		StatusIDs:      statusIDs,
+		ListingTypeIDs: listingTypeIDs,
 	}
 
 	assignments, err := h.service.GetAllAssignments(ctx, dto)
@@ -727,7 +767,7 @@ func (h *SecretGuestHandler) DeclineMyAssignment(w http.ResponseWriter, r *http.
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// @Summary      Decline Assignment
+// @Summary      Cancel Assignment
 // @Security     BearerAuth
 // @Description  Cancel an assignment offer.
 // @Tags         Assignments (Staff)
@@ -753,7 +793,7 @@ func (h *SecretGuestHandler) CancelAssignment(w http.ResponseWriter, r *http.Req
 	if err != nil {
 		switch {
 		case errors.Is(err, models.ErrAssignmentNotFound), errors.Is(err, models.ErrForbidden):
-			log.Info(ctx, "Assignment not found by ID", zap.String("report_id", assignmentID.String()))
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
 			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found or access denied")
 		default:
 			log.Error(ctx, "Failed to cancel assignment", zap.Error(err))
@@ -1020,7 +1060,7 @@ func (h *SecretGuestHandler) GetAllReports(w http.ResponseWriter, r *http.Reques
 	log := logger.GetLoggerFromCtx(ctx)
 
 	page, limit := h.parsePagination(r)
-	reporterID, statusIDs := h.parseFilterParams(r)
+	reporterID, statusIDs, _ := h.parseFilterParams(r)
 
 	dto := GetAllReportsRequestDTO{
 		Page:       page,
