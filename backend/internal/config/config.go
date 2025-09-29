@@ -18,8 +18,7 @@ type Config struct {
 	PostgresPassword string `env:"POSTGRES_PASSWORD" env-default:"mypass"`
 	PostgresDB       string `env:"POSTGRES_DB" env-default:"mydb"`
 
-	AssignmentAcceptanceHours int `env:"ASSIGNMENT_ACCEPTANCE_HOURS" env-default:"48"`
-	AssignmentDeadlineDays    int `env:"ASSIGNMENT_DEADLINE_DAYS" env-default:"7"`
+	AssignmentDeadlineHours int `env:"ASSIGNMENT_DEADLINE_HOURS" env-default:"24"`
 
 	DefaultPageLimit int `env:"DEFAULT_PAGE_LIMIT" env-default:"20"`
 

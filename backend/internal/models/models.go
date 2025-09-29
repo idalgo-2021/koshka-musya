@@ -80,6 +80,8 @@ type Assignment struct {
 	OtaSgReservationID uuid.UUID       `db:"ota_sg_reservation_id"`
 	Pricing            json.RawMessage `db:"pricing"`
 	Guests             json.RawMessage `db:"guests"`
+	CheckinDate        time.Time       `db:"checkin_date"`
+	CheckoutDate       time.Time       `db:"checkout_date"`
 
 	Purpose    string     `db:"purpose"`
 	CreatedAt  time.Time  `db:"created_at"`

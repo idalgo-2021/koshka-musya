@@ -494,6 +494,8 @@ func (r *SecretGuestRepository) scanAssignment(row pgx.Row) (*models.Assignment,
 		&a.OtaSgReservationID,
 		&a.Pricing,
 		&a.Guests,
+		&a.CheckinDate,
+		&a.CheckoutDate,
 
 		&a.ListingID, &a.ReporterID, &a.StatusID,
 
@@ -537,11 +539,14 @@ func (r *SecretGuestRepository) CreateAssignment(ctx context.Context, assignment
 			ota_sg_reservation_id, 
 			pricing,
 			guests,
+			checkin_date,
+			checkout_date,
+
 			listing_id,
 			purpose,
 			created_at,
 			expires_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id;
 	`
 
@@ -549,6 +554,8 @@ func (r *SecretGuestRepository) CreateAssignment(ctx context.Context, assignment
 		assignment.OtaSgReservationID,
 		assignment.Pricing,
 		assignment.Guests,
+		assignment.CheckinDate,
+		assignment.CheckoutDate,
 
 		assignment.ListingID,
 		assignment.Purpose,
@@ -603,6 +610,8 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 			a.ota_sg_reservation_id,
 			a.pricing,
 			a.guests, 
+			a.checkin_date,
+			a.checkout_date,
 			
 			a.listing_id, a.reporter_id, a.status_id,
 			a.purpose,
@@ -666,6 +675,8 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 			&a.OtaSgReservationID,
 			&a.Pricing,
 			&a.Guests,
+			&a.CheckinDate,
+			&a.CheckoutDate,
 
 			&a.ListingID, &a.ReporterID, &a.StatusID,
 			&a.Purpose,
@@ -753,6 +764,8 @@ func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter A
 			a.ota_sg_reservation_id,
 			a.pricing,
 			a.guests, 
+			a.checkin_date,
+			a.checkout_date,
 			
 			a.listing_id, a.reporter_id, a.status_id,
 			a.purpose,
@@ -816,6 +829,8 @@ func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter A
 			&a.OtaSgReservationID,
 			&a.Pricing,
 			&a.Guests,
+			&a.CheckinDate,
+			&a.CheckoutDate,
 
 			&a.ListingID, &a.ReporterID, &a.StatusID,
 			&a.Purpose,
@@ -871,6 +886,8 @@ func (r *SecretGuestRepository) GetAssignmentByID(ctx context.Context, assignmen
 			a.ota_sg_reservation_id,
 			a.pricing,
 			a.guests, 
+			a.checkin_date,
+			a.checkout_date,
 			
 			a.listing_id, a.reporter_id, a.status_id,
 			a.purpose, a.created_at, a.expires_at, a.accepted_at, a.deadline, l.code as "listing_code",
@@ -948,6 +965,8 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 			a.ota_sg_reservation_id,
 			a.pricing,
 			a.guests,  
+			a.checkin_date,
+			a.checkout_date,
 						
 			a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, a.deadline, l.code as "listing_code",
 
@@ -982,7 +1001,7 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 	return assignment, nil
 }
 
-func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt, deadline time.Time) (*models.Report, error) {
+func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt time.Time) (*models.Report, error) {
 	log := logger.GetLoggerFromCtx(ctx)
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -994,12 +1013,11 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 		UPDATE assignments
 		SET 
 			status_id = $1, 
-			accepted_at = $2, 
-			deadline = $3
+			accepted_at = $2
 		WHERE 
-			id = $4 
-			AND reporter_id = $5 
-			AND status_id = $6
+			id = $3 
+			AND reporter_id = $4 
+			AND status_id = $5
 		RETURNING listing_id, purpose`
 
 	var listingID uuid.UUID
@@ -1007,7 +1025,6 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 	err = tx.QueryRow(ctx, updateQuery,
 		models.AssignmentStatusAccepted, // new assignment status
 		acceptedAt,
-		deadline,
 		assignmentID,
 		reporterID,
 		models.AssignmentStatusOffered, // current assignment status
