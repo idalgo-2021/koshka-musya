@@ -37,6 +37,18 @@ interface AdminLayoutProps {
           title: undefined,
           position: "center" as const
         }
+      case "checklist-section-create":
+        return {
+          size: "sm" as const,
+          title: "Создание секции",
+          position: "center" as const
+        }
+      case "checklist-section-edit":
+        return {
+          size: "sm" as const,
+          title: "Редактирование секции",
+          position: "center" as const
+        }
       default:
         return {
           title: "Modal",

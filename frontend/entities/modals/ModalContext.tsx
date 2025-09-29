@@ -11,11 +11,14 @@ import ReorderSectionsModal from '@/components/ReorderSectionsModal';
 import ResetPasswordModal from '@/components/ResetPasswordModal';
 import { useKeyboardHooks } from '@/hooks/useKeyboardHooks';
 import { type ChecklistSection } from '@/entities/checklist/api';
+import ChecklistSectionForm from "@/components/ChecklistSectionForm";
 
 // Define modal types
 export type ModalType =
   | "checklist-item-create"
   | "checklist-item-edit"
+  | "checklist-section-create"
+  | "checklist-section-edit"
   | "listing-type-create"
   | "listing-type-edit"
   | "confirmation"
@@ -30,6 +33,14 @@ export interface ChecklistItemCreatePayload {
 export interface ChecklistItemEditPayload {
   itemId: number
   sectionId?: number
+}
+
+export interface ChecklistSectionCreatePayload {
+  // No initial data needed for create
+}
+
+export interface ChecklistSectionEditPayload {
+  sectionId: number
 }
 
 export interface ListingTypeCreatePayload {
@@ -71,6 +82,8 @@ export interface ResetPasswordPayload {
 export type ModalPayload =
   | ChecklistItemCreatePayload
   | ChecklistItemEditPayload
+  | ChecklistSectionCreatePayload
+  | ChecklistSectionEditPayload
   | ListingTypeCreatePayload
   | ListingTypeEditPayload
   | ConfirmationPayload
@@ -248,6 +261,26 @@ export function ModalContent({
           sectionId={editPayload?.sectionId}
           onSuccess={onSuccess}
           onCancel={onCancel}
+        />
+      )
+
+    case "checklist-section-create":
+      const sectionCreatePayload = payload as ChecklistSectionEditPayload
+       return (
+        <ChecklistSectionForm
+          sectionId={sectionCreatePayload?.sectionId}
+          onCancel={onCancel || (() => {})}
+          onSuccess={onCancel || (() => {})}
+        />
+      )
+
+    case "checklist-section-edit":
+      const sectionEditPayload = payload as ChecklistSectionEditPayload
+      return (
+        <ChecklistSectionForm
+          sectionId={sectionEditPayload?.sectionId}
+          onCancel={onCancel || (() => {})}
+          onSuccess={onCancel || (() => {})}
         />
       )
 

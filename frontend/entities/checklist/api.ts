@@ -108,6 +108,10 @@ export const ChecklistApi = {
     return api.get<ChecklistSectionsResponse>(url, true)
   },
 
+  async getSectionById(id: number): Promise<ChecklistSection> {
+    return api.get<ChecklistSection>(`/checklist_sections/${id}`, true)
+  },
+
   async createSection(data: Partial<ChecklistSection>): Promise<ChecklistSection> {
     return api.post<ChecklistSection>('/checklist_sections', data, true)
   },

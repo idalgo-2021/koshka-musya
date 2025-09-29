@@ -258,7 +258,7 @@ export default function ChecklistItemForm({
             value={formData.title || ''}
             onChange={(e) => handleInputChange('title', e.target.value)}
             placeholder="Enter item title..."
-            className="text-xl border-t-0 border-l-0 border-r-0 placeholder:text-xl laceholder:text-gray-400 px-4 py-6 w-full border-0 outline-0 focus:border-0 focus:ring-0 rounded-md bg-gray-50"
+            className="text-md md:text-lg border-t-0 border-l-0 border-r-0 placeholder:text-xl laceholder:text-gray-400 px-4 py-6 w-full border-0 outline-0 focus:border-0 focus:ring-0 rounded-md bg-gray-50"
             required
             autoFocus
             autoComplete='off'
@@ -397,7 +397,7 @@ export default function ChecklistItemForm({
           </div>
         )}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 mb-10">
         <IOSSwitch
           id="is_active"
           checked={formData.is_active || false}
@@ -408,7 +408,7 @@ export default function ChecklistItemForm({
         </Label>
       </div>
 
-      <div className="flex items-center gap-2 pt-4">
+      <div className="flex items-center gap-2 pt-4 fixed bottom-4 md:relative">
         <Button
           type="submit"
           disabled={createMutation.isPending || updateMutation.isPending}

@@ -29,6 +29,7 @@ import {
   type SectionFilters
 } from '@/entities/checklist/api'
 import {isMobileDevice} from "@/lib/browser";
+import { useChecklistModals } from '@/hooks/useChecklistModals';
 
 export default function ChecklistEditorPage() {
   const router = useRouter()
@@ -399,6 +400,19 @@ export default function ChecklistEditorPage() {
   const loading = sectionsQuery.isLoading || itemsQuery.isLoading || listingTypesQuery.isLoading
   const error = sectionsQuery.isError || itemsQuery.isError || listingTypesQuery.isError
 
+  const { openCreateSectionModal } = useChecklistModals();
+  const onPressCreateSection = React.useCallback(() => {
+    if (window.innerWidth < 767) {
+      openCreateSectionModal();
+      return
+    }
+    if (showCreateSectionForm) {
+      setNewSectionTitle('')
+      setNewSectionListingTypeId(undefined)
+    }
+    setShowCreateSectionForm(!showCreateSectionForm)
+  }, [showCreateSectionForm, openCreateSectionModal]);
+
   return (
     <div className="container max-w-4xl py-6 space-y-6">
       <div className="sticky flex flex-col justify-between gap-2">
@@ -436,13 +450,7 @@ export default function ChecklistEditorPage() {
         </div> */}
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => {
-              if (showCreateSectionForm) {
-                setNewSectionTitle('')
-                setNewSectionListingTypeId(undefined)
-              }
-              setShowCreateSectionForm(!showCreateSectionForm)
-            }}
+            onClick={onPressCreateSection}
             variant={showCreateSectionForm ? "outline" : "default"}
           >
             {showCreateSectionForm ? (

@@ -1,13 +1,16 @@
 "use client"
 
 import * as React from 'react'
+import { useCallback } from "react";
 import { Trash2, GripVertical } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import ChecklistItemForm from '@/components/ChecklistItemForm'
+import {Badge} from "@/components/ui/badge";
 
 import { type ChecklistItemFull, type ChecklistSection } from '@/entities/checklist/api'
-import {Badge} from "@/components/ui/badge";
+import {useChecklistModals} from "@/hooks/useChecklistModals";
+
 
 interface ChecklistItemCardProps {
   item: ChecklistItemFull
@@ -56,6 +59,17 @@ function ChecklistItemCard({
   // isDragOver = false,
   isSwapTarget = false
 } : ChecklistItemCardProps) {
+  const { openEditItemModal } = useChecklistModals()
+
+  const handleItemClick = useCallback(() => {
+    const isMobile = window.innerWidth < 768
+    if (isMobile) {
+      openEditItemModal(item.id, section.id);
+    } else {
+      onItemClick(item.id);
+    }
+  }, [item, section, onItemClick, openEditItemModal]);
+
   return (
     <div
       className={`transition-all duration-100 ease-in-out ${
@@ -96,7 +110,7 @@ function ChecklistItemCard({
           } ${
             isSwapTarget ? 'border-l-4 border-l-[#4285f4] bg-blue-50 transform scale-105' : ''
           }`}
-          onClick={() => onItemClick(item.id)}
+          onClick={handleItemClick}
         >
           <div className="flex items-center gap-3 flex-1">
             {/* Drag Handle */}
