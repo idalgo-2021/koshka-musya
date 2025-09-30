@@ -19,8 +19,10 @@ import { useConfirmation, useResetPassword } from '@/entities/modals/ModalContex
 import { MoreVertical, ChevronDown } from 'lucide-react'
 import { UserAvatar } from "@/components/UserAvatar"
 import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import ProfileTab from '../profiles/ProfileTab'
+import { Tabs } from '@/components/ui/tabs'
 
-export default function UsersPage() {
+function UsersTab() {
   const [page, setPage] = React.useState(1)
   const limit = 12
   const [isShow, setIsShow] = useToggleWithStorage(false, 'users-view-mode')
@@ -107,7 +109,6 @@ export default function UsersPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-md md:text-2xl font-semibold">Пользователи</h1>
         <div className="flex items-center gap-3">
           <div className="text-sm text-muted-foreground hidden sm:block">Страница {page} / {totalPages}</div>
         </div>
@@ -148,81 +149,81 @@ export default function UsersPage() {
           <div className="">
             <table className="w-full">
               <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Имя пользователя</th>
-                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
-                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Email</th>
-                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">Роль</th>
-                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden lg:table-cell">Дата создания</th>
-                  <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
-                </tr>
+              <tr className="border-b bg-muted/50">
+                <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Имя пользователя</th>
+                <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
+                <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Email</th>
+                <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">Роль</th>
+                <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden lg:table-cell">Дата создания</th>
+                <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
+              </tr>
               </thead>
               <tbody>
-                {users.map((user: User) => (
-                  <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
-                    <td className="p-2 md:p-4 align-middle">
-                        <div className="flex items-center gap-2">
-                          <UserAvatar size="md" />
-                          <div>
-                            <div className="font-medium">{user.username}</div>
-                            <div className="text-xs text-muted-foreground sm:hidden">{user.email}</div>
-                          </div>
+              {users.map((user: User) => (
+                <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
+                  <td className="p-2 md:p-4 align-middle">
+                    <div className="flex items-center gap-2">
+                      <UserAvatar size="md" />
+                      <div>
+                        <div className="font-medium">{user.username}</div>
+                        <div className="text-xs text-muted-foreground sm:hidden">{user.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="p-2 md:p-4 align-middle text-sm font-mono">
+                    {user.id}
+                  </td>
+                  <td className="p-2 md:p-4 align-middle text-sm text-muted-foreground hidden sm:table-cell">
+                    {user.email}
+                  </td>
+                  <td className="p-2 md:p-4 align-middle hidden md:table-cell">
+                    <Dropdown
+                      trigger={
+                        <div className="inline-flex items-center gap-1 cursor-pointer">
+                          <Badge variant={getRoleBadgeVariant(user.role_id)} className="cursor-pointer">
+                            {getRoleDisplayName(user.role_id, user.role_name)}
+                          </Badge>
+                          <ChevronDown className="h-3 w-3 text-muted-foreground" />
                         </div>
-                    </td>
-                    <td className="p-2 md:p-4 align-middle text-sm font-mono">
-                      {user.id}
-                    </td>
-                    <td className="p-2 md:p-4 align-middle text-sm text-muted-foreground hidden sm:table-cell">
-                      {user.email}
-                    </td>
-                    <td className="p-2 md:p-4 align-middle hidden md:table-cell">
+                      }
+                    >
+                      <DropdownItem onClick={() => handleRoleChange(user.id, 1)}>
+                        Администратор
+                      </DropdownItem>
+                      <DropdownItem onClick={() => handleRoleChange(user.id, 2)}>
+                        Модератор
+                      </DropdownItem>
+                      <DropdownItem onClick={() => handleRoleChange(user.id, 3)}>
+                        Секретный гость
+                      </DropdownItem>
+                    </Dropdown>
+                  </td>
+                  <td className="p-2 md:p-4 align-middle text-sm text-muted-foreground hidden lg:table-cell">
+                    {new Date(user.created_at).toLocaleDateString('ru-RU')}
+                  </td>
+                  <td className="p-2 md:p-4 align-middle">
+                    { isAdmin ? (
                       <Dropdown
                         trigger={
-                          <div className="inline-flex items-center gap-1 cursor-pointer">
-                            <Badge variant={getRoleBadgeVariant(user.role_id)} className="cursor-pointer">
-                              {getRoleDisplayName(user.role_id, user.role_name)}
-                            </Badge>
-                            <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                          </div>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
                         }
                       >
-                        <DropdownItem onClick={() => handleRoleChange(user.id, 1)}>
-                          Администратор
+                        <DropdownItem onClick={() => handleResetPassword(user.id, user.username)}>
+                          Сброс пароля
                         </DropdownItem>
-                        <DropdownItem onClick={() => handleRoleChange(user.id, 2)}>
-                          Модератор
-                        </DropdownItem>
-                        <DropdownItem onClick={() => handleRoleChange(user.id, 3)}>
-                          Секретный гость
+                        <DropdownItem
+                          onClick={() => handleBlockUser(user.id, true)}
+                          className="text-red-600 hover:bg-red-50"
+                        >
+                          Заблокировать
                         </DropdownItem>
                       </Dropdown>
-                    </td>
-                    <td className="p-2 md:p-4 align-middle text-sm text-muted-foreground hidden lg:table-cell">
-                      {new Date(user.created_at).toLocaleDateString('ru-RU')}
-                    </td>
-                    <td className="p-2 md:p-4 align-middle">
-                      { isAdmin ? (
-                        <Dropdown
-                          trigger={
-                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          }
-                        >
-                          <DropdownItem onClick={() => handleResetPassword(user.id, user.username)}>
-                            Сброс пароля
-                          </DropdownItem>
-                          <DropdownItem
-                            onClick={() => handleBlockUser(user.id, true)}
-                            className="text-red-600 hover:bg-red-50"
-                          >
-                            Заблокировать
-                          </DropdownItem>
-                        </Dropdown>
-                      ) : undefined}
-                    </td>
-                  </tr>
-                ))}
+                    ) : undefined}
+                  </td>
+                </tr>
+              ))}
               </tbody>
             </table>
           </div>
@@ -233,11 +234,11 @@ export default function UsersPage() {
           {users.map((user: User) => (
             <Card key={user.id}>
               <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <UserAvatar size="md" />
-                      <CardTitle className="text-lg">{user.username}</CardTitle>
-                    </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <UserAvatar size="md" />
+                    <CardTitle className="text-lg">{user.username}</CardTitle>
+                  </div>
                   <Dropdown
                     trigger={
                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
@@ -318,6 +319,17 @@ export default function UsersPage() {
           Вперед
         </button>
       </div>
+    </div>
+  )
+}
+
+export default function UsersPage() {
+  return (
+    <div className="space-y-8">
+      <Tabs items={[
+        { id: 'users', label: 'Пользователи', content: <UsersTab /> },
+        { id: 'stats', label: 'Статистика пользователей', content: <ProfileTab /> },
+    ]} />
     </div>
   )
 }
