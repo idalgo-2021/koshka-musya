@@ -232,3 +232,24 @@ CREATE TABLE "public"."reports" (
   CONSTRAINT "reports_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "public"."users" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT "reports_status_id_fkey" FOREIGN KEY ("status_id") REFERENCES "public"."report_statuses" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
+
+-- Create "user_profiles" table
+CREATE TABLE "public"."user_profiles" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "user_id" uuid NOT NULL,
+ 
+  "accepted_offers_count" integer NOT NULL DEFAULT 0,
+  "submitted_reports_count" integer NOT NULL DEFAULT 0,
+  "correct_reports_count" integer NOT NULL DEFAULT 0,
+  
+  "registered_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  
+  "last_active_at" timestamp NULL,
+  "additional_info" jsonb NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "user_profiles_user_id_key" UNIQUE ("user_id"),
+  CONSTRAINT "user_profiles_user_id_fkey" FOREIGN KEY ("user_id") 
+      REFERENCES "public"."users" ("id") 
+      ON UPDATE CASCADE 
+      ON DELETE CASCADE
+);

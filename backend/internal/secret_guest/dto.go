@@ -585,3 +585,29 @@ type UsersResponse struct {
 	Total int                `json:"total"`
 	Page  int                `json:"page"`
 }
+
+// ================================
+
+type ProfileResponseDTO struct {
+	ID                    uuid.UUID       `json:"id"`
+	UserID                uuid.UUID       `json:"user_id"`
+	Username              string          `json:"username"`
+	Email                 string          `json:"email"`
+	AcceptedOffersCount   int             `json:"accepted_offers_count"`
+	SubmittedReportsCount int             `json:"submitted_reports_count"`
+	CorrectReportsCount   int             `json:"correct_reports_count"`
+	RegisteredAt          time.Time       `json:"registered_at"`
+	LastActiveAt          *time.Time      `json:"last_active_at,omitempty"`
+	AdditionalInfo        json.RawMessage `json:"additional_info,omitempty" swaggertype:"object"`
+}
+
+type GetAllProfilesRequestDTO struct {
+	Page  int
+	Limit int
+}
+
+type ProfilesResponse struct {
+	Profiles []*ProfileResponseDTO `json:"profiles"`
+	Total    int                   `json:"total"`
+	Page     int                   `json:"page"`
+}

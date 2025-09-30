@@ -586,6 +586,40 @@ definitions:
     required:
     - ota_id
     type: object
+  secret_guest.ProfileResponseDTO:
+    properties:
+      accepted_offers_count:
+        type: integer
+      additional_info:
+        type: object
+      correct_reports_count:
+        type: integer
+      email:
+        type: string
+      id:
+        type: string
+      last_active_at:
+        type: string
+      registered_at:
+        type: string
+      submitted_reports_count:
+        type: integer
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  secret_guest.ProfilesResponse:
+    properties:
+      page:
+        type: integer
+      profiles:
+        items:
+          $ref: '#/definitions/secret_guest.ProfileResponseDTO'
+        type: array
+      total:
+        type: integer
+    type: object
   secret_guest.ReportBookingDetails:
     properties:
       booking_number:
@@ -804,7 +838,7 @@ paths:
           schema:
             $ref: '#/definitions/secret_guest.ErrorResponse'
         "409":
-          description: Listing cannot be created (e.g., wrong payload)
+          description: Listing cannot be created (e.g., duplicate listing or conflict)
           schema:
             $ref: '#/definitions/secret_guest.ErrorResponse'
         "500":
@@ -2168,7 +2202,7 @@ paths:
         name: limit
         type: integer
       - collectionFormat: multi
-        description: Filter by one or more listing type IDs
+        description: Filter by one or more listing type IDs (invalid IDs are ignored)
         in: query
         items:
           type: integer
@@ -2259,6 +2293,40 @@ paths:
       summary: Get Media Requirements (Staff)
       tags:
       - Media Requirements (Staff)
+  /profiles/my:
+    get:
+      description: Returns the profile information for the currently authenticated
+        user.
+      parameters:
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ProfileResponseDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Profile not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My Profile
+      tags:
+      - Profiles (User)
   /reports:
     get:
       description: Returns a paginated list of all reports. Available for staff only.
@@ -2761,6 +2829,98 @@ paths:
       summary: Cancel Assignment
       tags:
       - Assignments (Staff)
+  /staff/profiles:
+    get:
+      description: Returns a paginated list of all user profiles. Available for staff
+        only.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 50
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ProfilesResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Profiles (Staff)
+      tags:
+      - Profiles (Staff)
+  /staff/profiles/{id}:
+    get:
+      description: Returns a single user profile by their user ID. Available for staff
+        only.
+      parameters:
+      - description: User ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.ProfileResponseDTO'
+        "400":
+          description: Invalid User ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Profile not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Profile By User ID (Staff)
+      tags:
+      - Profiles (Staff)
   /staff/reports/{id}/approve:
     patch:
       description: Approves a submitted secret guest report. Available for staff only.
