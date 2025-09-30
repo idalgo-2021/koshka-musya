@@ -53,6 +53,11 @@ const mockStats = JSON.parse(`{
       "description": "Отчетов создано сегодня"
     },
     {
+      "key": "submitted_reports",
+      "value": 0,
+      "description": "Ждут модерации"
+    },
+    {
       "key": "total_sg",
       "value": 10,
       "description": "Всего тайных гостей"

@@ -6,26 +6,66 @@ import AdminStatisticCard from '@/components/AdminStatisticCard'
 import { StatisticCard } from '@/entities/admin/types'
 import ErrorState from '@/components/ErrorState'
 
-const mapStatisticsToCards = (statistics: AdminStatistic[]): StatisticCard[] => {
-  const cardConfig: Record<string, { icon: string; color: string }> = {
-    'total_ota_reservations': { icon: '🏨', color: 'bg-blue-100 text-blue-600' },
-    'ota_reservations_last_24h': { icon: '📅', color: 'bg-blue-100 text-blue-600' },
-    'total_assignments': { icon: '📋', color: 'bg-green-100 text-green-600' },
-    'open_assignments': { icon: '🔓', color: 'bg-yellow-100 text-yellow-600' },
-    'pending_accept_assignments': { icon: '⏳', color: 'bg-orange-100 text-orange-600' },
-    'total_assignment_declines': { icon: '❌', color: 'bg-red-100 text-red-600' },
-    'total_reports': { icon: '📊', color: 'bg-indigo-100 text-indigo-600' },
-    'reports_today': { icon: '📈', color: 'bg-indigo-100 text-indigo-600' },
-    'total_sg': { icon: '👤', color: 'bg-purple-100 text-purple-600' },
-    'new_sg_last_24h': { icon: '🆕', color: 'bg-pink-100 text-pink-600' }
-  }
+const cardConfig: Record<string, { icon: string; color: string }> = {
+  //  reservations
+  'total_ota_reservations': { icon: '🏨', color: 'bg-blue-100 text-blue-600' },
+  'ota_reservations_last_24h': { icon: '📅', color: 'bg-blue-100 text-blue-600' },
+  // assignments
+  'total_assignments': { icon: '📋', color: 'bg-green-100 text-green-600' },
+  'open_assignments': { icon: '🔓', color: 'bg-yellow-100 text-yellow-600' },
+  'pending_accept_assignments': { icon: '⏳', color: 'bg-orange-100 text-orange-600' },
+  'total_assignment_declines': { icon: '❌', color: 'bg-red-100 text-red-600' },
 
+  // reports
+  'total_reports': { icon: '📊', color: 'bg-indigo-100 text-indigo-600' },
+  'reports_today': { icon: '📈', color: 'bg-indigo-100 text-indigo-600' },
+  'submitted_reports': { icon: '✅', color: 'bg-emerald-100 text-emerald-600' },
+
+  // secret guest stats
+  'total_sg': { icon: '👤', color: 'bg-purple-100 text-purple-600' },
+  'new_sg_last_24h': { icon: '🆕', color: 'bg-pink-100 text-pink-600' }
+}
+
+const mapStatisticsToCards = (statistics: AdminStatistic[]): StatisticCard[] => {
   // Show all statistics
   return statistics.map(stat => ({
     ...stat,
     icon: cardConfig[stat.key]?.icon || '📊',
     color: cardConfig[stat.key]?.color || 'bg-gray-100 text-gray-600'
   }))
+}
+
+const groupStatisticsByCategory = (statistics: StatisticCard[]) => {
+  return  {
+    reservations: {
+      title: 'Бронирования',
+      icon: '🏨',
+      stats: statistics.filter(stat =>
+        stat.key.includes('ota_reservations') || stat.key.includes('reservation')
+      )
+    },
+    assignments: {
+      title: 'Предложения',
+      icon: '📋',
+      stats: statistics.filter(stat =>
+        stat.key.includes('assignment')
+      )
+    },
+    reports: {
+      title: 'Отчеты',
+      icon: '📊',
+      stats: statistics.filter(stat =>
+        stat.key.includes('report')
+      )
+    },
+    secretGuests: {
+      title: 'Тайные гости',
+      icon: '👤',
+      stats: statistics.filter(stat =>
+        stat.key.includes('sg')
+      )
+    }
+  }
 }
 
 export default function AdminDashboard() {
@@ -52,9 +92,10 @@ export default function AdminDashboard() {
   }
 
   const statisticCards = data ? mapStatisticsToCards(data.statistics) : []
+  const groupedStats = groupStatisticsByCategory(statisticCards)
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Админ панель</h1>
         <p className="text-gray-600 mt-1">
@@ -62,14 +103,29 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        {statisticCards.map((statistic) => (
-          <AdminStatisticCard
-            key={statistic.key}
-            statistic={statistic}
-          />
-        ))}
-      </div>
+      {Object.entries(groupedStats).map(([categoryKey, category]) => (
+        <div key={categoryKey} className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{category.icon}</span>
+            <h2 className="text-xl font-semibold text-gray-800">{category.title}</h2>
+          </div>
+
+          {category.stats.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {category.stats.map((statistic) => (
+                <AdminStatisticCard
+                  key={statistic.key}
+                  statistic={statistic}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">Нет данных в этой категории</p>
+            </div>
+          )}
+        </div>
+      ))}
 
       {statisticCards.length === 0 && (
         <div className="text-center py-12">
