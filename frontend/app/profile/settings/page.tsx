@@ -9,9 +9,9 @@ export default function ProfileSettingsPage() {
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [formData, setFormData] = useState({
     username: user?.username || '',
-    email: '',
-    phone: '',
-    telegram: '',
+    email: 'user@example.com',
+    phone: '+7 (999) 123-45-67',
+    telegram: '@username',
     notifications: true,
     emailNotifications: true,
     smsNotifications: false,
@@ -44,9 +44,9 @@ export default function ProfileSettingsPage() {
   const handleCancelPersonal = () => {
     setFormData({
       username: user?.username || '',
-      email: '',
-      phone: '',
-      telegram: '',
+      email: 'user@example.com',
+      phone: '+7 (999) 123-45-67',
+      telegram: '@username',
       notifications: true,
       emailNotifications: true,
       smsNotifications: false,
@@ -155,7 +155,7 @@ export default function ProfileSettingsPage() {
                       className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                     />
                   ) : (
-                    <p className="text-blue-900 text-lg font-medium">user@example.com</p>
+                    <p className="text-blue-900 text-lg font-medium">{formData.email}</p>
                   )}
                 </div>
 
@@ -172,7 +172,7 @@ export default function ProfileSettingsPage() {
                       placeholder="+7 (999) 123-45-67"
                     />
                   ) : (
-                    <p className="text-blue-900 text-lg font-medium">+7 (999) 123-45-67</p>
+                    <p className="text-blue-900 text-lg font-medium">{formData.phone}</p>
                   )}
                 </div>
 
@@ -189,7 +189,7 @@ export default function ProfileSettingsPage() {
                       placeholder="@username"
                     />
                   ) : (
-                    <p className="text-blue-900 text-lg font-medium">@username</p>
+                    <p className="text-blue-900 text-lg font-medium">{formData.telegram}</p>
                   )}
                 </div>
               </div>
