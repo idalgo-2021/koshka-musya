@@ -8,16 +8,16 @@ import {ProfileIcon} from "@/components/icons/ProfileIcon";
 
 const navItems = [
   {href: '/admin', label: 'Дашборд'},
-  {href: '/admin/listings', label: 'Объекты размещения'},
-  {href: '/admin/listingTypes', label: 'Типы объектов'},
-  {href: '/admin/assignments', label: 'Предложения'},
-  // { href: '/admin/answerTypes', label: 'Типы ответов' },
   {href: '/admin/reports', label: 'Отчеты'},
-  {href: '/admin/checklists', label: 'Настройка анкет'},
-  {href: '/admin/mediaRequirements', label: 'Media Requirements'},
-  {href: '/admin/users', label: 'Пользователи'},
-  {href: '/admin/profiles', label: 'Статистика пользователей'},
+  {href: '/admin/checklists/editor', label: 'Настройка анкет'},
+  {href: '/admin/listings', label: 'Объекты размещения'},
+  {href: '/admin/assignments', label: 'Предложения'},
   {href: '/admin/sg_reservations', label: 'SG Reservations'},
+  {href: '/admin/users', label: 'Пользователи'},
+
+  {href: '/admin/listingTypes', label: 'Типы объектов'},
+  // { href: '/admin/answerTypes', label: 'Типы ответов' },
+  {href: '/admin/mediaRequirements', label: 'Media Requirements'},
 ]
 
 // function formatUser(user: User | null) {
@@ -45,7 +45,7 @@ export default function AdminSidebar() {
     <aside className="lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950 w-60 shrink-0 border-r bg-background/50 flex flex-col h-[100svh] overflow-auto p-4 fixed top-0">
       <UserCard user={user}/>
       {/*<div className="px-4 py-4 text-sm font-semibold text-muted-foreground">{formatUser(user)}</div>*/}
-      <nav className="flex flex-col gap-0.5">
+      <nav className="flex flex-col gap-2">
         {navItems.map(item => {
           const active = pathname === item.href || pathname?.startsWith(item.href + '/')
           return (
@@ -133,8 +133,8 @@ function NavItem({
     <span className="relative">
       <a
         className={cn(
-          "flex w-full items-center gap-3 rounded-lg hover:bg-gray-10 px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 *:data-[slot=icon]:size-6 *:data-[slot=icon]:shrink-0 *:data-[slot=icon]:fill-zinc-500 sm:*:data-[slot=icon]:size-5 *:last:data-[slot=icon]:ml-auto *:last:data-[slot=icon]:size-5 sm:*:last:data-[slot=icon]:size-4 *:data-[slot=avatar]:-m-0.5 *:data-[slot=avatar]:size-7 sm:*:data-[slot=avatar]:size-6 data-hover:bg-zinc-950/5 data-hover:*:data-[slot=icon]:fill-zinc-950 data-active:bg-zinc-950/5 data-active:*:data-[slot=icon]:fill-zinc-950 data-current:*:data-[slot=icon]:fill-zinc-950 dark:text-white dark:*:data-[slot=icon]:fill-zinc-400 dark:data-hover:bg-white/5 dark:data-hover:*:data-[slot=icon]:fill-white dark:data-active:bg-white/5 dark:data-active:*:data-[slot=icon]:fill-white dark:data-current:*:data-[slot=icon]:fill-white",
-          active && 'bg-gray-50 text-accent-foreground'
+          "flex w-full items-center gap-3 rounded-lg hover:bg-gray-200 px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 *:data-[slot=icon]:size-6 *:data-[slot=icon]:shrink-0 *:data-[slot=icon]:fill-zinc-500 sm:*:data-[slot=icon]:size-5 *:last:data-[slot=icon]:ml-auto *:last:data-[slot=icon]:size-5 sm:*:last:data-[slot=icon]:size-4 *:data-[slot=avatar]:-m-0.5 *:data-[slot=avatar]:size-7 sm:*:data-[slot=avatar]:size-6 data-hover:bg-zinc-950/5 data-hover:*:data-[slot=icon]:fill-zinc-950 data-active:bg-zinc-950/5 data-active:*:data-[slot=icon]:fill-zinc-950 data-current:*:data-[slot=icon]:fill-zinc-950 dark:text-white dark:*:data-[slot=icon]:fill-zinc-400 dark:data-hover:bg-white/5 dark:data-hover:*:data-[slot=icon]:fill-white dark:data-active:bg-white/5 dark:data-active:*:data-[slot=icon]:fill-white dark:data-current:*:data-[slot=icon]:fill-white",
+          active && 'bg-gray-200 text-accent-foreground'
         )}
         type="button" data-headlessui-state="" href={href}
       >

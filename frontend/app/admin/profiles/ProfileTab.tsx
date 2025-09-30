@@ -32,7 +32,7 @@ const getActivityStatus = (lastActiveAt: string) => {
   return { label: 'Давно', color: 'bg-gray-100 text-gray-800' }
 }
 
-export default function ProfilesPage() {
+export default function ProfileTab() {
   const [filters, setFilters] = useState<ProfilesFilters>({
     page: 1,
     limit: ITEMS_PER_PAGE
@@ -77,10 +77,9 @@ export default function ProfilesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Профили пользователей</h1>
-          <p className="text-gray-600 mt-1">
+          {/* <p className="text-gray-600 mt-1">
             Управление профилями и статистикой пользователей
-          </p>
+          </p> */}
         </div>
         <ToggleButton
           checked={isTableView}

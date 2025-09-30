@@ -2,10 +2,12 @@
 
 import { cn } from '@/lib/utils'
 import { StatisticCard } from '@/entities/admin/types'
+import Link from 'next/link'
 
 interface AdminGroupedStatisticCardProps {
   title: string
   icon: string
+  link?: string
   statistics: StatisticCard[]
   className?: string
 }
@@ -13,6 +15,7 @@ interface AdminGroupedStatisticCardProps {
 export default function AdminGroupedStatisticCard({ 
   title,
   icon,
+  link,
   statistics,
   className 
 }: AdminGroupedStatisticCardProps) {
@@ -25,7 +28,13 @@ export default function AdminGroupedStatisticCard({
     >
       <div className="flex items-center gap-3 mb-4">
         <span className="text-2xl">{icon}</span>
-        <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+        {link ? (
+          <Link href={link} className="text-lg font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+            {title}
+          </Link>
+        ) : (
+          <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
+        )}
       </div>
       
       <div className="space-y-3">

@@ -1,5 +1,7 @@
 "use client"
 
+import Link from 'next/link'
+
 import { useAdminStatistics } from '@/entities/admin/useAdminStatistics'
 import { AdminStatistic } from '@/entities/admin/types'
 import AdminGroupedStatisticCard from '@/components/AdminGroupedStatisticCard'
@@ -41,6 +43,7 @@ const groupStatisticsByCategory = (statistics: StatisticCard[]) => {
     reservations: {
       title: 'Бронирования',
       icon: '🏨',
+      link: '/admin/sg_reservations',
       stats: statistics.filter(stat =>
         stat.key.includes('ota_reservations') || stat.key.includes('reservation')
       )
@@ -48,6 +51,7 @@ const groupStatisticsByCategory = (statistics: StatisticCard[]) => {
     assignments: {
       title: 'Предложения',
       icon: '📋',
+      link: '/admin/assignments',
       stats: statistics.filter(stat =>
         stat.key.includes('assignment')
       )
@@ -55,6 +59,7 @@ const groupStatisticsByCategory = (statistics: StatisticCard[]) => {
     reports: {
       title: 'Отчеты',
       icon: '📊',
+      link: '/admin/reports',
       stats: statistics.filter(stat =>
         stat.key.includes('report')
       )
@@ -62,6 +67,7 @@ const groupStatisticsByCategory = (statistics: StatisticCard[]) => {
     secretGuests: {
       title: 'Тайные гости',
       icon: '👤',
+      link: '/admin/users',
       stats: statistics.filter(stat =>
         stat.key.includes('sg')
       )
@@ -111,6 +117,7 @@ export default function AdminDashboard() {
             key={categoryKey}
             title={category.title}
             icon={category.icon}
+            link={category.link}
             statistics={category.stats}
           />
         ))}
@@ -122,9 +129,15 @@ export default function AdminDashboard() {
           <div key={categoryKey} className="space-y-4 mb-8">
             <div className="flex items-center gap-3">
               <span className="text-2xl">{category.icon}</span>
-              <h2 className="text-xl font-semibold text-gray-800">{category.title}</h2>
+              {category.link ? (
+                <Link href={category.link} className="text-xl font-semibold text-blue-600 hover:text-blue-800 hover:underline transition-colors">
+                  {category.title}
+                </Link>
+              ) : (
+                <h2 className="text-xl font-semibold text-gray-800">{category.title}</h2>
+              )}
             </div>
-            
+
             {category.stats.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {category.stats.map((statistic) => (
