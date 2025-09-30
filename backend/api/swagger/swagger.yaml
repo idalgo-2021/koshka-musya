@@ -350,6 +350,34 @@ definitions:
       upload_url:
         type: string
     type: object
+  secret_guest.JournalEntryDTO:
+    properties:
+      checkin_date:
+        type: string
+      checklist_schema:
+        $ref: '#/definitions/models.ChecklistSchema'
+      checkout_date:
+        type: string
+      created_at:
+        type: string
+      listing:
+        $ref: '#/definitions/secret_guest.ListingShortResponse'
+      purpose:
+        type: string
+      status_slug:
+        type: string
+    type: object
+  secret_guest.JournalResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/secret_guest.JournalEntryDTO'
+        type: array
+      page:
+        type: integer
+      total:
+        type: integer
+    type: object
   secret_guest.ListingResponseDTO:
     properties:
       address:
@@ -1999,6 +2027,45 @@ paths:
       summary: Update Checklist Section (Staff)
       tags:
       - Checklist Sections (Staff)
+  /journal/my:
+    get:
+      description: Returns a chronological history of the user's reports.
+      parameters:
+      - default: 1
+        description: Page number for pagination
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Number of items per page
+        in: query
+        name: limit
+        type: integer
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.JournalResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get My History
+      tags:
+      - Journal (User)
   /listing_types:
     get:
       description: Returns a list of all Listing Types.

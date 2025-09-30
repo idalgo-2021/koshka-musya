@@ -60,7 +60,7 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 
 	protectedRouter.HandleFunc("/profiles/my", secretGuestHandler.GetMyProfile).Methods(http.MethodGet) // profiles
 
-	// protectedRouter.HandleFunc("/journal/my", secretGuestHandler.GetMyHistory).Methods(http.MethodGet) // journal
+	protectedRouter.HandleFunc("/journal/my", secretGuestHandler.GetMyHistory).Methods(http.MethodGet) // journal
 
 	// - - - - UPLOADS
 	protectedRouter.HandleFunc("/uploads/generate-url", secretGuestHandler.GenerateUploadURL).Methods(http.MethodPost)

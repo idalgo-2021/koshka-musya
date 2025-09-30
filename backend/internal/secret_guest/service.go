@@ -97,6 +97,9 @@ type SecretGuestRepository interface {
 
 	// statistics
 	GetStatistics(ctx context.Context) (*models.Statistics, error)
+
+	// journal
+	GetUserHistory(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*models.Report, int, error)
 }
 
 type SecretGuestService struct {
@@ -1520,4 +1523,50 @@ func (s *SecretGuestService) GetStatistics(ctx context.Context) (*StatisticsResp
 	}
 
 	return &StatisticsResponseDTO{Statistics: items}, nil
+}
+
+// journal
+
+func (s *SecretGuestService) GetMyHistory(ctx context.Context, dto GetMyHistoryRequestDTO) (*JournalResponse, error) {
+	offset := (dto.Page - 1) * dto.Limit
+
+	reports, total, err := s.repo.GetUserHistory(ctx, dto.UserID, dto.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user history from repository: %w", err)
+	}
+
+	entries := make([]*JournalEntryDTO, 0, len(reports))
+	for _, r := range reports {
+		entries = append(entries, toJournalEntryDTO(r))
+	}
+
+	return &JournalResponse{
+		Entries: entries,
+		Total:   total,
+		Page:    dto.Page,
+	}, nil
+}
+
+func toJournalEntryDTO(r *models.Report) *JournalEntryDTO {
+	return &JournalEntryDTO{
+		CreatedAt: r.CreatedAt,
+		Listing: ListingShortResponse{
+			ID:          r.Listing.ID,
+			Code:        r.Listing.Code,
+			Title:       r.Listing.Title,
+			Description: r.Listing.Description,
+			MainPicture: r.Listing.MainPicture,
+			ListingType: ListingTypeResponse{
+				ID:   r.Listing.ListingTypeID,
+				Slug: r.Listing.ListingTypeSlug,
+				Name: r.Listing.ListingTypeName,
+			},
+			Address: r.Listing.Address,
+		},
+		Purpose:         r.Purpose,
+		CheckinDate:     r.BookingDetails.CheckinDate,
+		CheckoutDate:    r.BookingDetails.CheckoutDate,
+		ChecklistSchema: r.ChecklistSchema,
+		StatusSlug:      r.Status.Slug,
+	}
 }
