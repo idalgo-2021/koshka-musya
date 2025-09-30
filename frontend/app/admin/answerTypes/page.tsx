@@ -6,11 +6,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AnswerTypesApi, type AnswerType } from '@/entities/answerTypes/api'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { StepBackIcon } from 'lucide-react'
+import {Edit, StepBackIcon, Trash2} from 'lucide-react'
+import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import ConfirmationModal from '@/components/ConfirmationModal'
 
 export default function AnswerTypesListPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
+  const [deleteModalOpen, setDeleteModalOpen] = React.useState(false)
+  const [itemToDelete, setItemToDelete] = React.useState<AnswerType | null>(null)
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['answer_types'],
     queryFn: async () => await AnswerTypesApi.list(),
@@ -18,10 +23,33 @@ export default function AnswerTypesListPage() {
 
   const removeMutation = useMutation({
     mutationFn: (id: number) => AnswerTypesApi.remove(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['answer_types'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['answer_types'] })
+      setDeleteModalOpen(false)
+      setItemToDelete(null)
+    },
   })
 
   const items: AnswerType[] = (data?.answer_types as AnswerType[]) || []
+  const {user} = useAuth();
+  const isAdmin = user?.role === USER_ROLE.Admin;
+
+  const handleDeleteClick = (item: AnswerType) => {
+    setItemToDelete(item)
+    setDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (itemToDelete) {
+      removeMutation.mutate(itemToDelete.id)
+    }
+    return true
+  }
+
+  const handleCancelDelete = () => {
+    setDeleteModalOpen(false)
+    setItemToDelete(null)
+  }
 
   return (
     <div className="space-y-4">
@@ -30,9 +58,11 @@ export default function AnswerTypesListPage() {
           <Button variant="outline" onClick={() => router.back()}><StepBackIcon/></Button>
            <h1 className="text-md md:text-2xl font-semibold">Тип ответов</h1>
         </div>
-        <Button asChild>
-          <Link href="/admin/answerTypes/new">Создать Новый тип</Link>
-        </Button>
+        { isAdmin && (
+          <Button asChild>
+            <Link href="/admin/answerTypes/new">Создать Новый тип</Link>
+          </Button>
+        )}
       </div>
 
       {isLoading && <div>Loading...</div>}
@@ -56,23 +86,45 @@ export default function AnswerTypesListPage() {
                 <td className="px-3 py-2">{t.name}</td>
                 <td className="px-3 py-2">{t.slug}</td>
                 <td className="px-3 py-2 flex items-center gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link href={`/admin/answerTypes/${t.id}`}>Edit</Link>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={removeMutation.isPending}
-                    onClick={() => removeMutation.mutate(t.id)}
-                  >
-                    Delete
-                  </Button>
+                  {/*{isAdmin && (*/}
+                    <>
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/admin/answerTypes/${t.id}`}>
+                          <Edit />
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={removeMutation.isPending}
+                        onClick={() => handleDeleteClick(t)}
+                      >
+                        <Trash2 />
+                      </Button>
+                    </>
+                  {/*)}*/}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Confirmation Modal */}
+      {deleteModalOpen && itemToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <ConfirmationModal
+            title="Удалить тип ответа"
+            message={`Вы уверены, что хотите удалить тип ответа "${itemToDelete.name}"? Это действие нельзя отменить.`}
+            type="danger"
+            confirmText="Удалить"
+            cancelText="Отмена"
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            isLoading={removeMutation.isPending}
+          />
+        </div>
+      )}
     </div>
   )
 }

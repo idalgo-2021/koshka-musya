@@ -70,7 +70,7 @@ export default function UsersPage() {
     )
   }
   const { user } = useAuth()
-  const isAdmin = user?.role !== USER_ROLE.Admin;
+  const isAdmin = user?.role === USER_ROLE.Admin;
 
   const handleResetPassword = (userId: string, username: string) => {
     openResetPasswordModal(

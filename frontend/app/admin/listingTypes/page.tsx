@@ -162,10 +162,12 @@ export default function ListingTypesPage() {
            <h1 className="text-md md:text-2xl font-semibold">Типы объектов</h1>
         </div>
 
-        <Button onClick={handleCreateNew}>
-          <Plus className="w-4 h-4 mr-2" />
-          Добавить тип объекта
-        </Button>
+        {isAdmin ? (
+          <Button onClick={handleCreateNew}>
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить тип объекта
+          </Button>
+        ) : undefined}
       </div>
 
       <Card>
