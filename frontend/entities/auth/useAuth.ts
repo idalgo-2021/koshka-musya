@@ -76,7 +76,7 @@ export function useAuth() {
         setUser({ id: me.user_id, username: me.username, role, });
         setIsAuthenticated(true);
         setTimeout(() => {
-          window.location.href =(role !== USER_ROLE.Admin) ? '/dashboard' : '/admin/listings';
+          window.location.href = (role === USER_ROLE.User) ? '/dashboard' : '/admin';
         }, 100);
       } catch (error) {
         tokenStorage.clear();

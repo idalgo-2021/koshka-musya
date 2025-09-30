@@ -7,12 +7,13 @@ import {roleToString, useAuth, User} from "@/entities/auth/useAuth";
 import {ProfileIcon} from "@/components/icons/ProfileIcon";
 
 const navItems = [
+  {href: '/admin', label: 'Дашборд'},
   {href: '/admin/listings', label: 'Объекты размещения'},
   {href: '/admin/listingTypes', label: 'Типы объектов'},
   {href: '/admin/assignments', label: 'Предложения'},
   // { href: '/admin/answerTypes', label: 'Типы ответов' },
   {href: '/admin/reports', label: 'Отчеты'},
-  {href: '/admin/checklists', label: 'Checklists'},
+  {href: '/admin/checklists', label: 'Настройка анкет'},
   {href: '/admin/mediaRequirements', label: 'Media Requirements'},
   {href: '/admin/users', label: 'Пользователи'},
   {href: '/admin/sg_reservations', label: 'SG Reservations'},

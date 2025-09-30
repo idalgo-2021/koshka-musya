@@ -12,6 +12,7 @@ import { toast } from 'sonner'
 import {Plus, Search, Edit, Trash2, Save, X, StepBackIcon} from 'lucide-react'
 import { useListingTypeModals } from '@/hooks/useListingTypeModals'
 import { useConfirmation } from '@/entities/modals/ModalContext'
+import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
 
 export default function ListingTypesPage() {
   const router = useRouter()
@@ -22,6 +23,8 @@ export default function ListingTypesPage() {
   const [searchTerm, setSearchTerm] = React.useState('')
   const [editingId, setEditingId] = React.useState<number | null>(null)
   const [editingData, setEditingData] = React.useState({ name: '', slug: '' })
+
+  const { user } = useAuth();
 
   const listingTypesQuery = useQuery({
     queryKey: ['listing_types'],
@@ -87,9 +90,10 @@ export default function ListingTypesPage() {
     openCreateModal()
   }
 
+  const isAdmin = user?.role === USER_ROLE.Admin;
   const handleEdit = (listingType: ListingType) => {
     // Prevent editing if another item is already being edited
-    if (editingId !== null) {
+    if (editingId !== null && isAdmin) {
       toast.error('Please finish editing the current item first')
       return
     }
@@ -158,10 +162,12 @@ export default function ListingTypesPage() {
            <h1 className="text-md md:text-2xl font-semibold">Типы объектов</h1>
         </div>
 
-        <Button onClick={handleCreateNew}>
-          <Plus className="w-4 h-4 mr-2" />
-          Добавить тип объекта
-        </Button>
+        {isAdmin ? (
+          <Button onClick={handleCreateNew}>
+            <Plus className="w-4 h-4 mr-2" />
+            Добавить тип объекта
+          </Button>
+        ) : undefined}
       </div>
 
       <Card>
@@ -250,21 +256,26 @@ export default function ListingTypesPage() {
                         </>
                       ) : (
                         <>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(listingType)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(listingType.id, listingType.name)}
-                            disabled={deleteMutation.isPending}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {isAdmin ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEdit(listingType)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDelete(listingType.id, listingType.name)}
+                                disabled={deleteMutation.isPending}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          ) : undefined
+                          }
                         </>
                       )}
                     </div>

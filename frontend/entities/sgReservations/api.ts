@@ -1,80 +1,29 @@
-import { api } from '@/shared/api/http';
+import { api } from '@/shared/api/http'
+import { SgReservationsResponse, SgReservationsFilters, SgReservationStatus, CreateSGReservationRequest } from './types'
 
-export interface SGReservationListingType {
-  id: number;
-  name: string;
-  slug: string;
-}
+export const sgReservationsApi = {
+  getReservations: async (filters: SgReservationsFilters = {}): Promise<SgReservationsResponse> => {
+    const params = new URLSearchParams()
 
-export interface SGReservationListing {
-  address: string;
-  city: string;
-  country: string;
-  description: string;
-  id: string;
-  latitude: number;
-  listing_type: SGReservationListingType;
-  longitude: number;
-  main_picture: string;
-  title: string;
-}
+    if (filters.status_id) {
+      params.append('status_id', filters.status_id.toString())
+    }
+    if (filters.page) {
+      params.append('page', filters.page.toString())
+    }
+    if (filters.limit) {
+      params.append('limit', filters.limit.toString())
+    }
 
-export interface SGReservationDates {
-  checkIn: string;
-  checkOut: string;
-}
-
-export interface SGReservationGuests {
-  adults: number;
-  children: number;
-}
-
-export interface SGReservationPricingBreakdown {
-  nights: number;
-  per_night: number;
-}
-
-export interface SGReservationPricing {
-  breakdown: SGReservationPricingBreakdown;
-  currency: string;
-  total: number;
-}
-
-export interface SGReservationData {
-  booking_number: string;
-  dates: SGReservationDates;
-  guests: SGReservationGuests;
-  listing: SGReservationListing;
-  ota_id: string;
-  pricing: SGReservationPricing;
-  status: string;
-}
-
-export interface CreateSGReservationRequest {
-  received_at: string;
-  reservation: SGReservationData;
-  source: string;
-}
-
-export interface SGReservationStatus {
-  id: number;
-  slug: string;
-  name: string;
-}
-
-export const SG_RESERVATION_STATUSES: SGReservationStatus[] = [
-  { id: 1, slug: 'new', name: 'Новое' },
-  { id: 2, slug: 'hold', name: 'Захолдировано' },
-  { id: 3, slug: 'booked', name: 'Забронировано' },
-  { id: 4, slug: 'no-show', name: 'Не обрабатывать' },
-];
-
-export const SGReservationsApi = {
-  async createReservation(data: CreateSGReservationRequest): Promise<void> {
-    return api.post<void>('/admin/sg_reservations', data as any, true);
+    return await api.get<SgReservationsResponse>(`/staff/sg_reservations?${params.toString()}`, true);
   },
 
-  getReservationStatuses(): SGReservationStatus[] {
-    return SG_RESERVATION_STATUSES;
+  markAsNoShow: async (id: string): Promise<void> => {
+    await api.patch(`/staff/sg_reservations/${id}/no-show`, {}, true);
   },
-};
+
+  createReservation: async (data: CreateSGReservationRequest): Promise<void> => {
+    // @ts-ignore
+    await api.post('/admin/sg_reservations', data, true);
+  }
+}

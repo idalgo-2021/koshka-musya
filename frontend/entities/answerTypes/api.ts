@@ -20,28 +20,29 @@ export type UpsertAnswerTypeRequest = {
 
 export const AnswerTypesApi = {
   async list(): Promise<AnswerTypesResponse> {
-    const res = await api.get<AnswerTypesResponse>('/answer_types', true)
+    const res = await api.get<AnswerTypesResponse>('/staff/answer_types', true)
     return res
   },
 
   async getById(id: number): Promise<AnswerType> {
-    const res = await api.get<AnswerType>(`/answer_types/${id}`, true)
+    const res = await api.get<AnswerType>(`/staff/answer_types/${id}`, true)
     return res
   },
 
   async create(payload: UpsertAnswerTypeRequest): Promise<AnswerType> {
-    const res = await api.post<AnswerType>('/answer_types', payload, true)
+    const res = await api.post<AnswerType>('/staff/answer_types', payload, true)
     return res
   },
 
   async update(id: number, payload: UpsertAnswerTypeRequest): Promise<AnswerType> {
-    const res = await api.patch<AnswerType>(`/answer_types/${id}`, payload, true)
+    const res = await api.patch<AnswerType>(`/staff/nswer_types/${id}`, payload, true)
     return res
   },
 
   async remove(id: number): Promise<{ success?: boolean }> {
+    // return api.delete<void>(`/staff/answer_types/${id}`, true)
     // shared api has no delete helper; use fetch directly via api.patch? Create ad-hoc fetch
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/answer_types/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/staff/answer_types/${id}`, {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',

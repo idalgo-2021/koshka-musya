@@ -18,6 +18,7 @@ import { getRoleBadgeVariant, getRoleDisplayName } from "@/entities/users/util"
 import { useConfirmation, useResetPassword } from '@/entities/modals/ModalContext'
 import { MoreVertical, ChevronDown } from 'lucide-react'
 import { UserAvatar } from "@/components/UserAvatar"
+import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
 
 export default function UsersPage() {
   const [page, setPage] = React.useState(1)
@@ -68,6 +69,8 @@ export default function UsersPage() {
       }
     )
   }
+  const { user } = useAuth()
+  const isAdmin = user?.role === USER_ROLE.Admin;
 
   const handleResetPassword = (userId: string, username: string) => {
     openResetPasswordModal(
@@ -198,23 +201,25 @@ export default function UsersPage() {
                       {new Date(user.created_at).toLocaleDateString('ru-RU')}
                     </td>
                     <td className="p-2 md:p-4 align-middle">
-                      <Dropdown
-                        trigger={
-                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        }
-                      >
-                        <DropdownItem onClick={() => handleResetPassword(user.id, user.username)}>
-                          Сброс пароля
-                        </DropdownItem>
-                        <DropdownItem
-                          onClick={() => handleBlockUser(user.id, true)}
-                          className="text-red-600 hover:bg-red-50"
+                      { isAdmin ? (
+                        <Dropdown
+                          trigger={
+                            <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          }
                         >
-                          Заблокировать
-                        </DropdownItem>
-                      </Dropdown>
+                          <DropdownItem onClick={() => handleResetPassword(user.id, user.username)}>
+                            Сброс пароля
+                          </DropdownItem>
+                          <DropdownItem
+                            onClick={() => handleBlockUser(user.id, true)}
+                            className="text-red-600 hover:bg-red-50"
+                          >
+                            Заблокировать
+                          </DropdownItem>
+                        </Dropdown>
+                      ) : undefined}
                     </td>
                   </tr>
                 ))}
@@ -254,28 +259,35 @@ export default function UsersPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="text-sm text-muted-foreground">{user.email}</div>
-
-                {/* Clickable Role Badge */}
-                <Dropdown
-                  trigger={
-                    <div className="inline-flex items-center gap-1 cursor-pointer">
-                      <Badge variant={getRoleBadgeVariant(user.role_id)} className="cursor-pointer">
-                        {getRoleDisplayName(user.role_id, user.role_name)}
-                      </Badge>
-                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                    </div>
-                  }
-                >
-                  <DropdownItem onClick={() => handleRoleChange(user.id, 1)}>
-                    Администратор
-                  </DropdownItem>
-                  <DropdownItem onClick={() => handleRoleChange(user.id, 2)}>
-                    Модератор
-                  </DropdownItem>
-                  <DropdownItem onClick={() => handleRoleChange(user.id, 3)}>
-                    Секретный гость
-                  </DropdownItem>
-                </Dropdown>
+                {isAdmin ? (
+                  <Dropdown
+                    trigger={
+                      <div className="inline-flex items-center gap-1 cursor-pointer">
+                        <Badge variant={getRoleBadgeVariant(user.role_id)} className="cursor-pointer">
+                          {getRoleDisplayName(user.role_id, user.role_name)}
+                        </Badge>
+                        <ChevronDown className="h-3 w-3 text-muted-foreground"/>
+                      </div>
+                    }
+                  >
+                    <DropdownItem onClick={() => handleRoleChange(user.id, 1)}>
+                      Администратор
+                    </DropdownItem>
+                    <DropdownItem onClick={() => handleRoleChange(user.id, 2)}>
+                      Модератор
+                    </DropdownItem>
+                    <DropdownItem onClick={() => handleRoleChange(user.id, 3)}>
+                      Секретный гость
+                    </DropdownItem>
+                  </Dropdown>
+                ) : (
+                  <div className="inline-flex items-center gap-1 cursor-pointer">
+                    <Badge variant={getRoleBadgeVariant(user.role_id)} className="cursor-pointer">
+                      {getRoleDisplayName(user.role_id, user.role_name)}
+                    </Badge>
+                    <ChevronDown className="h-3 w-3 text-muted-foreground"/>
+                  </div>
+                )}
 
                 <div className="text-xs text-muted-foreground">
                   ID: {user.id}
