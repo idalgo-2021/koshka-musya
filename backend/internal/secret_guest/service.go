@@ -1454,7 +1454,35 @@ func toGenerateUploadURLResponseDTO(s *storage.UploadResponse) *GenerateUploadUR
 
 // Profile
 
+func calculateUserPointsAndRank(AcceptedOffersCount, SubmittedReportsCount, CorrectReportsCount int) (int, string) {
+
+	points := 0
+	rank := "Новичок"
+
+	points += AcceptedOffersCount * 10
+	points += SubmittedReportsCount * 5
+	points += CorrectReportsCount * 20
+
+	if points >= 100 {
+		rank = "Опытный"
+	}
+	if points >= 300 {
+		rank = "Профи"
+	}
+	if points >= 600 {
+		rank = "Мастер"
+	}
+	if points >= 1000 {
+		rank = "Легенда"
+	}
+
+	return points, rank
+}
+
 func toProfileResponseDTO(p *models.UserProfile) *ProfileResponseDTO {
+
+	points, rank := calculateUserPointsAndRank(p.AcceptedOffersCount, p.SubmittedReportsCount, p.CorrectReportsCount)
+
 	return &ProfileResponseDTO{
 		ID:                    p.ID,
 		UserID:                p.UserID,
@@ -1466,6 +1494,9 @@ func toProfileResponseDTO(p *models.UserProfile) *ProfileResponseDTO {
 		RegisteredAt:          p.RegisteredAt,
 		LastActiveAt:          p.LastActiveAt,
 		AdditionalInfo:        p.AdditionalInfo,
+
+		Points: points,
+		Rank:   rank,
 	}
 }
 

@@ -600,6 +600,8 @@ type ProfileResponseDTO struct {
 	RegisteredAt          time.Time       `json:"registered_at"`
 	LastActiveAt          *time.Time      `json:"last_active_at,omitempty"`
 	AdditionalInfo        json.RawMessage `json:"additional_info,omitempty" swaggertype:"object"`
+	Points                int             `json:"points"`
+	Rank                  string          `json:"rank"`
 }
 
 type GetAllProfilesRequestDTO struct {
