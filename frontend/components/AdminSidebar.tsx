@@ -16,6 +16,7 @@ const navItems = [
   {href: '/admin/checklists', label: 'Настройка анкет'},
   {href: '/admin/mediaRequirements', label: 'Media Requirements'},
   {href: '/admin/users', label: 'Пользователи'},
+  {href: '/admin/profiles', label: 'Статистика пользователей'},
   {href: '/admin/sg_reservations', label: 'SG Reservations'},
 ]
 
