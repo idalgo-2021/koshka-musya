@@ -92,10 +92,8 @@ export default function SgReservationsPage() {
           </p>
         </div>
         <ToggleButton
-          isToggled={isTableView}
+          checked={isTableView}
           onToggle={toggle}
-          icon={isTableView ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
-          label={isTableView ? "Таблица" : "Карточки"}
         />
       </div>
 
