@@ -6,16 +6,27 @@ import { SgReservationsFilters } from '@/entities/sgReservations/types'
 import SgReservationCard from '@/components/SgReservationCard'
 import { Button } from '@/components/ui/button'
 import Select from '@/components/ui/select'
-import { ChevronLeft, ChevronRight, Filter, RotateCcw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Filter, RotateCcw, Grid3X3, List } from 'lucide-react'
 import { SG_RESERVATION_STATUSES } from '@/entities/sgReservations/constants'
+import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
 
 const ITEMS_PER_PAGE = 10
+
+const calculateDays = (checkin: string, checkout: string) => {
+  const checkinDate = new Date(checkin)
+  const checkoutDate = new Date(checkout)
+  const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime())
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays
+}
 
 export default function SgReservationsPage() {
   const [filters, setFilters] = useState<SgReservationsFilters>({
     page: 1,
     limit: ITEMS_PER_PAGE
   })
+
+  const [isTableView, toggle] = useToggleWithStorage('sg-reservations-view', false)
 
   const { data, isLoading, error, refetch } = useSgReservations(filters)
 //   const { data: statuses } = useSgReservationStatuses()
@@ -80,6 +91,12 @@ export default function SgReservationsPage() {
             Управление резервациями от OTA партнеров
           </p>
         </div>
+        <ToggleButton
+          isToggled={isTableView}
+          onToggle={toggle}
+          icon={isTableView ? <List className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}
+          label={isTableView ? "Таблица" : "Карточки"}
+        />
       </div>
 
       {/* Filters */}
@@ -130,18 +147,95 @@ export default function SgReservationsPage() {
         </div>
       )}
 
-      {/* Reservations Grid */}
+      {/* Reservations Display */}
       {data && data.reservations?.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {data.reservations.map((reservation) => (
-            <SgReservationCard
-              key={reservation.id}
-              reservation={reservation}
-              onMarkAsNoShow={handleMarkAsNoShow}
-              isMarkingAsNoShow={markAsNoShowMutation.isPending}
-            />
-          ))}
-        </div>
+        isTableView ? (
+          /* Table View */
+          <div className="overflow-x-auto rounded-md border">
+            <table className="min-w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium">Бронирование</th>
+                  <th className="px-3 py-2 text-left font-medium">Даты</th>
+                  <th className="px-3 py-2 text-left font-medium">Гости</th>
+                  <th className="px-3 py-2 text-left font-medium">Стоимость</th>
+                  <th className="px-3 py-2 text-left font-medium">Статус</th>
+                  <th className="px-3 py-2 text-left font-medium">Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.reservations.map((reservation) => (
+                  <tr key={reservation.id} className="border-t">
+                    <td className="px-3 py-2">
+                      <div>
+                        <div className="font-medium">{reservation.BookingNumber}</div>
+                        <div className="text-xs text-gray-500">ID: {reservation.ListingID}</div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="text-xs">
+                        <div>{new Date(reservation.CheckinDate).toLocaleDateString('ru-RU')}</div>
+                        <div>{new Date(reservation.CheckoutDate).toLocaleDateString('ru-RU')}</div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="text-xs">
+                        {reservation.guests ?
+                          (typeof reservation.guests === 'object' && reservation.guests.adults ?
+                            `${reservation.guests.adults} взр.${reservation.guests.children > 0 ? `, ${reservation.guests.children} дет.` : ''}` :
+                            'N/A') : 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="text-xs">
+                        <div>{reservation.pricing?.pricing?.total?.toLocaleString()} {reservation.pricing?.pricing?.currency}</div>
+                        <div className="text-gray-500">
+                          {reservation.pricing?.pricing?.total &&
+                            Math.round(reservation.pricing.pricing.total / calculateDays(reservation.CheckinDate, reservation.CheckoutDate)).toLocaleString()} {reservation.pricing?.pricing?.currency}/день
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                        reservation.status.slug === 'new' ? 'bg-blue-100 text-blue-800' :
+                        reservation.status.slug === 'hold' ? 'bg-yellow-100 text-yellow-800' :
+                        reservation.status.slug === 'booked' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {reservation.status.name}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {reservation.status.slug !== 'no-show' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleMarkAsNoShow(reservation.id)}
+                          disabled={markAsNoShowMutation.isPending}
+                          className="text-xs"
+                        >
+                          Не обрабатывать
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Card View */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {data.reservations.map((reservation) => (
+              <SgReservationCard
+                key={reservation.id}
+                reservation={reservation}
+                onMarkAsNoShow={handleMarkAsNoShow}
+                isMarkingAsNoShow={markAsNoShowMutation.isPending}
+              />
+            ))}
+          </div>
+        )
       ) : (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-500">Резервации не найдены</p>
