@@ -3379,6 +3379,58 @@
                 }
             }
         },
+        "/staff/statistics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns basic statistics about the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Statistics (Staff)"
+                ],
+                "summary": "Get Statistics (Staff)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.StatisticsResponseDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/uploads/generate-url": {
             "post": {
                 "security": [
@@ -4522,6 +4574,46 @@
                     }
                 },
                 "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "secret_guest.StatisticsResponseDTO": {
+            "type": "object",
+            "properties": {
+                "new_sg_last_24h": {
+                    "type": "integer"
+                },
+                "open_assignments": {
+                    "type": "integer"
+                },
+                "ota_reservations_last_24h": {
+                    "type": "integer"
+                },
+                "pending_accept_assignments": {
+                    "type": "integer"
+                },
+                "reports_today": {
+                    "type": "integer"
+                },
+                "total_assignment_declines": {
+                    "description": "Отказы по предложениям",
+                    "type": "integer"
+                },
+                "total_assignments": {
+                    "description": "Предложения (assignments)",
+                    "type": "integer"
+                },
+                "total_ota_reservations": {
+                    "description": "OTA бронирования",
+                    "type": "integer"
+                },
+                "total_reports": {
+                    "description": "Отчёты",
+                    "type": "integer"
+                },
+                "total_sg": {
+                    "description": "Пользователи",
                     "type": "integer"
                 }
             }

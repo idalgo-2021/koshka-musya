@@ -2814,6 +2814,63 @@ func (r *SecretGuestRepository) GetAllUserProfiles(ctx context.Context, limit, o
 	return profiles, total, nil
 }
 
+// statistics
+func (r *SecretGuestRepository) GetStatistics(ctx context.Context) (*models.Statistics, error) {
+	// TODO: только для демки. Это нужно сразу убрать!
+
+	query := `
+		SELECT
+			-- OTA бронирования
+			(SELECT COUNT(*) FROM ota_sg_reservations) AS total_ota_reservations,
+			(SELECT COUNT(*) FROM ota_sg_reservations WHERE created_at >= NOW() - INTERVAL '24 hours') AS ota_reservations_last_24h,
+
+			-- Предложения (assignments)
+			(SELECT COUNT(*) FROM assignments) AS total_assignments,
+			(SELECT COUNT(*) 
+				FROM assignments a
+				JOIN assignment_statuses s ON a.status_id = s.id
+				WHERE s.slug = 'offered' AND a.reporter_id IS NULL
+			) AS open_assignments,
+			(SELECT COUNT(*) 
+				FROM assignments a
+				JOIN assignment_statuses s ON a.status_id = s.id
+				WHERE s.slug = 'offered' AND a.reporter_id IS NOT NULL
+			) AS pending_accept_assignments,
+
+			-- Отказы
+			(SELECT COUNT(*) FROM assignment_declines) AS total_assignment_declines,
+
+			-- Отчёты
+			(SELECT COUNT(*) FROM reports) AS total_reports,
+			(SELECT COUNT(*) FROM reports WHERE created_at::date = CURRENT_DATE) AS reports_today,
+
+			-- Тайные гости (role_id = 3)
+			(SELECT COUNT(*) FROM users WHERE role_id = 3) AS total_sg,
+			(SELECT COUNT(*) FROM users WHERE role_id = 3 AND created_at >= NOW() - INTERVAL '24 hours') AS new_sg_last_24h
+	`
+
+	row := r.db.QueryRow(ctx, query)
+
+	var stats models.Statistics
+	err := row.Scan(
+		&stats.TotalOtaReservations,
+		&stats.OtaReservationsLast24h,
+		&stats.TotalAssignments,
+		&stats.OpenAssignments,
+		&stats.PendingAcceptAssignments,
+		&stats.TotalAssignmentDeclines,
+		&stats.TotalReports,
+		&stats.ReportsToday,
+		&stats.TotalSg,
+		&stats.NewSgLast24h,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan statistics: %w", err)
+	}
+
+	return &stats, nil
+}
+
 // ГЕнерация отчета
 
 func (r *SecretGuestRepository) GetListingTypeID(ctx context.Context, listingID uuid.UUID) (int, error) {

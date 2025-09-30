@@ -611,3 +611,21 @@ type ProfilesResponse struct {
 	Total    int                   `json:"total"`
 	Page     int                   `json:"page"`
 }
+
+type StatisticsResponseDTO struct {
+	// OTA бронирования
+	TotalOtaReservations   int `json:"total_ota_reservations"`
+	OtaReservationsLast24h int `json:"ota_reservations_last_24h"`
+	// Предложения (assignments)
+	TotalAssignments         int `json:"total_assignments"`
+	OpenAssignments          int `json:"open_assignments"`
+	PendingAcceptAssignments int `json:"pending_accept_assignments"`
+	// Отказы по предложениям
+	TotalAssignmentDeclines int `json:"total_assignment_declines"`
+	// Отчёты
+	TotalReports int `json:"total_reports"`
+	ReportsToday int `json:"reports_today"`
+	// Пользователи
+	TotalSg      int `json:"total_sg"`
+	NewSgLast24h int `json:"new_sg_last_24h"`
+}

@@ -680,6 +680,34 @@ definitions:
       total:
         type: integer
     type: object
+  secret_guest.StatisticsResponseDTO:
+    properties:
+      new_sg_last_24h:
+        type: integer
+      open_assignments:
+        type: integer
+      ota_reservations_last_24h:
+        type: integer
+      pending_accept_assignments:
+        type: integer
+      reports_today:
+        type: integer
+      total_assignment_declines:
+        description: Отказы по предложениям
+        type: integer
+      total_assignments:
+        description: Предложения (assignments)
+        type: integer
+      total_ota_reservations:
+        description: OTA бронирования
+        type: integer
+      total_reports:
+        description: Отчёты
+        type: integer
+      total_sg:
+        description: Пользователи
+        type: integer
+    type: object
   secret_guest.StatusResponse:
     properties:
       id:
@@ -3016,6 +3044,39 @@ paths:
       summary: Reject a Report (Staff)
       tags:
       - Reports (Staff)
+  /staff/statistics:
+    get:
+      description: Returns basic statistics about the system
+      parameters:
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.StatisticsResponseDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Statistics (Staff)
+      tags:
+      - Statistics (Staff)
   /uploads/generate-url:
     post:
       consumes:

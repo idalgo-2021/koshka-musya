@@ -94,6 +94,9 @@ type SecretGuestRepository interface {
 	// profiles
 	GetUserProfileByID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
 	GetAllUserProfiles(ctx context.Context, limit, offset int) ([]*models.UserProfile, int, error)
+
+	// statistics
+	GetStatistics(ctx context.Context) (*models.Statistics, error)
 }
 
 type SecretGuestService struct {
@@ -1492,4 +1495,31 @@ func (s *SecretGuestService) GetAllProfiles(ctx context.Context, dto GetAllProfi
 	}
 
 	return response, nil
+}
+
+// statistics
+
+func (s *SecretGuestService) GetStatistics(ctx context.Context) (*StatisticsResponseDTO, error) {
+
+	//TODO: только для демки. Это нужно сразу убрать!
+
+	stat, err := s.repo.GetStatistics(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get statistics information from repository: %w", err)
+	}
+
+	dto := &StatisticsResponseDTO{
+		TotalOtaReservations:     stat.TotalOtaReservations,
+		OtaReservationsLast24h:   stat.OtaReservationsLast24h,
+		TotalAssignments:         stat.TotalAssignments,
+		OpenAssignments:          stat.OpenAssignments,
+		PendingAcceptAssignments: stat.PendingAcceptAssignments,
+		TotalAssignmentDeclines:  stat.TotalAssignmentDeclines,
+		TotalReports:             stat.TotalReports,
+		ReportsToday:             stat.ReportsToday,
+		TotalSg:                  stat.TotalSg,
+		NewSgLast24h:             stat.NewSgLast24h,
+	}
+
+	return dto, nil
 }
