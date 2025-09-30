@@ -620,3 +620,27 @@ type StatisticItemDTO struct {
 type StatisticsResponseDTO struct {
 	Statistics []StatisticItemDTO `json:"statistics"`
 }
+
+// ================================
+
+type GetMyHistoryRequestDTO struct {
+	UserID uuid.UUID
+	Page   int
+	Limit  int
+}
+
+type JournalEntryDTO struct {
+	CreatedAt       time.Time              `json:"created_at"`
+	Listing         ListingShortResponse   `json:"listing"`
+	Purpose         string                 `json:"purpose"`
+	CheckinDate     time.Time              `json:"checkin_date"`
+	CheckoutDate    time.Time              `json:"checkout_date"`
+	ChecklistSchema models.ChecklistSchema `json:"checklist_schema"`
+	StatusSlug      string                 `json:"status_slug"`
+}
+
+type JournalResponse struct {
+	Entries []*JournalEntryDTO `json:"entries"`
+	Total   int                `json:"total"`
+	Page    int                `json:"page"`
+}

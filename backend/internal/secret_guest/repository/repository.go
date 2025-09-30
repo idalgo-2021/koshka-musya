@@ -2873,6 +2873,86 @@ func (r *SecretGuestRepository) GetStatistics(ctx context.Context) (*models.Stat
 	return &stats, nil
 }
 
+// journal
+
+func (r *SecretGuestRepository) GetUserHistory(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*models.Report, int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	countQuery := `SELECT COUNT(*) FROM reports WHERE reporter_id = $1;`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery, userID).Scan(&total)
+	if err != nil {
+		log.Error(ctx, "Failed to query total user history count", zap.Error(err), zap.String("user_id", userID.String()))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.Report{}, 0, nil
+	}
+
+	query := `
+		SELECT
+			r.created_at,
+			r.purpose,
+			r.checkin_date,
+			r.checkout_date,
+			r.checklist_schema,
+			s.slug as status_slug,
+			l.id as listing_id,
+			l.code as listing_code,
+			l.title as listing_title,
+			l.description as listing_description,
+			l.main_picture as listing_main_picture,
+			l.listing_type_id,
+			lt.slug as listing_type_slug,
+			lt.name as listing_type_name,
+			l.address as listing_address
+		FROM reports r
+		JOIN listings l ON r.listing_id = l.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		JOIN report_statuses s ON r.status_id = s.id
+		WHERE r.reporter_id = $1
+		ORDER BY r.created_at DESC
+		LIMIT $2 OFFSET $3;
+	`
+
+	rows, err := r.db.Query(ctx, query, userID, limit, offset)
+	if err != nil {
+		log.Error(ctx, "Failed to query user history", zap.Error(err), zap.String("user_id", userID.String()))
+		return nil, total, err
+	}
+	defer rows.Close()
+
+	reports := make([]*models.Report, 0, limit)
+	for rows.Next() {
+		var rep models.Report
+		err = rows.Scan(
+			&rep.CreatedAt,
+			&rep.Purpose,
+			&rep.BookingDetails.CheckinDate,
+			&rep.BookingDetails.CheckoutDate,
+			&rep.ChecklistSchema,
+			&rep.Status.Slug,
+			&rep.Listing.ID,
+			&rep.Listing.Code,
+			&rep.Listing.Title,
+			&rep.Listing.Description,
+			&rep.Listing.MainPicture,
+			&rep.Listing.ListingTypeID,
+			&rep.Listing.ListingTypeSlug,
+			&rep.Listing.ListingTypeName,
+			&rep.Listing.Address,
+		)
+		if err != nil {
+			log.Error(ctx, "Failed to scan user history row", zap.Error(err))
+			return nil, total, err
+		}
+		reports = append(reports, &rep)
+	}
+
+	return reports, total, nil
+}
+
 // ГЕнерация отчета
 
 func (r *SecretGuestRepository) GetListingTypeID(ctx context.Context, listingID uuid.UUID) (int, error) {
