@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { MapPin, Calendar, User, EyeOff } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import ConfirmationModal from '@/components/ConfirmationModal'
-import { useState } from 'react'
+import {useMemo, useState} from 'react'
+import Link from 'next/link'
 
 interface SgReservationCardProps {
   reservation: SgReservation
@@ -31,6 +32,37 @@ const formatPricePerDay = (pricing: any, days: number) => {
   return `${pricePerDay.toLocaleString()} ${currency}/день`
 }
 
+
+const formatDate = (dateString: string) => {
+  return new Date(dateString).toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+const formatGuests = (guests: any) => {
+  if (!guests) return 'N/A'
+
+  // Handle different guest data structures
+  if (typeof guests === 'object') {
+    if (guests.adults && guests.children) {
+      return `${guests.adults} взрослых${guests.children > 0 ? `, ${guests.children} детей` : ''}`
+    }
+    if (guests.total) {
+      return `${guests.total} гостей`
+    }
+    if (guests.count) {
+      return `${guests.count} гостей`
+    }
+    // If it's an object with guest details
+    const guestCount = Object.keys(guests).length
+    return guestCount > 0 ? `${guestCount} гостей` : 'N/A'
+  }
+
+  return guests.toString()
+}
+
 export default function SgReservationCard({
   reservation,
   onMarkAsNoShow,
@@ -38,15 +70,7 @@ export default function SgReservationCard({
 }: SgReservationCardProps) {
   const [showNoShowModal, setShowNoShowModal] = useState(false)
 
-  const daysCount = calculateDays(reservation.CheckinDate, reservation.CheckoutDate)
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
+  const daysCount = useMemo(() => calculateDays(reservation.CheckinDate, reservation.CheckoutDate), [reservation.CheckinDate, reservation.CheckoutDate])
 
   const formatPrice = (pricing: any) => {
     if (!pricing?.pricing) return 'N/A'
@@ -54,27 +78,7 @@ export default function SgReservationCard({
     return `${total.toLocaleString()} ${currency}`
   }
 
-  const formatGuests = (guests: any) => {
-    if (!guests) return 'N/A'
 
-    // Handle different guest data structures
-    if (typeof guests === 'object') {
-      if (guests.adults && guests.children) {
-        return `${guests.adults} взрослых${guests.children > 0 ? `, ${guests.children} детей` : ''}`
-      }
-      if (guests.total) {
-        return `${guests.total} гостей`
-      }
-      if (guests.count) {
-        return `${guests.count} гостей`
-      }
-      // If it's an object with guest details
-      const guestCount = Object.keys(guests).length
-      return guestCount > 0 ? `${guestCount} гостей` : 'N/A'
-    }
-
-    return guests.toString()
-  }
   const handleMarkAsNoShow = () => {
     onMarkAsNoShow(reservation.id)
     setShowNoShowModal(false)
@@ -91,7 +95,12 @@ export default function SgReservationCard({
               </CardTitle>
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <MapPin className="w-4 h-4" />
-                <span>Listing ID: {reservation.ListingID}</span>
+                <Link
+                  href={`/admin/listings/${reservation.ListingID}`}
+                  className="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  <span>Объект: {reservation.ListingID}</span>
+                </Link>
               </div>
             </div>
             <Badge
@@ -105,7 +114,7 @@ export default function SgReservationCard({
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-2">
           {/* Dates */}
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4 text-gray-500" />
@@ -169,7 +178,7 @@ export default function SgReservationCard({
             type="warning"
             confirmText="Отметить"
             cancelText="Отмена"
-            onConfirm={handleMarkAsNoShow}
+            onConfirm={() => handleMarkAsNoShow()}
             onCancel={() => setShowNoShowModal(false)}
             isLoading={isMarkingAsNoShow}
           />

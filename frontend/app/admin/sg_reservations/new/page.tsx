@@ -5,20 +5,21 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { redirect } from 'next/navigation'
+import {redirect, useRouter} from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Select from '@/components/ui/select'
-import { RefreshCw } from 'lucide-react'
+import {RefreshCw, StepBackIcon} from 'lucide-react'
 
 import { sgReservationsApi } from '@/entities/sgReservations/api'
 import { CreateSGReservationRequest } from '@/entities/sgReservations/types'
 import { useAuth, USER_ROLE } from '@/entities/auth/useAuth'
 import { ListingsApi } from '@/entities/listings/api'
 import {SG_RESERVATION_STATUSES} from "@/entities/sgReservations/constants";
+import {toast} from "sonner";
 
 // Form validation schema
 const reservationSchema = z.object({
@@ -40,6 +41,11 @@ const reservationSchema = z.object({
 
 type ReservationFormValues = z.infer<typeof reservationSchema>
 
+// Format dates to ISO 8601 with timezone
+const formatDateToISO = (dateString: string): string => {
+  const date = new Date(dateString)
+  return date.toISOString()
+}
 export default function SGReservationsPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
@@ -60,7 +66,6 @@ export default function SGReservationsPage() {
     queryKey: ['listings'],
     queryFn: () => ListingsApi.getPublicListings(1, 100), // Fetch first 100 listings
   })
-  console.log({ listingsData })
 
   // Use hardcoded reservation statuses
   const reservationStatuses = SG_RESERVATION_STATUSES
@@ -82,11 +87,13 @@ export default function SGReservationsPage() {
       adults: 1,
       children: 0,
       nights: 1,
-      per_night: 0,
+      per_night: 100,
       currency: 'RUB',
-      total: 0,
+      total: 100,
+      ota_id: generateUUID(), // Auto-generate OTA ID
     },
   })
+
 
   // Create reservation mutation
   const createReservationMutation = useMutation({
@@ -94,18 +101,35 @@ export default function SGReservationsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sg_reservations'] })
       form.reset()
+      toast.success('Бронирование создано');
+      router.push('/admin/sg_reservations');
       // Show success message (you can add toast notification here)
-      alert('Бронирование успешно создано!')
     },
     onError: (error) => {
       console.error('Error creating reservation:', error)
-      alert('Ошибка при создании бронирования')
+      toast.error('Произошла ошибка при создании бронирования');
     },
   })
 
   // Calculate total when nights or per_night changes
   const watchedNights = form.watch('nights')
   const watchedPerNight = form.watch('per_night')
+  const watchedCheckin = form.watch('checkin')
+  const watchedCheckout = form.watch('checkout')
+
+  // Calculate nights between checkin and checkout dates
+  React.useEffect(() => {
+    if (watchedCheckin && watchedCheckout) {
+      const checkinDate = new Date(watchedCheckin)
+      const checkoutDate = new Date(watchedCheckout)
+      
+      if (checkoutDate > checkinDate) {
+        const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime())
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+        form.setValue('nights', diffDays)
+      }
+    }
+  }, [watchedCheckin, watchedCheckout, form])
 
   React.useEffect(() => {
     const total = watchedNights * watchedPerNight
@@ -116,28 +140,16 @@ export default function SGReservationsPage() {
     // Find selected listing
     const selectedListing = listingsData?.listings?.find(listing => listing.id === data.listing_id)
     if (!selectedListing) {
-      alert('Пожалуйста, выберите объект размещения')
+      toast.error('Пожалуйста, выберите объект размещения');
       return
     }
 
     // Find selected status
     const selectedStatus = reservationStatuses?.find(rs => rs.id.toString() === data.status)
     if (!selectedStatus) {
-      alert('Пожалуйста, выберите статус')
+      toast.error('Произошла ошибка при создании бронирования');
       return
     }
-
-    // Format dates to ISO 8601 with timezone
-    const formatDateToISO = (dateString: string): string => {
-      const date = new Date(dateString)
-      return date.toISOString()
-    }
-
-    console.log('Formatted dates:', {
-      received_at: formatDateToISO(data.received_at),
-      checkin: formatDateToISO(data.checkin),
-      checkout: formatDateToISO(data.checkout)
-    })
 
     const reservationData: CreateSGReservationRequest = {
       received_at: formatDateToISO(data.received_at),
@@ -145,8 +157,8 @@ export default function SGReservationsPage() {
       reservation: {
         booking_number: data.booking_number,
         dates: {
-          checkIn: formatDateToISO(data.checkin),
-          checkOut: formatDateToISO(data.checkout),
+          checkin: formatDateToISO(data.checkin),
+          checkout: formatDateToISO(data.checkout),
         },
         guests: {
           adults: data.adults,
@@ -161,7 +173,7 @@ export default function SGReservationsPage() {
           country: selectedListing.country,
           latitude: selectedListing.latitude,
           longitude: selectedListing.longitude,
-          main_picture: selectedListing.mainPicture || '',
+          main_picture: selectedListing.main_picture || 'g',
           listing_type: {
             id: selectedListing.listing_type.id,
             name: selectedListing.listing_type.name,
@@ -184,6 +196,8 @@ export default function SGReservationsPage() {
     createReservationMutation.mutate(reservationData)
   }
 
+  const router = useRouter();
+
   if (!user || user.role !== USER_ROLE.Admin) {
     return <div>Loading...</div>
     // return redirect('/dashboard');
@@ -191,11 +205,12 @@ export default function SGReservationsPage() {
 
   return (
     <div className="container max-w-4xl py-6 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center">
+        <Button variant="outline" onClick={() => router.back()}><StepBackIcon/></Button>
         <h1 className="text-2xl font-semibold">SG Reservations</h1>
       </div>
 
-      <Card>
+      <Card className="border-0 shadow-none">
         <CardHeader>
           <CardTitle>Создать новое бронирование</CardTitle>
         </CardHeader>
@@ -303,13 +318,15 @@ export default function SGReservationsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ota_id">OTA ID</Label>
+                <Label htmlFor="ota_id">OTA ID (автоматически)</Label>
                 <div className="flex gap-2">
                   <Input
                     id="ota_id"
                     {...form.register('ota_id')}
-                    placeholder="booking.com, expedia.com"
-                    className="flex-1"
+                    placeholder="Автоматически сгенерированный ID"
+                    className="flex-1 bg-gray-50"
+                    readOnly
+                    disabled
                   />
                   <Button
                     type="button"
@@ -336,6 +353,9 @@ export default function SGReservationsPage() {
                   type="number"
                   min="1"
                   {...form.register('nights', { valueAsNumber: true })}
+                  readOnly
+                  disabled
+                  className="bg-gray-50"
                 />
                 {form.formState.errors.nights && (
                   <p className="text-sm text-red-600">{form.formState.errors.nights.message}</p>

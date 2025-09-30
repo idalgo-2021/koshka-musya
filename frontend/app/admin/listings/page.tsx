@@ -17,7 +17,7 @@ export default function ListingsPage() {
   const [page, setPage] = React.useState(1)
   const limit = 12
   const [isShow, setIsShow] = useToggleWithStorage(false, 'listings-view-mode') // false = card view, true = table view
-  type ListingItem = { id: string; title: string;  mainpicture?: string; description: string; code: string; address: string; city: string; country: string; latitude: number; longitude: number; mainPicture?: string; listing_type: { id: number; name: string; slug: string };  listingType: { id: number; name: string; slug: string } }
+  type ListingItem = { id: string; title: string;  main_picture?: string; description: string; code: string; address: string; city: string; country: string; latitude: number; longitude: number; listing_type: { id: number; name: string; slug: string }; }
   type PublicListingsResponse = { listings: ListingItem[]; page: number; total: number }
   const { data, isLoading, isError, error } = useQuery<PublicListingsResponse>({
     queryKey: ['public_listings', { page, limit }],
@@ -30,7 +30,6 @@ export default function ListingsPage() {
   if (isError) return <div className="p-6 text-red-600 text-sm">{(error as Error)?.message || 'Failed to load listings'}</div>
 
   const listings = data?.listings || []
-  console.log({ listings });
   const total = data?.total || 0
   const totalPages = Math.max(1, Math.ceil(total / limit))
   const canPrev = page > 1
@@ -76,10 +75,10 @@ export default function ListingsPage() {
                 {listings.map((l: ListingItem) => (
                   <tr key={l.id} className="border-b transition-colors hover:bg-muted/50">
                     <td className="p-2 md:p-4 align-middle">
-                      {l.mainpicture ? (
+                      {l.main_picture ? (
                         <div className="relative h-12 w-12 md:h-16 md:w-16 overflow-hidden rounded-md border">
                           <Image
-                            src={l.mainpicture}
+                            src={l.main_picture}
                             alt={l.title}
                             width={64}
                             height={64}
@@ -105,7 +104,7 @@ export default function ListingsPage() {
                     </td>
                     <td className="p-2 md:p-4 align-middle hidden lg:table-cell">
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
-                        {l.listingType?.name}
+                        {l.listing_type?.name}
                       </span>
                     </td>
                     <td className="p-2 md:p-4 align-middle text-sm text-muted-foreground max-w-xs hidden xl:table-cell">
@@ -130,9 +129,9 @@ export default function ListingsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {l.mainpicture ? (
+                {l.main_picture ? (
                   <div className="relative h-40 w-full overflow-hidden rounded-md border">
-                    <Image src={l.mainpicture} alt={l.title}
+                    <Image src={l.main_picture} alt={l.title}
                            width={300}
                            height={300}
                            className="object-cover" />

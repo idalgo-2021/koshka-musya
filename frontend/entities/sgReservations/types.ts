@@ -39,6 +39,11 @@ export interface SgReservationsFilters {
   limit?: number
 }
 
+export interface SGReservationGuests {
+  adults: number;
+  children: number;
+}
+
 export interface CreateSGReservationRequest {
   source: string
   received_at: string
@@ -48,10 +53,7 @@ export interface CreateSGReservationRequest {
       checkin: string
       checkout: string
     }
-    guests: {
-      adults: number
-      children: number
-    }
+    guests: SGReservationGuests;
     ota_id: string
     status: string
     listing: {
@@ -70,13 +72,6 @@ export interface CreateSGReservationRequest {
       }
       main_picture: string
     }
-    pricing: {
-      total: number
-      currency: string
-      breakdown: {
-        nights: number
-        per_night: number
-      }
-    }
+    pricing: SgReservationPricing
   }
 }

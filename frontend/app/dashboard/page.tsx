@@ -153,7 +153,6 @@ function DashboardContent() {
     });
   }, [assignments, hotelDetails, hotelLoading]);
 
-
   const handleLogout = () => {
     logout();
     toast.success("Вы вышли из системы");

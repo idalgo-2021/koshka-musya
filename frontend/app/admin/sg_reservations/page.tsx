@@ -5,10 +5,12 @@ import { useSgReservations, useMarkAsNoShow } from '@/entities/sgReservations/us
 import { SgReservationsFilters } from '@/entities/sgReservations/types'
 import SgReservationCard from '@/components/SgReservationCard'
 import { Button } from '@/components/ui/button'
-import Select from '@/components/ui/select'
-import { ChevronLeft, ChevronRight, Filter, RotateCcw, Grid3X3, List } from 'lucide-react'
+import {ChevronLeft, ChevronRight,  Plus, ExternalLink} from 'lucide-react'
 import { SG_RESERVATION_STATUSES } from '@/entities/sgReservations/constants'
 import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import * as React from "react";
+import Link from 'next/link'
+import SelectRow from "@/components/ui/select-row";
 
 const ITEMS_PER_PAGE = 10
 
@@ -26,7 +28,7 @@ export default function SgReservationsPage() {
     limit: ITEMS_PER_PAGE
   })
 
-  const [isTableView, toggle] = useToggleWithStorage('sg-reservations-view', false)
+  const [isTableView, toggle] = useToggleWithStorage(false, 'sg-reservations-view');
 
   const { data, isLoading, error, refetch } = useSgReservations(filters)
 //   const { data: statuses } = useSgReservationStatuses()
@@ -49,10 +51,10 @@ export default function SgReservationsPage() {
   const handleMarkAsNoShow = (id: string) => {
     markAsNoShowMutation.mutate(id)
   }
-
-  const clearFilters = () => {
-    setFilters({ page: 1, limit: ITEMS_PER_PAGE })
-  }
+  //
+  // const clearFilters = () => {
+  //   setFilters({ page: 1, limit: ITEMS_PER_PAGE })
+  // }
 
   const totalPages = data ? Math.ceil(data.total / ITEMS_PER_PAGE) : 0
   const currentPage = filters.page || 1
@@ -80,7 +82,10 @@ export default function SgReservationsPage() {
       </div>
     )
   }
-
+  //
+  // const handleCreateNew = () => {
+  //
+  // }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -91,24 +96,32 @@ export default function SgReservationsPage() {
             Управление резервациями от OTA партнеров
           </p>
         </div>
-        <ToggleButton
-          checked={isTableView}
-          onToggle={toggle}
-        />
+        <div className="flex items-center gap-2">
+          <Button asChild>
+            <Link href="/admin/sg_reservations/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Добавить объект
+            </Link>
+          </Button>
+          {/*<Button onClick={handleCreateNew}>*/}
+          {/*  <Plus className="w-4 h-4 mr-2" />*/}
+          {/*  Добавить тип объекта*/}
+          {/*</Button>*/}
+          <ToggleButton
+            checked={isTableView}
+            onToggle={toggle}
+          />
+        </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
         <div className="flex items-center gap-4 flex-wrap">
+      <div className="bg-white p-4 rounded-lg">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <span className="text-sm font-medium text-gray-700">Фильтры:</span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Статус:</label>
-            <Select
+            <SelectRow
+              label="Статус"
               value={filters.status_id?.toString() || 'all'}
+              // @ts-ignore
               onChange={handleStatusFilter}
               placeholder="Все статусы"
               options={[
@@ -120,16 +133,6 @@ export default function SgReservationsPage() {
               ]}
             />
           </div>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearFilters}
-            className="flex items-center gap-2"
-          >
-            <RotateCcw className="w-4 h-4" />
-            Сбросить
-          </Button>
         </div>
       </div>
 
@@ -137,11 +140,6 @@ export default function SgReservationsPage() {
       {Array.isArray(data?.reservations) && data.reservations.length > 0 && (
         <div className="text-sm text-gray-600">
           Показано {data.reservations.length} из {data.total} резерваций
-          {filters.status_id && (
-            <span className="ml-2">
-              (статус: {SG_RESERVATION_STATUSES?.find(s => s.id === filters.status_id)?.name})
-            </span>
-          )}
         </div>
       )}
 
@@ -167,7 +165,13 @@ export default function SgReservationsPage() {
                     <td className="px-3 py-2">
                       <div>
                         <div className="font-medium">{reservation.BookingNumber}</div>
-                        <div className="text-xs text-gray-500">ID: {reservation.ListingID}</div>
+                        <Link
+                          href={`/admin/listings/${reservation.ListingID}`}
+                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                        >
+                          <span>ID: {reservation.ListingID}</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </Link>
                       </div>
                     </td>
                     <td className="px-3 py-2">
