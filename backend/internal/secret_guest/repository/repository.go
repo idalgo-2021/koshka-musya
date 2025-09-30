@@ -32,8 +32,19 @@ func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *mode
 	log := logger.GetLoggerFromCtx(ctx)
 
 	query := `
-		INSERT INTO listings (code, title, description, listing_type_id, address, city, country, latitude, longitude)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO listings (
+			code, 
+			title, 
+			description, 
+			listing_type_id, 
+			address, 
+			city, 
+			country, 
+			latitude, 
+			longitude,
+			main_picture
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10)
 		RETURNING id;
 	`
 
@@ -47,6 +58,7 @@ func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *mode
 		listing.Country,
 		listing.Latitude,
 		listing.Longitude,
+		listing.MainPicture,
 	)
 
 	var id uuid.UUID
