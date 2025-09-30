@@ -45,6 +45,7 @@ export default function AdminLayout({
 
 const AuthUserLayout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
+
   if (!user) {
     return (
       <AdminLoader />

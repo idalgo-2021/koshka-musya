@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Menu, X, Home, FileText, Settings, Building, Users, List, BarChart3, LogOut, Tag, Image } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useAuth, roleToString } from '@/entities/auth/useAuth'
+// import { useAuth, roleToString } from '@/entities/auth/useAuth'
 import { ProfileIcon } from '@/components/icons/ProfileIcon'
 
 const navItems = [
@@ -23,7 +23,7 @@ const navItems = [
 export default function AdminMobileNav() {
   const [isOpen, setIsOpen] = useState(false)
   const pathname = usePathname()
-  const { user } = useAuth()
+  // const { user } = useAuth()
 
   const toggleMenu = () => {
     setIsOpen(!isOpen)
@@ -66,10 +66,10 @@ export default function AdminMobileNav() {
           {/* User Avatar */}
           <div className="flex items-center gap-3">
             {/*{isOpen ? (*/}
-              <div>
-                <p className="font-medium text-gray-900">{user?.username}</p>
-                <p className="text-sm text-gray-500">{roleToString(user?.role)}</p>
-              </div>
+            {/*  <div>*/}
+            {/*    <p className="font-medium text-gray-900">{user?.username}</p>*/}
+            {/*    <p className="text-sm text-gray-500">{roleToString(user?.role)}</p>*/}
+            {/*  </div>*/}
             {/*) : undefined}*/}
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
               <ProfileIcon/>

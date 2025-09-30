@@ -29,7 +29,7 @@ const navItems = [
 export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  const {user} = useAuth();
+  // const {user} = useAuth();
 
   const onLogout = () => {
     try {
@@ -42,7 +42,7 @@ export default function AdminSidebar() {
 
   return (
     <aside className="lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950 w-60 shrink-0 border-r bg-background/50 flex flex-col h-[100svh] overflow-auto p-4 fixed top-0">
-      <UserCard user={user}/>
+      {/*<UserCard user={user}/>*/}
       {/*<div className="px-4 py-4 text-sm font-semibold text-muted-foreground">{formatUser(user)}</div>*/}
       <nav className="flex flex-col gap-2">
         {navItems.map(item => {
@@ -56,7 +56,7 @@ export default function AdminSidebar() {
         <div className="py-2 border-t border-gray-200">
           <button
             onClick={onLogout}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left"
           >
             <LogOut className="w-5 h-5"/>
             <span className="font-medium">Выйти</span>

@@ -6,6 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
+import { useAdminDataRefresh } from '@/hooks/useAdminEventBus'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -34,7 +35,10 @@ function UsersTab() {
   const { confirm } = useConfirmation()
   const { openResetPasswordModal } = useResetPassword()
 
-  const { data, isLoading, isError, error } = useUsersQuery(page, limit, searchUsername || undefined, searchRoleId)
+  const { data, isLoading, isError, error, refetch } = useUsersQuery(page, limit, searchUsername || undefined, searchRoleId)
+
+  // Listen for refresh events
+  useAdminDataRefresh(['users:refresh', 'admin:refresh-all'], refetch)
 
   // Mutations for user management
   const changeRoleMutation = useMutation({

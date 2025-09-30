@@ -9,6 +9,7 @@ import {ChevronLeft, ChevronRight,  Plus, ExternalLink} from 'lucide-react'
 import { SG_RESERVATION_STATUSES } from '@/entities/sgReservations/constants'
 import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
+import { useAdminDataRefresh } from '@/hooks/useAdminEventBus'
 import * as React from "react";
 import Link from 'next/link'
 import SelectRow from "@/components/ui/select-row";
@@ -34,6 +35,9 @@ export default function SgReservationsPage() {
   const { data, isLoading, error, refetch } = useSgReservations(filters)
 //   const { data: statuses } = useSgReservationStatuses()
   const markAsNoShowMutation = useMarkAsNoShow()
+
+  // Listen for refresh events
+  useAdminDataRefresh(['sg-reservations:refresh', 'admin:refresh-all'], refetch)
 
   const handleStatusFilter = (statusId: string) => {
     const newFilters = { ...filters, page: 1 }
