@@ -53,7 +53,7 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
 
             {/* Reporter Info */}
             <div className="text-sm gap-2">
-              <span className="text-muted-foreground">Тайный гость:</span>
+              <span className="text-muted-foreground">Secret Guest:</span>
               <span className="font-medium">{assignment.reporter?.username || 'Unknown'}</span>
             </div>
             {assignment.deadline && (

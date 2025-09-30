@@ -5,7 +5,11 @@ import { LoginForm } from "./LoginForm";
 import { RestoreForm } from "./RestoreForm";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function AuthForm() {
+interface AuthFormProps {
+  hideRegistration?: boolean;
+}
+
+export default function AuthForm({ hideRegistration = false }: AuthFormProps) {
   const [tab, setTab] = useState<"login" | "register" | "restore">("login");
 
   return (
@@ -31,7 +35,7 @@ export default function AuthForm() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <LoginForm onSwitchTab={setTab} />
+              <LoginForm onSwitchTab={setTab} hideRegistration={hideRegistration} />
             </motion.div>
           )}
           {tab === "register" && (
