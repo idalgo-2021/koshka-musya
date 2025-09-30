@@ -6,7 +6,8 @@ import { ProfilesFilters } from '@/entities/profiles/types'
 import ProfileCard from '@/components/ProfileCard'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import * as React from "react"
 
 const ITEMS_PER_PAGE = 10
@@ -38,7 +39,7 @@ export default function ProfileTab() {
     limit: ITEMS_PER_PAGE
   })
 
-  const [isTableView, toggle] = useToggleWithStorage(false, 'profiles-view')
+  const [isTableView, toggle] = useResponsiveToggle(false, 'profiles-view')
   const { data, isLoading, error, refetch } = useProfiles(filters)
 
   const handlePageChange = (newPage: number) => {
