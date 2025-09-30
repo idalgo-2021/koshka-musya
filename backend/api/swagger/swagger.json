@@ -3379,6 +3379,58 @@
                 }
             }
         },
+        "/staff/statistics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns basic statistics about the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Statistics (Staff)"
+                ],
+                "summary": "Get Statistics (Staff)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.StatisticsResponseDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/uploads/generate-url": {
             "post": {
                 "security": [
@@ -4523,6 +4575,31 @@
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "secret_guest.StatisticItemDTO": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "secret_guest.StatisticsResponseDTO": {
+            "type": "object",
+            "properties": {
+                "statistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/secret_guest.StatisticItemDTO"
+                    }
                 }
             }
         },

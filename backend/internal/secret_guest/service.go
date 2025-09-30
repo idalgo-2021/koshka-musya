@@ -94,6 +94,9 @@ type SecretGuestRepository interface {
 	// profiles
 	GetUserProfileByID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
 	GetAllUserProfiles(ctx context.Context, limit, offset int) ([]*models.UserProfile, int, error)
+
+	// statistics
+	GetStatistics(ctx context.Context) (*models.Statistics, error)
 }
 
 type SecretGuestService struct {
@@ -1492,4 +1495,28 @@ func (s *SecretGuestService) GetAllProfiles(ctx context.Context, dto GetAllProfi
 	}
 
 	return response, nil
+}
+
+// statistics
+
+func (s *SecretGuestService) GetStatistics(ctx context.Context) (*StatisticsResponseDTO, error) {
+	stat, err := s.repo.GetStatistics(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get statistics information from repository: %w", err)
+	}
+
+	items := []StatisticItemDTO{
+		{Key: "total_ota_reservations", Value: stat.TotalOtaReservations, Description: "Всего бронирований от OTA"},
+		{Key: "ota_reservations_last_24h", Value: stat.OtaReservationsLast24h, Description: "Новых бронирований от OTA за 24 часа"},
+		{Key: "total_assignments", Value: stat.TotalAssignments, Description: "Всего предложений"},
+		{Key: "open_assignments", Value: stat.OpenAssignments, Description: "Свободных предложений"},
+		{Key: "pending_accept_assignments", Value: stat.PendingAcceptAssignments, Description: "Предложений, ожидающих принятия"},
+		{Key: "total_assignment_declines", Value: stat.TotalAssignmentDeclines, Description: "Всего отказов от предложений"},
+		{Key: "total_reports", Value: stat.TotalReports, Description: "Всего отчетов"},
+		{Key: "reports_today", Value: stat.ReportsToday, Description: "Отчетов создано сегодня"},
+		{Key: "total_sg", Value: stat.TotalSg, Description: "Всего тайных гостей"},
+		{Key: "new_sg_last_24h", Value: stat.NewSgLast24h, Description: "Новых тайных гостей за 24 часа"},
+	}
+
+	return &StatisticsResponseDTO{Statistics: items}, nil
 }

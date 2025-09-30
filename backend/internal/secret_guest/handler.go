@@ -2531,3 +2531,28 @@ func (h *SecretGuestHandler) GetProfileByUserID(w http.ResponseWriter, r *http.R
 
 	h.writeJSONResponse(ctx, w, http.StatusOK, profile)
 }
+
+// @Summary      Get Statistics (Staff)
+// @Security     BearerAuth
+// @Description  Returns basic statistics about the system
+// @Tags         Statistics (Staff)
+// @Produce      json
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.StatisticsResponseDTO
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /staff/statistics [get]
+func (h *SecretGuestHandler) GetStatistics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	stats, err := h.service.GetStatistics(ctx)
+	if err != nil {
+		log.Error(ctx, "Failed to get statistics", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, stats)
+}

@@ -611,3 +611,12 @@ type ProfilesResponse struct {
 	Total    int                   `json:"total"`
 	Page     int                   `json:"page"`
 }
+
+type StatisticItemDTO struct {
+	Key         string `json:"key"`
+	Value       int    `json:"value"`
+	Description string `json:"description"`
+}
+type StatisticsResponseDTO struct {
+	Statistics []StatisticItemDTO `json:"statistics"`
+}

@@ -680,6 +680,22 @@ definitions:
       total:
         type: integer
     type: object
+  secret_guest.StatisticItemDTO:
+    properties:
+      description:
+        type: string
+      key:
+        type: string
+      value:
+        type: integer
+    type: object
+  secret_guest.StatisticsResponseDTO:
+    properties:
+      statistics:
+        items:
+          $ref: '#/definitions/secret_guest.StatisticItemDTO'
+        type: array
+    type: object
   secret_guest.StatusResponse:
     properties:
       id:
@@ -3016,6 +3032,39 @@ paths:
       summary: Reject a Report (Staff)
       tags:
       - Reports (Staff)
+  /staff/statistics:
+    get:
+      description: Returns basic statistics about the system
+      parameters:
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/secret_guest.StatisticsResponseDTO'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Statistics (Staff)
+      tags:
+      - Statistics (Staff)
   /uploads/generate-url:
     post:
       consumes:
