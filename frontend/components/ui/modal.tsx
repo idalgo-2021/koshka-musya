@@ -3,6 +3,7 @@
 import * as React from "react"
 import { X } from "lucide-react"
 import { Button } from "./button"
+import { useEventListener } from "@/hooks/useEventHooks"
 
 export type ModalSize = "sm" | "md" | "lg" | "xl" | "full";
 
@@ -28,21 +29,11 @@ export function Modal({ isOpen = false, onClose, title, children, size = "lg", p
     }
   }, [isOpen])
 
-  React.useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-      }
+  useEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && isOpen) {
+      onClose()
     }
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-    }
-  }, [isOpen, onClose])
+  }, { enabled: isOpen })
 
   if (!isOpen) return null
 
