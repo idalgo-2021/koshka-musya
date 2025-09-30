@@ -7,8 +7,9 @@ import { AnswerTypesApi, type AnswerType } from '@/entities/answerTypes/api'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import {Edit, StepBackIcon, Trash2} from 'lucide-react'
-import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import {USER_ROLE} from "@/entities/auth/useAuth";
 import ConfirmationModal from '@/components/ConfirmationModal'
+import {useUser} from "@/entities/auth/SessionContext";
 
 export default function AnswerTypesListPage() {
   const router = useRouter()
@@ -31,7 +32,7 @@ export default function AnswerTypesListPage() {
   })
 
   const items: AnswerType[] = (data?.answer_types as AnswerType[]) || []
-  const {user} = useAuth();
+  const user = useUser();
   const isAdmin = user?.role === USER_ROLE.Admin;
 
   const handleDeleteClick = (item: AnswerType) => {

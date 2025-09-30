@@ -7,16 +7,18 @@ import { useQuery, keepPreviousData } from '@tanstack/react-query'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 
 import { ListingsApi } from '@/entities/listings/api'
-import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import {USER_ROLE} from "@/entities/auth/useAuth";
 import {Plus} from "lucide-react";
+import {useUser} from "@/entities/auth/SessionContext";
 
 export default function ListingsPage() {
   const [page, setPage] = React.useState(1)
   const limit = 12
-  const [isShow, setIsShow] = useToggleWithStorage(false, 'listings-view-mode') // false = card view, true = table view
+  const [isShow, setIsShow] = useResponsiveToggle(false, 'listings-view-mode') // false = card view, true = table view
   type ListingItem = { id: string; title: string;  main_picture?: string; description: string; code: string; address: string; city: string; country: string; latitude: number; longitude: number; listing_type: { id: number; name: string; slug: string }; }
   type PublicListingsResponse = { listings: ListingItem[]; page: number; total: number }
   const { data, isLoading, isError, error } = useQuery<PublicListingsResponse>({
@@ -25,7 +27,7 @@ export default function ListingsPage() {
     placeholderData: keepPreviousData,
   })
 
-  const { user } = useAuth();
+  const user = useUser();
   if (isLoading) return <div className="p-6">Loading...</div>
   if (isError) return <div className="p-6 text-red-600 text-sm">{(error as Error)?.message || 'Failed to load listings'}</div>
 

@@ -1,11 +1,13 @@
 "use client"
 
-import {usePathname, useRouter} from 'next/navigation'
+import {usePathname} from 'next/navigation'
 import * as React from 'react'
 import {cn} from '@/lib/utils'
-import {roleToString, useAuth, User} from "@/entities/auth/useAuth";
+import {roleToString, User} from "@/entities/auth/useAuth";
 import {ProfileIcon} from "@/components/icons/ProfileIcon";
 import {Home, FileText, Settings, Building, Users, List, BarChart3, Tag, Image, LogOut} from 'lucide-react'
+import {useUser} from "@/entities/auth/SessionContext";
+import {useLogout} from "@/entities/auth/SessionActionContext";
 
 const navItems = [
   { href: '/admin', label: 'Дашборд', icon: Home },
@@ -19,31 +21,14 @@ const navItems = [
   { href: '/admin/mediaRequirements', label: 'Media Requirements', icon: Image },
 ]
 
-// function formatUser(user: User | null) {
-//   if (!user?.username || !user?.role) {
-//     return '';
-//   }
-//   return (user?.username || '') + ' - ' + roleToString(user?.role);
-// }
-
 export default function AdminSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
-  const {user} = useAuth();
-
-  const onLogout = () => {
-    try {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-    } catch {
-    }
-    router.push('/');
-  }
+  const user = useUser();
+  const onLogout = useLogout()
 
   return (
     <aside className="lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950 w-60 shrink-0 border-r bg-background/50 flex flex-col h-[100svh] overflow-auto p-4 fixed top-0">
       <UserCard user={user}/>
-      {/*<div className="px-4 py-4 text-sm font-semibold text-muted-foreground">{formatUser(user)}</div>*/}
       <nav className="flex flex-col gap-2">
         {navItems.map(item => {
           const active = pathname === item.href || pathname?.startsWith(item.href + '/')
@@ -56,7 +41,7 @@ export default function AdminSidebar() {
         <div className="py-2 border-t border-gray-200">
           <button
             onClick={onLogout}
-            className="flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left cursor-pointer"
+            className="flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left"
           >
             <LogOut className="w-5 h-5"/>
             <span className="font-medium">Выйти</span>
@@ -85,7 +70,6 @@ function UserCard({user}: { user: User | null }) {
               <span data-slot="avatar"
                     className="size-10 [--avatar-radius:20%] outline -outline-offset-1 outline-black/10 dark:outline-white/10 rounded-(--avatar-radius) *:rounded-(--avatar-radius) flex  items-center justify-center overflow-hidden">
                 <ProfileIcon/>
-                {/*<img className="size-full" src="/profile-photo.jpg" alt=""/>*/}
                 </span>
               <span className="min-w-0">
                 <span
@@ -94,12 +78,6 @@ function UserCard({user}: { user: User | null }) {
                   className="block truncate text-xs/5 font-normal text-zinc-500 dark:text-zinc-400">{roleToString(user?.role)}</span>
               </span>
             </span>
-            {/*<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"*/}
-            {/*     data-slot="icon">*/}
-            {/*  <path fill-rule="evenodd"*/}
-            {/*        d="M11.78 9.78a.75.75 0 0 1-1.06 0L8 7.06 5.28 9.78a.75.75 0 0 1-1.06-1.06l3.25-3.25a.75.75 0 0 1 1.06 0l3.25 3.25a.75.75 0 0 1 0 1.06Z"*/}
-            {/*        clip-rule="evenodd"></path>*/}
-            {/*</svg>*/}
           </button>
         </span>
       </div>

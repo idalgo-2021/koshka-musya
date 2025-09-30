@@ -122,7 +122,9 @@ export default function AdminDashboard() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => refetch()}
+            onClick={() => {
+              refetch()
+            }}
             disabled={isLoading}
             className="flex items-center gap-2"
           >

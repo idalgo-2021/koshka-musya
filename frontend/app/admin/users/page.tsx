@@ -4,7 +4,9 @@ import * as React from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
+import { useAdminDataRefresh } from '@/hooks/useAdminEventBus'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,14 +20,15 @@ import { getRoleBadgeVariant, getRoleDisplayName } from "@/entities/users/util"
 import { useConfirmation, useResetPassword } from '@/entities/modals/ModalContext'
 import { MoreVertical, ChevronDown } from 'lucide-react'
 import { UserAvatar } from "@/components/UserAvatar"
-import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import { USER_ROLE } from "@/entities/auth/useAuth";
 import ProfileTab from '../profiles/ProfileTab'
 import { Tabs } from '@/components/ui/tabs'
+import {useUser} from "@/entities/auth/SessionContext";
 
 function UsersTab() {
   const [page, setPage] = React.useState(1)
   const limit = 12
-  const [isShow, setIsShow] = useToggleWithStorage(false, 'users-view-mode')
+  const [isShow, setIsShow] = useResponsiveToggle(false, 'users-view-mode')
   const [searchUsername, setSearchUsername] = React.useState('')
   const [searchRoleId, setSearchRoleId] = React.useState<number | undefined>(undefined)
 
@@ -33,7 +36,10 @@ function UsersTab() {
   const { confirm } = useConfirmation()
   const { openResetPasswordModal } = useResetPassword()
 
-  const { data, isLoading, isError, error } = useUsersQuery(page, limit, searchUsername || undefined, searchRoleId)
+  const { data, isLoading, isError, error, refetch } = useUsersQuery(page, limit, searchUsername || undefined, searchRoleId)
+
+  // Listen for refresh events
+  useAdminDataRefresh(['users:refresh', 'admin:refresh-all'], refetch)
 
   // Mutations for user management
   const changeRoleMutation = useMutation({
@@ -71,7 +77,7 @@ function UsersTab() {
       }
     )
   }
-  const { user } = useAuth()
+  const user = useUser()
   const isAdmin = user?.role === USER_ROLE.Admin;
 
   const handleResetPassword = (userId: string, username: string) => {

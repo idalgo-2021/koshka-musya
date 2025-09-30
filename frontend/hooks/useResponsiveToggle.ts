@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import { useEventListener } from './useEventHooks'
 
 export function useResponsiveToggle(
   defaultValue: boolean = false,
@@ -16,15 +17,16 @@ export function useResponsiveToggle(
   })
 
   // Check if device is mobile
-  useEffect(() => {
-    const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768) // md breakpoint
-    }
-
-    checkIsMobile()
-    window.addEventListener('resize', checkIsMobile)
-    return () => window.removeEventListener('resize', checkIsMobile)
+  const checkIsMobile = useCallback(() => {
+    setIsMobile(window.innerWidth < 968)
   }, [])
+
+  // Initial check
+  useEffect(() => {
+    checkIsMobile()
+  }, [checkIsMobile])
+
+  useEventListener('resize', checkIsMobile, { target: window })
 
   const setStoredValue = (newValue: boolean) => {
     setValue(newValue)
