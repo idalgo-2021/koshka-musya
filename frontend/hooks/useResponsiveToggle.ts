@@ -18,7 +18,7 @@ export function useResponsiveToggle(
 
   // Check if device is mobile
   const checkIsMobile = useCallback(() => {
-    setIsMobile(window.innerWidth < 768)
+    setIsMobile(window.innerWidth < 968)
   }, [])
 
   // Initial check
