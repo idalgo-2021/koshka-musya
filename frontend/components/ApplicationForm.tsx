@@ -228,10 +228,10 @@ export default function ApplicationForm({ onBack, initialData }: ApplicationForm
               </p>
           </div>
             <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Email */}
+              {/* Mail */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email *
+                  Mail *
                 </label>
                 <input
                   type="email"
@@ -240,7 +240,7 @@ export default function ApplicationForm({ onBack, initialData }: ApplicationForm
                   onChange={handleInputChange}
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-accenttext focus:border-accenttext transition-all duration-200"
-                  placeholder="your@email.com"
+                  placeholder="your@mail.com"
                 />
               </div>
 
@@ -423,7 +423,7 @@ export default function ApplicationForm({ onBack, initialData }: ApplicationForm
                       className="w-4 h-4 text-accenttext border-gray-300 rounded focus:ring-accenttext focus:ring-2"
                     />
                     <div>
-                      <span className="text-sm font-medium text-gray-700">Email уведомления</span>
+                      <span className="text-sm font-medium text-gray-700">Mail уведомления</span>
                       <p className="text-xs text-gray-500">Новые задания, статусы отчетов</p>
                     </div>
                   </label>

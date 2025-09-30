@@ -1,12 +1,49 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { RegisterForm } from "@/components/RegistrationForm";
 import { LoginForm } from "@/components/LoginForm";
 import { RestoreForm } from "@/components/RestoreForm";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<"login" | "register" | "restore">("register");
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Проверяем наличие токена одобрения в URL
+    const approvalToken = searchParams.get('token');
+    const email = searchParams.get('email');
+    
+    if (!approvalToken || !email) {
+      // Если нет токена или mail, перенаправляем на главную
+      router.push('/');
+      return;
+    }
+
+    // Здесь можно добавить проверку токена на сервере
+    // Пока что просто устанавливаем авторизацию
+    setIsAuthorized(true);
+    setIsLoading(false);
+  }, [searchParams, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-accentgreen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accenttext mx-auto mb-4"></div>
+          <p className="text-accenttext">Проверка доступа...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null; // Перенаправление уже произошло
+  }
 
   return (
     <div className="min-h-screen bg-accentgreen flex items-center justify-center py-12">

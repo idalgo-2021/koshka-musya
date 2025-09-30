@@ -11,8 +11,10 @@ import type { ApiError } from "@/entities/auth/types";
 
 const schema = z.object({
   username: z.string().min(3, "Минимум 3 символа"),
-  email: z.string().email("Введите корректный email"),
+  email: z.string().email("Введите корректный mail"),
   password: z.string().min(1, "Введите пароль"),
+  phone: z.string().optional(),
+  telegram: z.string().optional(),
 });
 
 type RegisterData = z.infer<typeof schema>;
@@ -27,10 +29,10 @@ export function RegisterForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => 
     formState: { errors, isSubmitting },
   } = useForm<RegisterData>({ resolver: zodResolver(schema) });
 
-  const onSubmit: SubmitHandler<RegisterData> = async ({ username, email, password }) => {
+  const onSubmit: SubmitHandler<RegisterData> = async ({ username, email, password, phone, telegram }) => {
     try {
-      await registerUser({ username, email, password });
-      toast.success("Регистрация успешна! Войдите под своим email.");
+      await registerUser({ username, email, password, phone, telegram });
+      toast.success("Регистрация успешна! Войдите под своим mail.");
       onSwitchTab?.("login");
     } catch (e) {
       const err = e as ApiError | Error;
@@ -67,17 +69,17 @@ export function RegisterForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => 
         )}
       </div>
 
-      {/* Поле email */}
+      {/* Поле mail */}
       <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-          Email
+          Mail
         </Label>
         <Input 
           id="email" 
           type="email"
           {...register("email")} 
           className="h-12 px-4 text-base border-gray-200 focus:border-accenttext focus:ring-2 focus:ring-accenttext/20 transition-all"
-          placeholder="Введите ваш email"
+          placeholder="Введите ваш mail"
         />
         {errors.email && (
           <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
@@ -98,6 +100,40 @@ export function RegisterForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => 
         />
         {errors.password && (
           <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+        )}
+      </div>
+
+      {/* Поле телефона */}
+      <div className="space-y-2">
+        <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+          Телефон <span className="text-gray-400 text-xs">(по желанию)</span>
+        </Label>
+        <Input 
+          id="phone" 
+          type="tel"
+          {...register("phone")} 
+          className="h-12 px-4 text-base border-gray-200 focus:border-accenttext focus:ring-2 focus:ring-accenttext/20 transition-all"
+          placeholder="+7 (999) 123-45-67"
+        />
+        {errors.phone && (
+          <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+        )}
+      </div>
+
+      {/* Поле телеграма */}
+      <div className="space-y-2">
+        <Label htmlFor="telegram" className="text-sm font-medium text-gray-700">
+          Telegram <span className="text-gray-400 text-xs">(по желанию)</span>
+        </Label>
+        <Input 
+          id="telegram" 
+          type="text"
+          {...register("telegram")} 
+          className="h-12 px-4 text-base border-gray-200 focus:border-accenttext focus:ring-2 focus:ring-accenttext/20 transition-all"
+          placeholder="@username"
+        />
+        {errors.telegram && (
+          <p className="text-red-500 text-xs mt-1">{errors.telegram.message}</p>
         )}
       </div>
 

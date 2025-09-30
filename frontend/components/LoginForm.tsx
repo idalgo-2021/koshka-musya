@@ -12,10 +12,10 @@ import type { ApiError } from "@/entities/auth/types";
 
 /** ───────────── future: login by email ─────────────
 const emailSchema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z.string().email("Введите корректный mail"),
   password: z.string().min(6, "Минимум 6 символов"),
 });
-type EmailLoginData = z.infer<typeof emailSchema>;
+type MailLoginData = z.infer<typeof emailSchema>;
 ──────────────────────────────────────────────────── */
 
 /** текущий вариант: логин по username */
