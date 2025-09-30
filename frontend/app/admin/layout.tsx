@@ -10,7 +10,7 @@ import { ModalProvider } from "@/entities/modals/ModalContext";
 import { AdminLayout as AdminLayoutComponent } from "@/components/AdminLayout";
 
 import { useAuth, USER_ROLE } from "@/entities/auth/useAuth";
-import { Loader } from 'lucide-react';
+import {AdminLoader} from "@/components/AdminLoader";
 
 export default function AdminLayout({
   children,
@@ -47,9 +47,7 @@ const AuthUserLayout = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
   if (!user) {
     return (
-      <div className='flex items-center justify-center min-h-[100svh]'>
-        <Loader />
-      </div>
+      <AdminLoader />
     );
   }
   if (user && user.role === USER_ROLE.User) {

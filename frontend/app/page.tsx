@@ -2,7 +2,7 @@
 import { useEffect, useCallback } from "react";
 
 import AuthForm from "../components/AuthForm"
-import { Toaster } from "../components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { Loader } from "@/components/Loader";
 
 import { useAuth } from "@/entities/auth/useAuth";
