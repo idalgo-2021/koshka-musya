@@ -126,7 +126,7 @@ function ChecklistSectionCard({
     setLocalShowAddItemForm(section.id)
     setLocalShowAddItemId(null)
     onStartAddItem(section.id)
-  }, [section.id, collapsed, onToggleCollapse, onStartAddItem])
+  }, [section.id, collapsed, onToggleCollapse, onStartAddItem, openCreateItemModal])
 
   const { openEditSectionModal } = useChecklistModals();
   // Section editing handlers
@@ -139,7 +139,7 @@ function ChecklistSectionCard({
     setSectionTitle(section.title)
     setSectionSlug(section.slug)
     setSectionListingTypeId(section.listing_type_id)
-  }, [section.title, section.slug, section.listing_type_id])
+  }, [section.id, section.title, section.slug, section.listing_type_id, openEditSectionModal])
 
   const handleSaveSectionEdit = React.useCallback(async () => {
     if (!sectionTitle.trim()) return

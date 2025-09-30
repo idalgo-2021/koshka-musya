@@ -3,39 +3,43 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 
-export interface IOSCheckboxProps {
+export interface IOSRadioButtonProps {
   checked: boolean
   onChange: (checked: boolean) => void
   disabled?: boolean
   className?: string
   id?: string
   name?: string
+  value?: string
   size?: 'sm' | 'md' | 'lg'
   label?: string
 }
 
-export default function IOSCheckbox({
+const sizeClasses = {
+  sm: 'w-6 h-6',
+  md: 'w-7 h-7',
+  lg: 'w-8 h-8'
+}
+
+const dotSizeClasses = {
+  sm: 'w-4 h-4',
+  md: 'w-4.5 h-4.5',
+  lg: 'w-5.5 h-5.5'
+}
+
+
+export default function IOSRadioButton({
   checked,
   onChange,
   disabled = false,
   className,
   id,
   name,
+  value,
   size = 'md',
   label
-}: IOSCheckboxProps) {
-  const sizeClasses = {
-    sm: 'w-8 h-5',
-    md: 'w-11 h-6',
-    lg: 'w-14 h-7'
-  }
-
-  const thumbSizeClasses = {
-    sm: 'w-4 h-4',
-    md: 'w-5 h-5',
-    lg: 'w-6 h-6'
-  }
-
+}: IOSRadioButtonProps) {
+ 
   const handleClick = () => {
     if (!disabled) {
       onChange(!checked)
@@ -60,43 +64,45 @@ export default function IOSCheckbox({
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={disabled ? -1 : 0}
-      role="checkbox"
+      role="radio"
       aria-checked={checked}
       aria-disabled={disabled}
       id={id}
     >
       {/* Hidden input for form compatibility */}
       <input
-        type="checkbox"
+        type="radio"
         checked={checked}
         onChange={() => {}} // Handled by parent div
         disabled={disabled}
         className="sr-only"
         name={name}
+        value={value}
         tabIndex={-1}
       />
       
-      {/* Toggle track */}
+      {/* Radio button circle */}
       <div
         className={cn(
-          "relative rounded-full transition-colors duration-200 ease-in-out",
+          "relative rounded-full border-3 transition-all duration-200 ease-in-out flex items-center justify-center",
           sizeClasses[size],
           checked 
-            ? "bg-blue-500" 
-            : "bg-gray-300",
-          disabled && "bg-gray-200"
+            ? "bg-white" 
+            : "border-gray-300 bg-white",
+          disabled && "border-gray-200 bg-gray-50"
         )}
+        style={checked ? { borderColor: 'rgb(103, 58, 183)' } : undefined}
       >
-        {/* Toggle thumb */}
-        <div
-          className={cn(
-            "absolute top-0.5 rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out",
-            thumbSizeClasses[size],
-            checked 
-              ? size === 'sm' ? "translate-x-3" : size === 'md' ? "translate-x-5" : "translate-x-7"
-              : "translate-x-0.5"
-          )}
-        />
+        {/* Inner dot */}
+        {checked && (
+          <div
+            className={cn(
+              "rounded-full transition-all duration-200 ease-in-out",
+              dotSizeClasses[size]
+            )}
+            style={{ backgroundColor: 'rgb(103, 58, 183)' }}
+          />
+        )}
       </div>
       
       {/* Label */}
