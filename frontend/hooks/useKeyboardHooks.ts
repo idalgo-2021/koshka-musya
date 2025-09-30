@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEventListener } from './useEventHooks'
 
 interface UseKeyboardHooksOptions {
   onEscape?: () => void
@@ -7,20 +7,15 @@ interface UseKeyboardHooksOptions {
 }
 
 export function useKeyboardHooks({ onEscape, onEnter, isActive = true }: UseKeyboardHooksOptions) {
-  useEffect(() => {
+  useEventListener('keydown', (e: KeyboardEvent) => {
     if (!isActive) return
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && onEscape) {
-        e.preventDefault()
-        onEscape()
-      } else if (e.key === 'Enter' && onEnter) {
-        e.preventDefault()
-        onEnter()
-      }
+    if (e.key === 'Escape' && onEscape) {
+      e.preventDefault()
+      onEscape()
+    } else if (e.key === 'Enter' && onEnter) {
+      e.preventDefault()
+      onEnter()
     }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onEscape, onEnter, isActive])
+  }, { enabled: isActive })
 }
