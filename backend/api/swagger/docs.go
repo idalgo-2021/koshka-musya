@@ -3474,9 +3474,6 @@ const docTemplate = `{
                 "dates": {
                     "$ref": "#/definitions/secret_guest.AssignmentReservationDates"
                 },
-                "deadline": {
-                    "type": "string"
-                },
                 "expires_at": {
                     "type": "string"
                 },
@@ -3503,6 +3500,9 @@ const docTemplate = `{
                 },
                 "status": {
                     "$ref": "#/definitions/secret_guest.StatusResponse"
+                },
+                "taked_at": {
+                    "type": "string"
                 }
             }
         },
@@ -4199,11 +4199,40 @@ const docTemplate = `{
                 }
             }
         },
+        "secret_guest.ReportBookingDetails": {
+            "type": "object",
+            "properties": {
+                "booking_number": {
+                    "type": "string"
+                },
+                "checkin_date": {
+                    "type": "string"
+                },
+                "checkout_date": {
+                    "type": "string"
+                },
+                "guests": {
+                    "type": "object"
+                },
+                "ota_id": {
+                    "type": "string"
+                },
+                "ota_sg_reservation_id": {
+                    "type": "string"
+                },
+                "pricing": {
+                    "type": "object"
+                }
+            }
+        },
         "secret_guest.ReportResponseDTO": {
             "type": "object",
             "properties": {
                 "assignment_id": {
                     "type": "string"
+                },
+                "booking_details": {
+                    "$ref": "#/definitions/secret_guest.ReportBookingDetails"
                 },
                 "checklist_schema": {
                     "$ref": "#/definitions/models.ChecklistSchema"

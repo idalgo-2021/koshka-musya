@@ -48,7 +48,7 @@ type ListingType struct {
 
 // Reservation - бронирование
 type OTAReservation struct {
-	ID            uuid.UUID       `db:"ota_id"`
+	ID            uuid.UUID       `db:"id"`
 	OTAID         uuid.UUID       `db:"ota_id"`
 	BookingNumber string          `db:"booking_number"`
 	ListingID     uuid.UUID       `db:"listing_id"`
@@ -87,7 +87,7 @@ type Assignment struct {
 	CreatedAt  time.Time  `db:"created_at"`
 	ExpiresAt  time.Time  `db:"expires_at"`
 	AcceptedAt *time.Time `db:"accepted_at"`
-	Deadline   *time.Time `db:"deadline"`
+	TakedAt    *time.Time `db:"taked_at"`
 
 	Listing  ListingShortInfo `db:"-"`
 	Reporter UserShortInfo    `db:"-"`
@@ -129,14 +129,26 @@ type StatusInfo struct {
 
 //================================
 
+type BookingDetails struct {
+	OTAID              uuid.UUID       `db:"ota_id"`
+	BookingNumber      string          `db:"booking_number"`
+	OtaSgReservationID uuid.UUID       `db:"ota_sg_reservation_id"`
+	Pricing            json.RawMessage `db:"pricing"`
+	Guests             json.RawMessage `db:"guests"`
+	CheckinDate        time.Time       `db:"checkin_date"`
+	CheckoutDate       time.Time       `db:"checkout_date"`
+}
+
 // Report - отчет ТГ
 type Report struct {
-	ID           uuid.UUID  `db:"id"`
-	AssignmentID uuid.UUID  `db:"assignment_id"`
-	Purpose      string     `db:"purpose"`
-	CreatedAt    time.Time  `db:"created_at"`
-	UpdatedAt    *time.Time `db:"updated_at"`
-	SubmittedAt  *time.Time `db:"submitted_at"`
+	ID             uuid.UUID      `db:"id"`
+	AssignmentID   uuid.UUID      `db:"assignment_id"`
+	BookingDetails BookingDetails `db:"-"`
+
+	Purpose     string     `db:"purpose"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   *time.Time `db:"updated_at"`
+	SubmittedAt *time.Time `db:"submitted_at"`
 
 	Listing  ListingShortInfo `db:"-"`
 	Reporter UserShortInfo    `db:"-"`

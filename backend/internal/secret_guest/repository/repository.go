@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -504,8 +505,9 @@ func (r *SecretGuestRepository) scanAssignment(row pgx.Row) (*models.Assignment,
 		&a.ExpiresAt,
 		&a.AcceptedAt,
 
-		&a.Deadline,
+		&a.TakedAt,
 
+		&a.Listing.ID,
 		&a.Listing.Code,
 		&a.Listing.Title,
 		&a.Listing.Description,
@@ -619,7 +621,7 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 			a.expires_at,
 			a.accepted_at,
 			
-			a.deadline,
+			a.taked_at,
 
 			l.code as "listing_code",
 			l.title as "listing_title",
@@ -684,7 +686,7 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 			&a.ExpiresAt,
 			&a.AcceptedAt,
 
-			&a.Deadline,
+			&a.TakedAt,
 
 			&a.Listing.Code,
 			&a.Listing.Title,
@@ -773,8 +775,9 @@ func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter A
 			a.expires_at,
 			a.accepted_at,
 			
-			a.deadline,
+			a.taked_at,
 
+			l.id,
 			l.code as "listing_code",
 			l.title as "listing_title",
 			l.description as "listing_description",
@@ -838,8 +841,9 @@ func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter A
 			&a.ExpiresAt,
 			&a.AcceptedAt,
 
-			&a.Deadline,
+			&a.TakedAt,
 
+			&a.Listing.ID,
 			&a.Listing.Code,
 			&a.Listing.Title,
 			&a.Listing.Description,
@@ -890,7 +894,11 @@ func (r *SecretGuestRepository) GetAssignmentByID(ctx context.Context, assignmen
 			a.checkout_date,
 			
 			a.listing_id, a.reporter_id, a.status_id,
-			a.purpose, a.created_at, a.expires_at, a.accepted_at, a.deadline, l.code as "listing_code",
+			a.purpose, a.created_at, a.expires_at, a.accepted_at, 
+			a.taked_at,
+
+			l.id,
+			l.code as "listing_code",
 
 			l.title as "listing_title",
 			l.description as "listing_description",
@@ -968,7 +976,11 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 			a.checkin_date,
 			a.checkout_date,
 						
-			a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, a.deadline, l.code as "listing_code",
+			a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, 
+			a.taked_at,
+
+			l.id,
+			l.code as "listing_code",
 
 			l.title as "listing_title", l.description as "listing_description", l.main_picture as "listing_main_picture",
 
@@ -1002,6 +1014,9 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 }
 
 func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt time.Time) (*models.Report, error) {
+
+	//TODO: Переписать!!!
+
 	log := logger.GetLoggerFromCtx(ctx)
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -1018,17 +1033,36 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 			id = $3 
 			AND reporter_id = $4 
 			AND status_id = $5
-		RETURNING listing_id, purpose`
+		RETURNING 
+			listing_id, 
+			purpose, 
+			ota_sg_reservation_id,
+			pricing,
+			guests,
+			checkin_date,
+			checkout_date`
 
 	var listingID uuid.UUID
 	var purpose string
+	var otaSgReservationID uuid.UUID
+	var pricing json.RawMessage
+	var guests json.RawMessage
+	var checkinDate time.Time
+	var checkoutDate time.Time
+
 	err = tx.QueryRow(ctx, updateQuery,
 		models.AssignmentStatusAccepted, // new assignment status
 		acceptedAt,
 		assignmentID,
 		reporterID,
 		models.AssignmentStatusOffered, // current assignment status
-	).Scan(&listingID, &purpose)
+	).Scan(&listingID,
+		&purpose,
+		&otaSgReservationID,
+		&pricing,
+		&guests,
+		&checkinDate,
+		&checkoutDate)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -1036,6 +1070,24 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 		}
 		return nil, err
 	}
+
+	// ДЕргаем документ-основание - бронирование из ota_sg_reservations
+	var otaID uuid.UUID
+	var bookingNumber string
+
+	if otaSgReservationID != uuid.Nil {
+		err = tx.QueryRow(ctx,
+			`SELECT ota_id, booking_number FROM ota_sg_reservations WHERE id = $1`,
+			otaSgReservationID,
+		).Scan(&otaID, &bookingNumber)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log.Error(ctx, "Assignment has no linked OTA reservation", zap.String("assignment_id", assignmentID.String()))
+		return nil, fmt.Errorf("assignment %s has no linked OTA reservation", assignmentID)
+	}
+	//////
 
 	// Create report
 	report := &models.Report{
@@ -1045,20 +1097,62 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 		Purpose:      purpose,
 		ReporterID:   reporterID,
 		StatusID:     models.ReportStatusGenerating,
+		BookingDetails: models.BookingDetails{
+			OTAID:              otaID,
+			BookingNumber:      bookingNumber,
+			OtaSgReservationID: otaSgReservationID,
+			Pricing:            pricing,
+			Guests:             guests,
+			CheckinDate:        checkinDate,
+			CheckoutDate:       checkoutDate,
+		},
 	}
-	insertQuery := `INSERT INTO reports (id, assignment_id, listing_id, purpose, reporter_id, status_id) VALUES ($1, $2, $3, $4, $5, $6)`
-	if _, err := tx.Exec(ctx, insertQuery, report.ID, report.AssignmentID, report.ListingID, report.Purpose, report.ReporterID, report.StatusID); err != nil {
+
+	insertQuery := `
+		INSERT INTO reports (
+			id, 
+			assignment_id, 
+			listing_id, 
+			purpose, 
+			reporter_id, 
+			status_id,
+			ota_id, 
+			booking_number,
+			ota_sg_reservation_id,
+			pricing,
+			guests,
+			checkin_date,
+			checkout_date
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+	`
+	if _, err := tx.Exec(ctx, insertQuery,
+		report.ID,
+		report.AssignmentID,
+		report.ListingID,
+		report.Purpose,
+		report.ReporterID,
+		report.StatusID,
+		report.BookingDetails.OTAID,
+		report.BookingDetails.BookingNumber,
+		report.BookingDetails.OtaSgReservationID,
+		report.BookingDetails.Pricing,
+		report.BookingDetails.Guests,
+		report.BookingDetails.CheckinDate,
+		report.BookingDetails.CheckoutDate,
+	); err != nil {
 		log.Error(ctx, "Failed to create report in transaction", zap.Error(err))
 		return nil, err
 	}
 
+	// Коммитим транзакцию
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
+
 	return report, nil
 }
 
-func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, declinedAt time.Time) error {
+func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, takedAt, declinedAt time.Time) error {
 	log := logger.GetLoggerFromCtx(ctx)
 
 	tx, err := r.db.Begin(ctx)
@@ -1073,7 +1167,8 @@ func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignm
 		UPDATE assignments
 		SET 
 			status_id   = $1,
-			reporter_id = NULL
+			reporter_id = NULL,
+			taked_at    = NULL
 		WHERE 
 			id = $2 
 			AND reporter_id = $3 
@@ -1103,10 +1198,10 @@ func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignm
 	// TODO: Возможно, стоит переписать всё в рамках одной транзакции.
 	// Регистрируем отказ
 	insertQuery := `
-		INSERT INTO assignment_declines (assignment_id, reporter_id, declined_at)
-		VALUES ($1, $2, $3)
+		INSERT INTO assignment_declines (assignment_id, reporter_id, taked_at, declined_at)
+		VALUES ($1, $2, $3, $4)
 	`
-	_, err = tx.Exec(ctx, insertQuery, assignmentID, reporterID, declinedAt)
+	_, err = tx.Exec(ctx, insertQuery, assignmentID, reporterID, takedAt, declinedAt)
 	if err != nil {
 		log.Error(ctx, "Failed to insert assignment decline history", zap.Error(err))
 		return err
@@ -1118,7 +1213,6 @@ func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignm
 	}
 
 	return nil
-
 }
 
 func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, assignmentID, userID uuid.UUID, takenAt time.Time) error {
@@ -1153,10 +1247,11 @@ func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, ass
 		UPDATE assignments
 		SET 
 			reporter_id = $1, 
-			status_id = $2 
+			status_id = $2, 
+			taked_at = $3
 		WHERE 
-			id = $3
-		  	AND status_id = $4
+			id = $4
+		  	AND status_id = $5
 		  	AND reporter_id IS NULL
 		RETURNING id
 	`
@@ -1165,7 +1260,7 @@ func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, ass
 	err = tx.QueryRow(ctx, updateQuery,
 		userID,
 		models.AssignmentStatusOffered, // новый статус, пока пусть тот же
-		//  accepted_at = $3  takenAt,
+		takenAt,
 		assignmentID,
 		models.AssignmentStatusOffered, // текущий статус
 	).Scan(&id)
@@ -1230,7 +1325,19 @@ func (r *SecretGuestRepository) scanReport(row pgx.Row) (*models.Report, error) 
 	var rep models.Report
 	if err := row.Scan(
 		&rep.ID,
-		&rep.AssignmentID, &rep.ListingID, &rep.ReporterID, &rep.StatusID,
+		&rep.AssignmentID,
+
+		&rep.BookingDetails.OTAID,
+		&rep.BookingDetails.BookingNumber,
+		&rep.BookingDetails.OtaSgReservationID,
+		&rep.BookingDetails.Pricing,
+		&rep.BookingDetails.Guests,
+		&rep.BookingDetails.CheckinDate,
+		&rep.BookingDetails.CheckoutDate,
+
+		&rep.ListingID,
+		&rep.ReporterID,
+		&rep.StatusID,
 		&rep.Purpose,
 		&rep.CreatedAt,
 		&rep.UpdatedAt,
@@ -1289,7 +1396,17 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 	baseQuery := `
 		SELECT
 			r.id,
-			r.assignment_id, r.listing_id, r.reporter_id, r.status_id,
+			r.assignment_id, 
+			
+			r.ota_id,
+			r.booking_number,
+			r.ota_sg_reservation_id,
+			r.pricing,
+			r.guests,
+			r.checkin_date,
+			r.checkout_date,
+						
+			r.listing_id, r.reporter_id, r.status_id,
 			r.purpose,
 			r.created_at,
 			r.updated_at,
@@ -1297,6 +1414,7 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 
 			r.checklist_schema,
 
+			l.ID,
 			l.code as "listing_code",
 			l.title as "listing_title",
 			l.description as "listing_description",
@@ -1341,7 +1459,17 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 		var r models.Report
 		if err := rows.Scan(
 			&r.ID,
-			&r.AssignmentID, &r.ListingID, &r.ReporterID, &r.StatusID,
+			&r.AssignmentID,
+
+			&r.BookingDetails.OTAID,
+			&r.BookingDetails.BookingNumber,
+			&r.BookingDetails.OtaSgReservationID,
+			&r.BookingDetails.Pricing,
+			&r.BookingDetails.Guests,
+			&r.BookingDetails.CheckinDate,
+			&r.BookingDetails.CheckoutDate,
+
+			&r.ListingID, &r.ReporterID, &r.StatusID,
 			&r.Purpose,
 			&r.CreatedAt,
 			&r.UpdatedAt,
@@ -1349,6 +1477,7 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 
 			&r.ChecklistSchema,
 
+			&r.Listing.ID,
 			&r.Listing.Code,
 			&r.Listing.Title,
 			&r.Listing.Description,
@@ -1391,8 +1520,22 @@ func (r *SecretGuestRepository) GetReportByID(ctx context.Context, reportID uuid
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
+			r.id, 
+			r.assignment_id, 
+			
+			r.ota_id,
+			r.booking_number,
+			r.ota_sg_reservation_id,
+			r.pricing,
+			r.guests,
+			r.checkin_date,
+			r.checkout_date,
+						
+			r.listing_id, r.reporter_id, r.status_id, r.purpose,
+			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, 
+			
+			l.ID,
+			l.code as "listing_code",
 			l.title as "listing_title", l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
 
@@ -1429,8 +1572,21 @@ func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, repor
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
+			r.id, 
+			r.assignment_id, 
+			
+			r.ota_id,
+			r.booking_number,
+			r.ota_sg_reservation_id,
+			r.pricing,
+			r.guests,
+			r.checkin_date,
+			r.checkout_date,
+			
+			r.listing_id, r.reporter_id, r.status_id, r.purpose,
+			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, 
+			l.ID,
+			l.code as "listing_code",
 			l.title as "listing_title", l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
 
