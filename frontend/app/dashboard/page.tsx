@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import {redirect, useRouter, useSearchParams} from "next/navigation";
 import { toast } from "sonner";
 
-import { useAuth } from "@/entities/auth/useAuth";
+import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
 import { useAssignments } from "@/entities/assignments/useAssignments";
 import { AssignmentsApi, type HotelDetails } from "@/entities/assignments/api";
 import { ReportsApi } from "@/entities/reports/api";
@@ -418,6 +418,9 @@ function DashboardContent() {
     return null;
   }
 
+  if (user?.role === USER_ROLE.Admin || user?.role === USER_ROLE.Staff) {
+    return redirect('/admin')
+  }
   return (
       <div className="min-h-screen bg-accentgreen">
         {/* Header */}

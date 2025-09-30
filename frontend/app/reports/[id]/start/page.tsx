@@ -1,9 +1,9 @@
 "use client";
 import * as React from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import {useRouter, useParams, redirect} from 'next/navigation';
 import { toast } from 'sonner';
 
-import { useAuth } from '@/entities/auth/useAuth';
+import {useAuth, USER_ROLE} from '@/entities/auth/useAuth';
 import { ReportsApi } from '@/entities/reports/api';
 import type { Report } from '@/entities/reports/types';
 
@@ -77,7 +77,9 @@ export default function ReportStartPage() {
     // Переходим на dashboard с параметрами, чтобы показать FAQ и передать ID отчета
     router.push(`/dashboard?showFAQ=true&reportId=${reportId}`);
   };
-
+  if (user?.role === USER_ROLE.Admin || user?.role === USER_ROLE.Staff) {
+    return redirect('/admin')
+  }
   return (
     <div className="min-h-screen bg-accentgreen">
       {/* Dashboard Header */}

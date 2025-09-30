@@ -511,23 +511,23 @@ export default function ChecklistEditorPage() {
         </div>
 
         {/* Listing Type Filters */}
-        <SelectRow
-          value={filters.listing_type_id?.[0]}
-          onChange={(value) => setFilters({
-            ...filters,
-            listing_type_id: value && value !== 'all' ? [Number(value)] : undefined
-          })}
-          variant="buttons"
-          options={[
-            { value: 'all', label: 'Все' },
-            ...(listingTypes || []).map((type) => ({
-              value: type.id,
-              label: type.name
-            }))
-          ]}
-        />
-      </div>
 
+      </div>
+      <SelectRow
+        value={filters.listing_type_id?.[0]}
+        onChange={(value) => setFilters({
+          ...filters,
+          listing_type_id: value && value !== 'all' ? [Number(value)] : undefined
+        })}
+        variant="buttons"
+        options={[
+          { value: 'all', label: 'Все' },
+          ...(listingTypes || []).map((type) => ({
+            value: type.id,
+            label: type.name
+          }))
+        ]}
+      />
       {loading ? (
         <div>Loading...</div>
       ) : error ? (
