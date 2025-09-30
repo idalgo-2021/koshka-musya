@@ -1,25 +1,25 @@
 "use client"
 
-import { useState } from 'react'
-import { usePathname } from 'next/navigation'
+import {useState} from 'react'
+import {usePathname} from 'next/navigation'
 import Link from 'next/link'
-import { Menu, X, Home, FileText, Settings, Building, Users, List, BarChart3, LogOut, Tag, Image } from 'lucide-react'
-import { cn } from '@/lib/utils'
-// import { useAuth, roleToString } from '@/entities/auth/useAuth'
-import { ProfileIcon } from '@/components/icons/ProfileIcon'
+import {Menu, X, Home, FileText, Settings, Building, Users, List, BarChart3, LogOut, Tag, Image} from 'lucide-react'
+import {cn} from '@/lib/utils'
+import {ProfileIcon} from '@/components/icons/ProfileIcon'
 import {useUser} from "@/entities/auth/SessionContext";
 import {roleToString} from "@/entities/auth/useAuth";
+import {useLogout} from "@/entities/auth/SessionActionContext";
 
 const navItems = [
-  { href: '/admin', label: 'Дашборд', icon: Home },
-  { href: '/admin/reports', label: 'Отчеты', icon: FileText },
-  { href: '/admin/checklists/editor', label: 'Настройка анкет', icon: Settings },
-  { href: '/admin/listings', label: 'Объекты размещения', icon: Building },
-  { href: '/admin/assignments', label: 'Предложения', icon: List },
-  { href: '/admin/sg_reservations', label: 'SG Reservations', icon: BarChart3 },
-  { href: '/admin/users', label: 'Пользователи', icon: Users },
-  { href: '/admin/listingTypes', label: 'Типы объектов', icon: Tag },
-  { href: '/admin/mediaRequirements', label: 'Media Requirements', icon: Image },
+  {href: '/admin', label: 'Дашборд', icon: Home},
+  {href: '/admin/reports', label: 'Отчеты', icon: FileText},
+  {href: '/admin/checklists/editor', label: 'Настройка анкет', icon: Settings},
+  {href: '/admin/listings', label: 'Объекты размещения', icon: Building},
+  {href: '/admin/assignments', label: 'Предложения', icon: List},
+  {href: '/admin/sg_reservations', label: 'SG Reservations', icon: BarChart3},
+  {href: '/admin/users', label: 'Пользователи', icon: Users},
+  {href: '/admin/listingTypes', label: 'Типы объектов', icon: Tag},
+  {href: '/admin/mediaRequirements', label: 'Media Requirements', icon: Image},
 ]
 
 export default function AdminMobileNav() {
@@ -35,15 +35,7 @@ export default function AdminMobileNav() {
     setIsOpen(false)
   }
 
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-    } catch {
-      // Handle error silently
-    }
-    window.location.href = '/'
-  }
+  const handleLogout = useLogout();
 
   return (
     <>
@@ -57,9 +49,9 @@ export default function AdminMobileNav() {
               aria-label="Открыть меню"
             >
               {isOpen ? (
-                <X className="w-6 h-6 text-gray-600" />
+                <X className="w-6 h-6 text-gray-600"/>
               ) : (
-                <Menu className="w-6 h-6 text-gray-600" />
+                <Menu className="w-6 h-6 text-gray-600"/>
               )}
             </button>
             <h1 className="text-lg font-semibold text-gray-900">Админ панель</h1>
@@ -68,10 +60,10 @@ export default function AdminMobileNav() {
           {/* User Avatar */}
           <div className="flex items-center gap-3">
             {/*{isOpen ? (*/}
-              <div>
-                <p className="font-medium text-gray-900">{user?.username}</p>
-                <p className="text-sm text-gray-500">{roleToString(user?.role)}</p>
-              </div>
+            <div>
+              <p className="font-medium text-gray-900">{user?.username}</p>
+              <p className="text-sm text-gray-500">{roleToString(user?.role)}</p>
+            </div>
             {/*) : undefined}*/}
             <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
               <ProfileIcon/>
@@ -88,7 +80,7 @@ export default function AdminMobileNav() {
             <div className="px-4 py-4 border-b border-gray-200">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                  <ProfileIcon />
+                  <ProfileIcon/>
                 </div>
               </div>
             </div>
@@ -109,7 +101,7 @@ export default function AdminMobileNav() {
                       active && "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
                     )}
                   >
-                    <Icon className="w-5 h-5" />
+                    <Icon className="w-5 h-5"/>
                     <span className="font-medium">{item.label}</span>
                   </Link>
                 )
@@ -122,7 +114,7 @@ export default function AdminMobileNav() {
                 onClick={handleLogout}
                 className="flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-5 h-5"/>
                 <span className="font-medium">Выйти</span>
               </button>
             </div>
