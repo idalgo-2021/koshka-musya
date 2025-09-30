@@ -48,23 +48,23 @@ export const ListingsApi = {
     return data;
   },
   async getListingTypes(): Promise<ListingTypesResponse> {
-    return api.get<ListingTypesResponse>('/listing_types', true)
+    return api.get<ListingTypesResponse>('/staff/listing_types', true)
   },
 
   async createListingType(payload: CreateListingTypeRequest): Promise<ListingType> {
-    return api.post<ListingType>('/listing_types', payload as unknown as Record<string, unknown>, true)
+    return api.post<ListingType>('/staff/listing_types', payload as unknown as Record<string, unknown>, true)
   },
 
   async updateListingType(id: number, payload: UpdateListingTypeRequest): Promise<ListingType> {
-    return api.patch<ListingType>(`/listing_types/${id}`, payload as unknown as Record<string, unknown>, true)
+    return api.patch<ListingType>(`/staff/listing_types/${id}`, payload as unknown as Record<string, unknown>, true)
   },
 
   async deleteListingType(id: number): Promise<void> {
-    return api.delete<void>(`/listing_types/${id}`, true)
+    return api.delete<void>(`/staff/listing_types/${id}`, true)
   },
 
   async createListing(payload: CreateListingRequest): Promise<unknown> {
-    return api.post<unknown>('/admin/listings', payload as unknown as Record<string, unknown>, true)
+    return api.post<unknown>('/adminF/listings', payload as unknown as Record<string, unknown>, true)
   },
 }
 

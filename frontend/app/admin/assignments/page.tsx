@@ -36,8 +36,8 @@ export default function AssignmentsStaffPage() {
     queryFn: async () => {
       const statusId = statusIds ? Number(statusIds) : undefined
       // Filter out 'all' and convert to numbers, or use undefined if 'all' is selected or no types selected
-      const listingTypesIdsNumbers = listingTypesIds.length > 0 && !listingTypesIds.includes('all') 
-        ? listingTypesIds.filter(id => id !== 'all').map(id => Number(id)) 
+      const listingTypesIdsNumbers = listingTypesIds.length > 0 && !listingTypesIds.includes('all')
+        ? listingTypesIds.filter(id => id !== 'all').map(id => Number(id))
         : undefined
       return AssignmentsApi.getAllAssignmentsStaff({
         page,
@@ -61,14 +61,14 @@ export default function AssignmentsStaffPage() {
         <h1 className="text-md md:text-2xl font-semibold">Предложения на оценку</h1>
         <div className="flex items-center gap-3">
           <ToggleButton checked={isShow} onToggle={setIsShow} />
-          {user?.role === USER_ROLE.Admin  && (
-            <Button asChild>
-              <Link href="/admin/assignments/new">
-                <Plus className="w-4 h-4 mr-2" />
-                 Предложение
-              </Link>
-            </Button>
-          )}
+          {/*{user?.role === USER_ROLE.Admin  && (*/}
+          {/*  <Button asChild>*/}
+          {/*    <Link href="/admin/assignments/new">*/}
+          {/*      <Plus className="w-4 h-4 mr-2" />*/}
+          {/*       Предложение*/}
+          {/*    </Link>*/}
+          {/*  </Button>*/}
+          {/*)}*/}
         </div>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -92,7 +92,7 @@ export default function AssignmentsStaffPage() {
           />
         </div>
       </div>
-      
+
       <div className="space-y-1">
         {/* <div className="text-sm text-muted-foreground">Типы объектов</div> */}
         <SelectRowMulti

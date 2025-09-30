@@ -41,18 +41,20 @@ export const UsersApi = {
       params.append('role_id', role_id.toString());
     }
 
-    return api.get<UsersResponse>(`/users?${params.toString()}`, true);
+    return api.get<UsersResponse>(`/staff/users?${params.toString()}`, true);
   },
 
   async changeUserRole(userId: string, data: ChangeUserRoleRequest): Promise<void> {
-    return api.patch<void>(`/users/${userId}/change-role`, data as any, true);
+    return api.patch<void>(`/staff/users/${userId}/change-role`, data as any, true);
   },
 
   async resetUserPassword(userId: string, data: ResetPasswordRequest): Promise<void> {
-    return api.post<void>(`/users/${userId}/reset-password`, data as any, true);
+    alert('mock reset user password' + userId + data.new_password)
+    // return api.post<void>(`/staff/users/${userId}/reset-password`, data as any, true);
   },
 
   async blockUser(userId: string, data: BlockUserRequest): Promise<void> {
-    return api.patch<void>(`/users/${userId}/block`, data as any, true);
+    alert('mock block user' + userId + data.blocked)
+    // return api.patch<void>(`/staff/users/${userId}/block`, data as any, true);
   },
 };

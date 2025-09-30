@@ -13,7 +13,7 @@ const navItems = [
   {href: '/admin/assignments', label: 'Предложения'},
   // { href: '/admin/answerTypes', label: 'Типы ответов' },
   {href: '/admin/reports', label: 'Отчеты'},
-  {href: '/admin/checklists', label: 'Checklists'},
+  {href: '/admin/checklists', label: 'Шаблоны вопросов'},
   {href: '/admin/mediaRequirements', label: 'Media Requirements'},
   {href: '/admin/users', label: 'Пользователи'},
   {href: '/admin/sg_reservations', label: 'SG Reservations'},

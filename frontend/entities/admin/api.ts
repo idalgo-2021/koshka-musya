@@ -1,5 +1,7 @@
 // import { api } from '@/shared/api/http'
 
+import {api} from "@/shared/api/http";
+
 export interface AdminStatistic {
   key: string
   value: number
@@ -70,10 +72,10 @@ const mockStats = JSON.parse(`{
   ]
 }`);
 export const adminApi = {
-  // getStatistics: async (): Promise<AdminStatisticsResponse> => {
-  getStatistics: (): AdminStatisticsResponse => {
-    return mockStats;
+  getStatistics: async (): Promise<AdminStatisticsResponse> => {
+  // getStatistics:  (): AdminStatisticsResponse => {
+    // return mockStats;
     // return new Promise(resolve => mockStats)
-    // return await api.get<AdminStatisticsResponse>('/admin/statistics')
+    return await api.get<AdminStatisticsResponse>('/staff/statistics', true)
   }
 }

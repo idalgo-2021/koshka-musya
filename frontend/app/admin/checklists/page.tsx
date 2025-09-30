@@ -14,9 +14,9 @@ export default function ChecklistsPage() {
           <Link href="/admin/answerTypes">Типы ответов</Link>
         </Button>
 
-        <Button asChild size="lg" variant="outline" className="justify-start h-20 text-left">
-          <Link href="/admin/checklists/items">Пункты чек-листа</Link>
-        </Button>
+        {/*<Button asChild size="lg" variant="outline" className="justify-start h-20 text-left">*/}
+        {/*  <Link href="/admin/checklists/items">Пункты чек-листа</Link>*/}
+        {/*</Button>*/}
 
         {/*<Button asChild size="lg" variant="outline" className="justify-start h-20 text-left">*/}
         {/*  <Link href="/admin/checklists/sections">Секции чек-листа</Link>*/}

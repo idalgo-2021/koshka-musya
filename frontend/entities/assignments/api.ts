@@ -66,7 +66,7 @@ export const AssignmentsApi = {
     purpose: string;
     reporter_id: string;
   }): Promise<Assignment> {
-    return api.post<Assignment>(`/admin/assignments`, data, true);
+    return api.post<Assignment>(`/staff/assignments`, data, true);
   },
 
   // Staff: Get all assignments with filters
@@ -85,11 +85,11 @@ export const AssignmentsApi = {
       sp.delete('listing_types_ids');
       params.listing_types_ids.forEach((id) => sp.append('listing_types_ids', String(id)));
     }
-    return api.get<AssignmentsResponse>(`/assignments?${sp.toString()}`, true);
+    return api.get<AssignmentsResponse>(`/staff/assignments?${sp.toString()}`, true);
   },
 
   // Staff: Get assignment by ID
   async getAssignmentByIdStaff(id: string): Promise<Assignment> {
-    return api.get<Assignment>(`/assignments/${id}`, true);
+    return api.get<Assignment>(`/staff/assignments/${id}`, true);
   },
 };
