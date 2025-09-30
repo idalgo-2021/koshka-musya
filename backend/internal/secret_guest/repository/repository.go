@@ -2843,6 +2843,7 @@ func (r *SecretGuestRepository) GetStatistics(ctx context.Context) (*models.Stat
 			-- Отчёты
 			(SELECT COUNT(*) FROM reports) AS total_reports,
 			(SELECT COUNT(*) FROM reports WHERE created_at::date = CURRENT_DATE) AS reports_today,
+			(SELECT COUNT(*) FROM reports WHERE status_id = 3) AS submitted_reports,
 
 			-- Тайные гости (role_id = 3)
 			(SELECT COUNT(*) FROM users WHERE role_id = 3) AS total_sg,
@@ -2861,6 +2862,7 @@ func (r *SecretGuestRepository) GetStatistics(ctx context.Context) (*models.Stat
 		&stats.TotalAssignmentDeclines,
 		&stats.TotalReports,
 		&stats.ReportsToday,
+		&stats.SubmittedReports,
 		&stats.TotalSg,
 		&stats.NewSgLast24h,
 	)

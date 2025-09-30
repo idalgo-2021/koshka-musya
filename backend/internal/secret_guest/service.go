@@ -1514,6 +1514,7 @@ func (s *SecretGuestService) GetStatistics(ctx context.Context) (*StatisticsResp
 		{Key: "total_assignment_declines", Value: stat.TotalAssignmentDeclines, Description: "Всего отказов от предложений"},
 		{Key: "total_reports", Value: stat.TotalReports, Description: "Всего отчетов"},
 		{Key: "reports_today", Value: stat.ReportsToday, Description: "Отчетов создано сегодня"},
+		{Key: "submitted_reports", Value: stat.SubmittedReports, Description: "Отчетов ожидают модерации"},
 		{Key: "total_sg", Value: stat.TotalSg, Description: "Всего тайных гостей"},
 		{Key: "new_sg_last_24h", Value: stat.NewSgLast24h, Description: "Новых тайных гостей за 24 часа"},
 	}

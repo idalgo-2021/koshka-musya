@@ -60,6 +60,8 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 
 	protectedRouter.HandleFunc("/profiles/my", secretGuestHandler.GetMyProfile).Methods(http.MethodGet) // profiles
 
+	// protectedRouter.HandleFunc("/journal/my", secretGuestHandler.GetMyHistory).Methods(http.MethodGet) // journal
+
 	// - - - - UPLOADS
 	protectedRouter.HandleFunc("/uploads/generate-url", secretGuestHandler.GenerateUploadURL).Methods(http.MethodPost)
 
@@ -114,6 +116,8 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	staffRouter.HandleFunc("/checklist_items", secretGuestHandler.CreateChecklistItem).Methods(http.MethodPost)               // checklist_items
 	staffRouter.HandleFunc("/checklist_items/{id:[0-9]+}", secretGuestHandler.UpdateChecklistItem).Methods(http.MethodPatch)  // checklist_items
 	staffRouter.HandleFunc("/checklist_items/{id:[0-9]+}", secretGuestHandler.DeleteChecklistItem).Methods(http.MethodDelete) // checklist_items
+
+	// staffRouter.HandleFunc("/journal", secretGuestHandler.GetJournal).Methods(http.MethodGet) // journal
 
 	///
 
