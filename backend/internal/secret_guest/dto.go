@@ -233,10 +233,11 @@ type GetMyReportsRequestDTO struct {
 }
 
 type GetAllReportsRequestDTO struct {
-	Page       int
-	Limit      int
-	ReporterID *uuid.UUID
-	StatusIDs  []int
+	Page           int
+	Limit          int
+	ReporterID     *uuid.UUID
+	StatusIDs      []int
+	ListingTypeIDs []int
 }
 
 type ReportBookingDetails struct {

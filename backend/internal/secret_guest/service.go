@@ -710,10 +710,11 @@ func (s *SecretGuestService) GetMyReports(ctx context.Context, dto GetMyReportsR
 func (s *SecretGuestService) GetAllReports(ctx context.Context, dto GetAllReportsRequestDTO) (*ReportsResponse, error) {
 
 	filter := repository.ReportsFilter{
-		ReporterID: dto.ReporterID,
-		StatusIDs:  dto.StatusIDs,
-		Limit:      dto.Limit,
-		Offset:     (dto.Page - 1) * dto.Limit,
+		ReporterID:     dto.ReporterID,
+		StatusIDs:      dto.StatusIDs,
+		ListingTypeIDs: dto.ListingTypeIDs,
+		Limit:          dto.Limit,
+		Offset:         (dto.Page - 1) * dto.Limit,
 	}
 
 	return s.getReportsWithFilter(ctx, filter, dto.Page)
