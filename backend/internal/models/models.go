@@ -264,8 +264,9 @@ type Statistics struct {
 	// Отказы по предложениям
 	TotalAssignmentDeclines int `db:"total_assignment_declines"`
 	// Отчёты
-	TotalReports int `db:"total_reports"`
-	ReportsToday int `db:"reports_today"`
+	TotalReports     int `db:"total_reports"`
+	ReportsToday     int `db:"reports_today"`
+	SubmittedReports int `db:"submitted_reports"`
 	// Пользователи
 	TotalSg      int `db:"total_sg"`
 	NewSgLast24h int `db:"new_sg_last_24h"`
