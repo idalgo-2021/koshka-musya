@@ -16,10 +16,11 @@ import {RefreshCw, StepBackIcon} from 'lucide-react'
 
 import { sgReservationsApi } from '@/entities/sgReservations/api'
 import { CreateSGReservationRequest } from '@/entities/sgReservations/types'
-import { useAuth, USER_ROLE } from '@/entities/auth/useAuth'
+import { USER_ROLE } from '@/entities/auth/useAuth'
 import { ListingsApi } from '@/entities/listings/api'
 import {SG_RESERVATION_STATUSES} from "@/entities/sgReservations/constants";
 import {toast} from "sonner";
+import {useUser} from "@/entities/auth/SessionContext";
 
 // Form validation schema
 const reservationSchema = z.object({
@@ -47,7 +48,7 @@ const formatDateToISO = (dateString: string): string => {
   return date.toISOString()
 }
 export default function SGReservationsPage() {
-  const { user } = useAuth()
+  const user = useUser()
   const queryClient = useQueryClient()
 
   React.useEffect(() => {

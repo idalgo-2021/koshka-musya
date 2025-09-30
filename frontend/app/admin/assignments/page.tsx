@@ -13,7 +13,6 @@ import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import AssignmentCard, { getStatusBadgeClasses } from '@/components/AssignmentCard'
 import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Loader} from 'lucide-react'
-// import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
 import {assignmentStatusOptions} from "@/entities/assignments/const";
 import { ListingsApi } from '@/entities/listings/api'
 
@@ -24,7 +23,6 @@ export default function AssignmentsStaffPage() {
   const [statusIds, setStatusIds] = React.useState<string>('')
   const [listingTypesIds, setListingTypesIds] = React.useState<(string | number)[]>([])
   const [isShow, setIsShow] = useResponsiveToggle(false, 'assignments-view-mode') // false = card view, true = table view
-  // const { user } = useAuth();
 
   // Fetch listing types for filter
   const { data: listingTypesData } = useQuery({

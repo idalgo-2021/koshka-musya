@@ -12,7 +12,8 @@ import { toast } from 'sonner'
 import {Plus, Search, Edit, Trash2, Save, X, StepBackIcon} from 'lucide-react'
 import { useListingTypeModals } from '@/hooks/useListingTypeModals'
 import { useConfirmation } from '@/entities/modals/ModalContext'
-import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import { USER_ROLE} from "@/entities/auth/useAuth";
+import {useUser} from "@/entities/auth/SessionContext";
 
 export default function ListingTypesPage() {
   const router = useRouter()
@@ -24,7 +25,7 @@ export default function ListingTypesPage() {
   const [editingId, setEditingId] = React.useState<number | null>(null)
   const [editingData, setEditingData] = React.useState({ name: '', slug: '' })
 
-  const { user } = useAuth();
+  const user = useUser();
 
   const listingTypesQuery = useQuery({
     queryKey: ['listing_types'],

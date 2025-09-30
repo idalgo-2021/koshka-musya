@@ -2,6 +2,7 @@ import * as React from 'react';
 import { AuthApi } from './api';
 import { tokenStorage, type TokenInput } from './types';
 import { jwtDecode } from "jwt-decode";
+import { SessionContextType } from '@/entities/auth/SessionContext';
 
 export const USER_ROLE = {
   Admin: 1,
@@ -96,3 +97,30 @@ export function useAuth() {
     validate,
   };
 }
+
+// Create session context value from useAuth
+export function useSessionContextValue(): SessionContextType {
+  const auth = useAuth();
+
+  return {
+    user: auth.user,
+    isAuthenticated: auth.isAuthenticated,
+    isLoading: auth.loading,
+    login: auth.login,
+    logout: auth.logout,
+    validate: auth.validate,
+  };
+}
+//
+// // Higher-order component to provide session context
+// export function withSessionProvider<T extends object>(Component: React.ComponentType<T>) {
+//   return function SessionWrappedComponent(props: T) {
+//     const sessionValue = useSessionContextValue();
+//
+//     return (
+//       <SessionProvider value={sessionValue}>
+//         <Component {...props} />
+//       </SessionProvider>
+//     );
+//   };
+// }

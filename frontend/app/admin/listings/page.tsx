@@ -11,8 +11,9 @@ import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 
 import { ListingsApi } from '@/entities/listings/api'
-import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import {USER_ROLE} from "@/entities/auth/useAuth";
 import {Plus} from "lucide-react";
+import {useUser} from "@/entities/auth/SessionContext";
 
 export default function ListingsPage() {
   const [page, setPage] = React.useState(1)
@@ -26,7 +27,7 @@ export default function ListingsPage() {
     placeholderData: keepPreviousData,
   })
 
-  const { user } = useAuth();
+  const user = useUser();
   if (isLoading) return <div className="p-6">Loading...</div>
   if (isError) return <div className="p-6 text-red-600 text-sm">{(error as Error)?.message || 'Failed to load listings'}</div>
 

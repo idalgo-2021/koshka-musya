@@ -20,9 +20,10 @@ import { getRoleBadgeVariant, getRoleDisplayName } from "@/entities/users/util"
 import { useConfirmation, useResetPassword } from '@/entities/modals/ModalContext'
 import { MoreVertical, ChevronDown } from 'lucide-react'
 import { UserAvatar } from "@/components/UserAvatar"
-import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import { USER_ROLE } from "@/entities/auth/useAuth";
 import ProfileTab from '../profiles/ProfileTab'
 import { Tabs } from '@/components/ui/tabs'
+import {useUser} from "@/entities/auth/SessionContext";
 
 function UsersTab() {
   const [page, setPage] = React.useState(1)
@@ -76,7 +77,7 @@ function UsersTab() {
       }
     )
   }
-  const { user } = useAuth()
+  const user = useUser()
   const isAdmin = user?.role === USER_ROLE.Admin;
 
   const handleResetPassword = (userId: string, username: string) => {

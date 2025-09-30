@@ -3,9 +3,10 @@
 import {usePathname, useRouter} from 'next/navigation'
 import * as React from 'react'
 import {cn} from '@/lib/utils'
-import {roleToString, useAuth, User} from "@/entities/auth/useAuth";
+import {roleToString, User} from "@/entities/auth/useAuth";
 import {ProfileIcon} from "@/components/icons/ProfileIcon";
 import {Home, FileText, Settings, Building, Users, List, BarChart3, Tag, Image, LogOut} from 'lucide-react'
+import {useUser} from "@/entities/auth/SessionContext";
 
 const navItems = [
   { href: '/admin', label: 'Дашборд', icon: Home },
@@ -19,17 +20,10 @@ const navItems = [
   { href: '/admin/mediaRequirements', label: 'Media Requirements', icon: Image },
 ]
 
-// function formatUser(user: User | null) {
-//   if (!user?.username || !user?.role) {
-//     return '';
-//   }
-//   return (user?.username || '') + ' - ' + roleToString(user?.role);
-// }
-
 export default function AdminSidebar() {
   const pathname = usePathname()
   const router = useRouter()
-  // const {user} = useAuth();
+  const user = useUser();
 
   const onLogout = () => {
     try {
@@ -42,7 +36,7 @@ export default function AdminSidebar() {
 
   return (
     <aside className="lg:bg-zinc-100 dark:bg-zinc-900 dark:lg:bg-zinc-950 w-60 shrink-0 border-r bg-background/50 flex flex-col h-[100svh] overflow-auto p-4 fixed top-0">
-      {/*<UserCard user={user}/>*/}
+      <UserCard user={user}/>
       {/*<div className="px-4 py-4 text-sm font-semibold text-muted-foreground">{formatUser(user)}</div>*/}
       <nav className="flex flex-col gap-2">
         {navItems.map(item => {
