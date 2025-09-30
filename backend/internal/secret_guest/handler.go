@@ -1167,13 +1167,14 @@ func (h *SecretGuestHandler) GetAllReports(w http.ResponseWriter, r *http.Reques
 	log := logger.GetLoggerFromCtx(ctx)
 
 	page, limit := h.parsePagination(r)
-	reporterID, statusIDs, _ := h.parseFilterParams(r)
+	reporterID, statusIDs, listingTypeIDs := h.parseFilterParams(r)
 
 	dto := GetAllReportsRequestDTO{
-		Page:       page,
-		Limit:      limit,
-		ReporterID: reporterID,
-		StatusIDs:  statusIDs,
+		Page:           page,
+		Limit:          limit,
+		ReporterID:     reporterID,
+		StatusIDs:      statusIDs,
+		ListingTypeIDs: listingTypeIDs,
 	}
 
 	reports, err := h.service.GetAllReports(ctx, dto)

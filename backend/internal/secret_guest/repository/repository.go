@@ -734,6 +734,7 @@ func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter A
 	if whereClause != "" {
 		whereClause += " AND "
 	}
+
 	whereClause += "a.reporter_id IS NULL"
 
 	countQuery := `
@@ -1282,11 +1283,12 @@ func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, ass
 // reports
 
 type ReportsFilter struct {
-	ReportID   *uuid.UUID
-	ReporterID *uuid.UUID
-	StatusIDs  []int
-	Limit      int
-	Offset     int
+	ReportID       *uuid.UUID
+	ReporterID     *uuid.UUID
+	StatusIDs      []int
+	ListingTypeIDs []int
+	Limit          int
+	Offset         int
 }
 
 func buildReportWhereClause(filter ReportsFilter) (string, []interface{}, int) {
@@ -1316,8 +1318,19 @@ func buildReportWhereClause(filter ReportsFilter) (string, []interface{}, int) {
 		conditions = append(conditions, fmt.Sprintf("r.status_id IN (%s)", strings.Join(placeholders, ",")))
 	}
 
-	whereClause := strings.Join(conditions, " AND ")
+	if len(filter.ListingTypeIDs) > 0 {
+		placeholders := make([]string, 0, len(filter.ListingTypeIDs))
+		for _, id := range filter.ListingTypeIDs {
+			placeholders = append(placeholders, fmt.Sprintf("$%d", paramCount))
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions,
+			fmt.Sprintf("l.listing_type_id IN (%s)", strings.Join(placeholders, ",")),
+		)
+	}
 
+	whereClause := strings.Join(conditions, " AND ")
 	return whereClause, args, paramCount
 }
 
@@ -1373,12 +1386,19 @@ func (r *SecretGuestRepository) scanReport(row pgx.Row) (*models.Report, error) 
 }
 
 func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFilter) ([]*models.Report, int, error) {
-
 	log := logger.GetLoggerFromCtx(ctx)
 
 	whereClause, args, paramCount := buildReportWhereClause(filter)
 
-	countQuery := "SELECT COUNT(r.id) FROM reports r JOIN report_statuses s ON r.status_id = s.id"
+	countQuery := `
+		SELECT COUNT(r.id) 
+		FROM reports r 
+		JOIN report_statuses s ON r.status_id = s.id
+		`
+	if len(filter.ListingTypeIDs) > 0 {
+		countQuery += " JOIN listings l ON r.listing_id = l.id "
+	}
+
 	if whereClause != "" {
 		countQuery += " WHERE " + whereClause
 	}
@@ -1433,7 +1453,7 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 
 		FROM reports r
 		JOIN listings l ON r.listing_id = l.id
-		JOIN users u ON r.reporter_id = u.id
+		LEFT JOIN users u ON r.reporter_id = u.id
 		JOIN report_statuses s ON r.status_id = s.id
 		JOIN listing_types lt ON l.listing_type_id = lt.id
 	`
