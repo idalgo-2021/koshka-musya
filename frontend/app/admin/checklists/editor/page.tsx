@@ -400,12 +400,19 @@ export default function ChecklistEditorPage() {
   }, [showCreateSectionForm, openCreateSectionModal]);
 
   return (
-    <div className="container max-w-4xl py-6 space-y-6">
+    <div className="container max-w-4xl pb-6 space-y-6">
       <div className="sticky flex flex-col justify-between gap-2">
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => router.back()}><StepBackIcon/></Button>
           <h1 className="text-md md:text-2xl font-semibold">Форма ответов</h1>
           <QueueStatusIndicator compact/>
+          <Button
+            variant="ghost"
+            onClick={() => router.push('/admin/answerTypes')}
+            className="ml-auto"
+          >
+            Типы ответов
+          </Button>
         </div>
         {/* <div className="flex items-center gap-2">
           {hasActiveFilters && (
