@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useCallback } from "react";
 
-import AuthForm from "../components/AuthForm"
+import SecretGuestLanding from "../components/SecretGuestLanding"
 import { Toaster } from "../components/ui/sonner";
 import { Loader } from "@/components/Loader";
 
@@ -56,10 +56,10 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-accentgreen">
-      <AuthForm />
+    <>
+      <SecretGuestLanding />
       <Toaster />
-    </div>
+    </>
   );
 }
 
