@@ -2,6 +2,7 @@
 
 import { useAdminStatistics } from '@/entities/admin/useAdminStatistics'
 import { AdminStatistic } from '@/entities/admin/types'
+import AdminGroupedStatisticCard from '@/components/AdminGroupedStatisticCard'
 import AdminStatisticCard from '@/components/AdminStatisticCard'
 import { StatisticCard } from '@/entities/admin/types'
 import ErrorState from '@/components/ErrorState'
@@ -36,7 +37,7 @@ const mapStatisticsToCards = (statistics: AdminStatistic[]): StatisticCard[] => 
 }
 
 const groupStatisticsByCategory = (statistics: StatisticCard[]) => {
-  return  {
+  return {
     reservations: {
       title: 'Бронирования',
       icon: '🏨',
@@ -103,29 +104,44 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {Object.entries(groupedStats).map(([categoryKey, category]) => (
-        <div key={categoryKey} className="space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{category.icon}</span>
-            <h2 className="text-xl font-semibold text-gray-800">{category.title}</h2>
-          </div>
+      {/* Mobile: Grouped cards */}
+      <div className="block md:hidden space-y-4">
+        {Object.entries(groupedStats).map(([categoryKey, category]) => (
+          <AdminGroupedStatisticCard
+            key={categoryKey}
+            title={category.title}
+            icon={category.icon}
+            statistics={category.stats}
+          />
+        ))}
+      </div>
 
-          {category.stats.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {category.stats.map((statistic) => (
-                <AdminStatisticCard
-                  key={statistic.key}
-                  statistic={statistic}
-                />
-              ))}
+      {/* Desktop: Individual cards */}
+      <div className="hidden md:block">
+        {Object.entries(groupedStats).map(([categoryKey, category]) => (
+          <div key={categoryKey} className="space-y-4 mb-8">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{category.icon}</span>
+              <h2 className="text-xl font-semibold text-gray-800">{category.title}</h2>
             </div>
-          ) : (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">Нет данных в этой категории</p>
-            </div>
-          )}
-        </div>
-      ))}
+            
+            {category.stats.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {category.stats.map((statistic) => (
+                  <AdminStatisticCard
+                    key={statistic.key}
+                    statistic={statistic}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">Нет данных в этой категории</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
 
       {statisticCards.length === 0 && (
         <div className="text-center py-12">
