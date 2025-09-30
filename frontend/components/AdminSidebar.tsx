@@ -5,19 +5,18 @@ import * as React from 'react'
 import {cn} from '@/lib/utils'
 import {roleToString, useAuth, User} from "@/entities/auth/useAuth";
 import {ProfileIcon} from "@/components/icons/ProfileIcon";
+import {Home, FileText, Settings, Building, Users, List, BarChart3, Tag, Image, LogOut} from 'lucide-react'
 
 const navItems = [
-  {href: '/admin', label: 'Дашборд'},
-  {href: '/admin/reports', label: 'Отчеты'},
-  {href: '/admin/checklists/editor', label: 'Настройка анкет'},
-  {href: '/admin/listings', label: 'Объекты размещения'},
-  {href: '/admin/assignments', label: 'Предложения'},
-  {href: '/admin/sg_reservations', label: 'SG Reservations'},
-  {href: '/admin/users', label: 'Пользователи'},
-
-  {href: '/admin/listingTypes', label: 'Типы объектов'},
-  // { href: '/admin/answerTypes', label: 'Типы ответов' },
-  {href: '/admin/mediaRequirements', label: 'Media Requirements'},
+  { href: '/admin', label: 'Дашборд', icon: Home },
+  { href: '/admin/reports', label: 'Отчеты', icon: FileText },
+  { href: '/admin/checklists/editor', label: 'Настройка анкет', icon: Settings },
+  { href: '/admin/listings', label: 'Объекты размещения', icon: Building },
+  { href: '/admin/assignments', label: 'Предложения', icon: List },
+  { href: '/admin/sg_reservations', label: 'SG Reservations', icon: BarChart3 },
+  { href: '/admin/users', label: 'Пользователи', icon: Users },
+  { href: '/admin/listingTypes', label: 'Типы объектов', icon: Tag },
+  { href: '/admin/mediaRequirements', label: 'Media Requirements', icon: Image },
 ]
 
 // function formatUser(user: User | null) {
@@ -49,36 +48,20 @@ export default function AdminSidebar() {
         {navItems.map(item => {
           const active = pathname === item.href || pathname?.startsWith(item.href + '/')
           return (
-            <NavItem href={item.href} key={item.href} active={active}>
+            <NavItem href={item.href} key={item.href} active={active} icon={item.icon}>
               {item.label}
             </NavItem>
-            // <Link
-            //   key={item.href}
-            //   href={item.href}
-            //   className={cn(
-            //     'rounded-md px-3 py-2 text-sm transition-colors',
-            //     active
-            //       ? 'bg-accent text-accent-foreground'
-            //       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-            //   )}
-            // >
-            //   {item.label}
-            // </Link>
           )
         })}
-        <button
-          className="justify-start pointer-events-auto group cursor-default rounded-lg px-3.5 py-2.5 focus:outline-hidden sm:px-3 sm:py-1.5 text-left text-base/6 text-zinc-950 sm:text-sm/6 dark:text-white forced-colors:text-[CanvasText] data-focus:bg-blue-500 data-focus:text-white data-disabled:opacity-50 forced-color-adjust-none forced-colors:data-focus:bg-[Highlight] forced-colors:data-focus:text-[HighlightText] forced-colors:data-focus:*:data-[slot=icon]:text-[HighlightText] col-span-full grid grid-cols-[auto_1fr_1.5rem_0.5rem_auto] items-center supports-[grid-template-columns:subgrid]:grid-cols-subgrid *:data-[slot=icon]:col-start-1 *:data-[slot=icon]:row-start-1 *:data-[slot=icon]:mr-2.5 *:data-[slot=icon]:-ml-0.5 *:data-[slot=icon]:size-5 sm:*:data-[slot=icon]:mr-2 sm:*:data-[slot=icon]:size-4 *:data-[slot=icon]:text-zinc-500 data-focus:*:data-[slot=icon]:text-white dark:*:data-[slot=icon]:text-zinc-400 dark:data-focus:*:data-[slot=icon]:text-white *:data-[slot=avatar]:mr-2.5 *:data-[slot=avatar]:-ml-1 *:data-[slot=avatar]:size-6 sm:*:data-[slot=avatar]:mr-2 sm:*:data-[slot=avatar]:size-5"
-          type="button"
-          onClick={onLogout}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
-               data-slot="icon">
-            <path fill-rule="evenodd"
-                  d="M2 4.75A2.75 2.75 0 0 1 4.75 2h3a2.75 2.75 0 0 1 2.75 2.75v.5a.75.75 0 0 1-1.5 0v-.5c0-.69-.56-1.25-1.25-1.25h-3c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h3c.69 0 1.25-.56 1.25-1.25v-.5a.75.75 0 0 1 1.5 0v.5A2.75 2.75 0 0 1 7.75 14h-3A2.75 2.75 0 0 1 2 11.25v-6.5Zm9.47.47a.75.75 0 0 1 1.06 0l2.25 2.25a.75.75 0 0 1 0 1.06l-2.25 2.25a.75.75 0 1 1-1.06-1.06l.97-.97H5.25a.75.75 0 0 1 0-1.5h7.19l-.97-.97a.75.75 0 0 1 0-1.06Z"
-                  clip-rule="evenodd"></path>
-          </svg>
-          <div data-slot="label" className="col-start-2 row-start-1">Выйти</div>
-        </button>
+        <div className="py-2 border-t border-gray-200">
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-3 px-3 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full text-left cursor-pointer"
+          >
+            <LogOut className="w-5 h-5"/>
+            <span className="font-medium">Выйти</span>
+          </button>
+        </div>
       </nav>
     </aside>
   )
@@ -125,25 +108,23 @@ function UserCard({user}: { user: User | null }) {
 }
 
 function NavItem({
-  href, children, active
-} : React.PropsWithChildren<{ href: string; active: boolean }>) {
+  href, children, active, icon: Icon
+} : React.PropsWithChildren<{ href: string; active: boolean; icon: React.ComponentType<{ className?: string }> }>) {
   return (
-    // <div data-slot="section" className="max-lg:hidden flex flex-col gap-0.5">
-    //   <h3 className="mb-1 px-2 text-xs/6 font-medium text-zinc-500 dark:text-zinc-400">Upcoming Events</h3>
     <span className="relative">
       <a
         className={cn(
-          "flex w-full items-center gap-3 rounded-lg hover:bg-gray-200 px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 *:data-[slot=icon]:size-6 *:data-[slot=icon]:shrink-0 *:data-[slot=icon]:fill-zinc-500 sm:*:data-[slot=icon]:size-5 *:last:data-[slot=icon]:ml-auto *:last:data-[slot=icon]:size-5 sm:*:last:data-[slot=icon]:size-4 *:data-[slot=avatar]:-m-0.5 *:data-[slot=avatar]:size-7 sm:*:data-[slot=avatar]:size-6 data-hover:bg-zinc-950/5 data-hover:*:data-[slot=icon]:fill-zinc-950 data-active:bg-zinc-950/5 data-active:*:data-[slot=icon]:fill-zinc-950 data-current:*:data-[slot=icon]:fill-zinc-950 dark:text-white dark:*:data-[slot=icon]:fill-zinc-400 dark:data-hover:bg-white/5 dark:data-hover:*:data-[slot=icon]:fill-white dark:data-active:bg-white/5 dark:data-active:*:data-[slot=icon]:fill-white dark:data-current:*:data-[slot=icon]:fill-white",
+          "flex w-full items-center gap-3 rounded-lg hover:bg-gray-200 px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5 transition-colors",
           active && 'bg-gray-200 text-accent-foreground'
         )}
-        type="button" data-headlessui-state="" href={href}
+        href={href}
       >
         <span
           className="absolute top-1/2 left-1/2 size-[max(100%,2.75rem)] -translate-x-1/2 -translate-y-1/2 pointer-fine:hidden"
           aria-hidden="true"></span>
+        <Icon className="w-5 h-5 shrink-0" />
         {children}
       </a>
     </span>
-    // </div>
   )
 }

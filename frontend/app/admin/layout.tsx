@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import AdminSidebar from '@/components/AdminSidebar'
 import AdminBottomNav from "@/components/AdminBottomNav";
+import AdminMobileNav from "@/components/AdminMobileNav";
 import { Loader } from "@/components/Loader";
 import { ModalProvider } from "@/entities/modals/ModalContext";
 import { AdminLayout as AdminLayoutComponent } from "@/components/AdminLayout";
@@ -28,7 +29,8 @@ export default function AdminLayout({
     <ModalProvider>
       <AdminLayoutComponent>
         <div className="flex flex-col min-h-[100svh]">
-          {/*<AdminNavbar/>*/}
+          {/* Mobile Navigation */}
+          <AdminMobileNav />
 
           <div className="flex flex-1 overflow-hidden">
             <div className="hidden md:block relative">
