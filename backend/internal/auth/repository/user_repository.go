@@ -115,11 +115,25 @@ func (r *UserRepository) FindUserByID(ctx context.Context, userId uuid.UUID) (*m
 func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) error {
 	log := logger.GetLoggerFromCtx(ctx)
 
-	query := `
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		log.Error(ctx, "Failed to begin transaction", zap.Error(err))
+		return models.ErrDataBaseQuery
+	}
+
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback(ctx)
+		} else {
+			_ = tx.Commit(ctx)
+		}
+	}()
+
+	userQuery := `
 	    INSERT INTO users (id, username, email, password_hash, role_id)
 	    VALUES ($1, $2, $3, $4, $5)
 	`
-	_, err := r.db.Exec(ctx, query,
+	_, err = tx.Exec(ctx, userQuery,
 		user.ID,
 		user.Username,
 		user.Email,
@@ -128,8 +142,7 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) er
 	)
 	if err != nil {
 		var pgErr *pgconn.PgError
-		// Проверяем, является ли ошибка нарушением уникального ограничения PostgreSQL.
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" { // 23505 - код для unique_violation
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 			if strings.Contains(pgErr.ConstraintName, "users_username_key") {
 				log.Info(ctx, "Attempt to register user with existing username", zap.String("username", user.Username))
 				return models.ErrUserExists
@@ -139,14 +152,17 @@ func (r *UserRepository) RegisterUser(ctx context.Context, user *models.User) er
 				return models.ErrEmailExists
 			}
 		}
+		log.Error(ctx, "DB error on user insert", zap.Error(err), zap.String("user_id", user.ID.String()), zap.String("username", user.Username))
+		return models.ErrDataBaseQuery
+	}
 
-		// Для всех остальных ошибок логируем как общую ошибку базы данных.
-		log.Error(ctx,
-			"DB error on user insert",
-			zap.Error(err),
-			zap.String("user_id", user.ID.String()),
-			zap.String("username", user.Username),
-		)
+	profileQuery := `
+	    INSERT INTO user_profiles (user_id)
+	    VALUES ($1)
+	`
+	_, err = tx.Exec(ctx, profileQuery, user.ID)
+	if err != nil {
+		log.Error(ctx, "DB error on profile insert", zap.Error(err), zap.String("user_id", user.ID.String()))
 		return models.ErrDataBaseQuery
 	}
 

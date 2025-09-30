@@ -58,6 +58,8 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	protectedRouter.HandleFunc("/reports/my/{id}/submit", secretGuestHandler.SubmitMyReport).Methods(http.MethodPatch) // reports
 	protectedRouter.HandleFunc("/reports/my/{id}/refuse", secretGuestHandler.RefuseMyReport).Methods(http.MethodPatch) // reports
 
+	protectedRouter.HandleFunc("/profiles/my", secretGuestHandler.GetMyProfile).Methods(http.MethodGet) // profiles
+
 	// - - - - UPLOADS
 	protectedRouter.HandleFunc("/uploads/generate-url", secretGuestHandler.GenerateUploadURL).Methods(http.MethodPost)
 
@@ -79,6 +81,9 @@ func NewRouter(ctx context.Context, cfg *config.Config, authHandlers *auth.AuthH
 	staffRouter.HandleFunc("/reports/{id}/reject", secretGuestHandler.RejectReport).Methods(http.MethodPatch)   // reports
 
 	staffRouter.HandleFunc("/users", secretGuestHandler.GetAllUsers).Methods(http.MethodGet) // users
+
+	staffRouter.HandleFunc("/profiles", secretGuestHandler.GetAllProfiles).Methods(http.MethodGet)               // profiles
+	staffRouter.HandleFunc("/profiles/{user_id}", secretGuestHandler.GetProfileByUserID).Methods(http.MethodGet) // profiles
 
 	///
 

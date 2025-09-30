@@ -70,7 +70,7 @@
                         }
                     },
                     "409": {
-                        "description": "Listing cannot be created (e.g., wrong payload)",
+                        "description": "Listing cannot be created (e.g., duplicate listing or conflict)",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }
@@ -2158,7 +2158,7 @@
                             "type": "integer"
                         },
                         "collectionFormat": "multi",
-                        "description": "Filter by one or more listing type IDs",
+                        "description": "Filter by one or more listing type IDs (invalid IDs are ignored)",
                         "name": "listing_type_id",
                         "in": "query"
                     }
@@ -2276,6 +2276,58 @@
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.MediaRequirementsResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/profiles/my": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns the profile information for the currently authenticated user.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profiles (User)"
+                ],
+                "summary": "Get My Profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ProfileResponseDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }
                     },
                     "500": {
@@ -3032,6 +3084,144 @@
                     },
                     "409": {
                         "description": "Assignment cannot be cancelled",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/staff/profiles": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a paginated list of all user profiles. Available for staff only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profiles (Staff)"
+                ],
+                "summary": "Get All Profiles (Staff)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 50,
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ProfilesResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/staff/profiles/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a single user profile by their user ID. Available for staff only.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Profiles (Staff)"
+                ],
+                "summary": "Get Profile By User ID (Staff)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ProfileResponseDTO"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid User ID format",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Profile not found",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }
@@ -4189,6 +4379,58 @@
                 },
                 "status": {
                     "$ref": "#/definitions/secret_guest.StatusResponse"
+                }
+            }
+        },
+        "secret_guest.ProfileResponseDTO": {
+            "type": "object",
+            "properties": {
+                "accepted_offers_count": {
+                    "type": "integer"
+                },
+                "additional_info": {
+                    "type": "object"
+                },
+                "correct_reports_count": {
+                    "type": "integer"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_active_at": {
+                    "type": "string"
+                },
+                "registered_at": {
+                    "type": "string"
+                },
+                "submitted_reports_count": {
+                    "type": "integer"
+                },
+                "user_id": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "secret_guest.ProfilesResponse": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "profiles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/secret_guest.ProfileResponseDTO"
+                    }
+                },
+                "total": {
+                    "type": "integer"
                 }
             }
         },
