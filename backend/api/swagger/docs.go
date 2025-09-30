@@ -4417,7 +4417,6 @@ const docTemplate = `{
                 "latitude",
                 "listing_type",
                 "longitude",
-                "main_picture",
                 "title"
             ],
             "properties": {
@@ -4446,6 +4445,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "main_picture": {
+                    "description": "MainPicture *string             ` + "`" + `json:\"main_picture\" validate:\"required\"` + "`" + `",
                     "type": "string"
                 },
                 "title": {
@@ -4563,6 +4563,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "last_active_at": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "rank": {
                     "type": "string"
                 },
                 "registered_at": {
