@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -178,7 +179,7 @@ func (h *SecretGuestHandler) parseFilterParams(r *http.Request) (*uuid.UUID, []i
 // @Failure      400 {object} ErrorResponse "Invalid payload"
 // @Failure      401 {object} ErrorResponse "Unauthorized"
 // @Failure      403 {object} ErrorResponse "Forbidden"
-// @Failure      409 {object} ErrorResponse "Listing cannot be created (e.g., wrong payload)"
+// @Failure      409 {object} ErrorResponse "Listing cannot be created (e.g., duplicate listing or conflict)"
 // @Failure      500 {object} ErrorResponse "Internal server error"
 // @Router       /admin/listings [post]
 func (h *SecretGuestHandler) CreateListing(w http.ResponseWriter, r *http.Request) {
@@ -220,7 +221,7 @@ func (h *SecretGuestHandler) CreateListing(w http.ResponseWriter, r *http.Reques
 // @Produce      json
 // @Param        page query int false "Page number for pagination" default(1) min(1)
 // @Param        limit query int false "Number of items per page" default(20) min(1)
-// @Param        listing_type_id query []int false "Filter by one or more listing type IDs" collectionFormat(multi)
+// @Param        listing_type_id query []int false "Filter by one or more listing type IDs (invalid IDs are ignored)" collectionFormat(multi)
 // @Success      200 {object} secret_guest.ListingsResponse
 // @Failure      500 {object} ErrorResponse "Internal server error"
 // @Router       /listings [get]
@@ -430,7 +431,7 @@ func (h *SecretGuestHandler) GetOTAReservationByID(w http.ResponseWriter, r *htt
 // @Failure      403 {object} ErrorResponse "Forbidden"
 // @Failure      404 {object} ErrorResponse "Reservation not found"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /sg_reservations/{id}/no-show [post]
+// @Router       /sg_reservations/{id}/no-show [patch]
 func (h *SecretGuestHandler) UpdateOTAReservationStatusNoShow(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -490,6 +491,19 @@ func (h *SecretGuestHandler) UpdateOTAReservationStatusNoShow(w http.ResponseWri
 // 	h.writeJSONResponse(ctx, w, http.StatusCreated, assignment)
 // }
 
+// @Summary      Get Free Assignments
+// @Security     BearerAuth
+// @Description  Returns a paginated list of "free" assignments that can be taken by any user.
+// @Tags         Assignments (User)
+// @Produce      json
+// @Param        page query int false "Page number for pagination" default(1)
+// @Param        limit query int false "Number of items per page" default(20)
+// @Param        listing_type_id query []int false "Filter by one or more listing type IDs" collectionFormat(multi)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.AssignmentsResponse
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /assignments [get]
 func (h *SecretGuestHandler) GetFreeAssignments(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -511,6 +525,43 @@ func (h *SecretGuestHandler) GetFreeAssignments(w http.ResponseWriter, r *http.R
 	}
 
 	h.writeJSONResponse(ctx, w, http.StatusOK, assignments)
+}
+
+// @Summary      Get Free Assignment By ID
+// @Security     BearerAuth
+// @Description  Returns details of a specific "free" assignment that can be taken.
+// @Tags         Assignments (User)
+// @Produce      json
+// @Param        id path string true "Assignment ID" format(uuid)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.AssignmentResponseDTO
+// @Failure      400 {object} ErrorResponse "Invalid assignment ID format"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "Assignment not found or is not available"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /assignments/{id} [get]
+func (h *SecretGuestHandler) GetFreeAssignmentsByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	assignmentID, ok := h.parseUUIDFromPath(w, r, "id")
+	if !ok {
+		return
+	}
+
+	assignment, err := h.service.GetFreeAssignmentsByID(ctx, assignmentID)
+	if err != nil {
+		if errors.Is(err, models.ErrAssignmentNotFound) {
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found")
+		} else {
+			log.Error(ctx, "Failed to get assignment by ID as secret guest", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, assignment)
 }
 
 // @Summary      Get My Assignments
@@ -683,7 +734,7 @@ func (h *SecretGuestHandler) GetAssignmentByID_AsStaff(w http.ResponseWriter, r 
 // @Failure      404 {object} ErrorResponse "Assignment not found or does not belong to user"
 // @Failure      409 {object} ErrorResponse "Assignment cannot be accepted (e.g., wrong status)"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /assignments/my/{id}/accept [post]
+// @Router       /assignments/my/{id}/accept [patch]
 func (h *SecretGuestHandler) AcceptMyAssignment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -700,6 +751,10 @@ func (h *SecretGuestHandler) AcceptMyAssignment(w http.ResponseWriter, r *http.R
 
 	err := h.service.AcceptMyAssignment(ctx, userID, assignmentID)
 	if err != nil {
+		if err.Error() == fmt.Sprintf("accept is allowed only within %d hours before check-in", h.cfg.AssignmentDeadlineHours) {
+			h.writeErrorResponse(ctx, w, http.StatusConflict, err.Error())
+			return
+		}
 		switch {
 		case errors.Is(err, models.ErrAssignmentNotFound), errors.Is(err, models.ErrForbidden):
 			log.Info(ctx, "Assignment not found by ID", zap.String("report_id", assignmentID.String()))
@@ -732,7 +787,7 @@ func (h *SecretGuestHandler) AcceptMyAssignment(w http.ResponseWriter, r *http.R
 // @Failure      404 {object} ErrorResponse "Assignment not found or does not belong to user"
 // @Failure      409 {object} ErrorResponse "Assignment cannot be declined (e.g., wrong status)"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /assignments/my/{id}/decline [post]
+// @Router       /assignments/my/{id}/decline [patch]
 func (h *SecretGuestHandler) DeclineMyAssignment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -751,13 +806,65 @@ func (h *SecretGuestHandler) DeclineMyAssignment(w http.ResponseWriter, r *http.
 	if err != nil {
 		switch {
 		case errors.Is(err, models.ErrAssignmentNotFound), errors.Is(err, models.ErrForbidden):
-			log.Info(ctx, "Assignment not found by ID", zap.String("report_id", assignmentID.String()))
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
 			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found or access denied")
 		case errors.Is(err, models.ErrAssignmentCannotBeDeclined):
 			log.Info(ctx, "Assignment can not be declined", zap.Error(err))
 			h.writeErrorResponse(ctx, w, http.StatusConflict, "Assignment can not be declined")
 		default:
 			log.Error(ctx, "Failed to decline assignment", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// @Summary      Take a Free Assignment
+// @Security     BearerAuth
+// @Description  Allows a user to take a free assignment, assigning it to themselves. The assignment status becomes 'offered' to this specific user.
+// @Tags         Assignments (User)
+// @Param        id path string true "Assignment ID" format(uuid)
+// @Param Authorization header string true "Bearer Access Token"
+// @Success      204 "No Content"
+// @Failure      400 {object} ErrorResponse "Invalid assignment ID format"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "Assignment not found or not available"
+// @Failure      409 {object} ErrorResponse "Assignment cannot be taken (e.g., already taken, or user has other active offers)"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /assignments/{id}/take [patch]
+func (h *SecretGuestHandler) TakeFreeAssignmentsByID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUserAndID(w, r)
+	if !ok {
+		return
+	}
+
+	assignmentID, ok := h.parseUUIDFromPath(w, r, "id")
+	if !ok {
+		return
+	}
+
+	err := h.service.TakeFreeAssignmentsByID(ctx, userID, assignmentID)
+	if err != nil {
+		switch {
+		case errors.Is(err, models.ErrAssignmentNotFound), errors.Is(err, models.ErrForbidden):
+			log.Info(ctx, "Assignment not found by ID", zap.String("assignment_id", assignmentID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Assignment not found or access denied")
+		case errors.Is(err, models.ErrAssignmentCannotBeDeclined):
+			log.Info(ctx, "Assignment can not be taked", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusConflict, "Assignment can not be taked")
+
+		case strings.Contains(err.Error(), "already has"):
+			log.Info(ctx, "User already has active assignments", zap.Error(err))
+			h.writeErrorResponse(ctx, w, http.StatusConflict, "User already has active assignments")
+
+		default:
+			log.Info(ctx, "Failed to take assignment", zap.Error(err))
 			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
 		}
 
@@ -779,7 +886,7 @@ func (h *SecretGuestHandler) DeclineMyAssignment(w http.ResponseWriter, r *http.
 // @Failure      404 {object} ErrorResponse "Assignment not found or does not belong to user"
 // @Failure      409 {object} ErrorResponse "Assignment cannot be cancelled"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /assignments/{id}/cancel [post]
+// @Router       /staff/assignments/{id}/cancel [patch]
 func (h *SecretGuestHandler) CancelAssignment(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -902,7 +1009,7 @@ func (h *SecretGuestHandler) GetMyReportByID(w http.ResponseWriter, r *http.Requ
 // @Failure      404 {object} ErrorResponse "Report not found or does not belong to user"
 // @Failure      409 {object} ErrorResponse "Report is not in a draft state and cannot be edited"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /reports/my/{id} [patch]
+// @Router       /reports/my/{id} [post]
 func (h *SecretGuestHandler) UpdateMyReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -961,7 +1068,7 @@ func (h *SecretGuestHandler) UpdateMyReport(w http.ResponseWriter, r *http.Reque
 // @Failure      404 {object} ErrorResponse "Report not found or does not belong to user"
 // @Failure      409 {object} ErrorResponse "Report is not in a draft state"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /reports/my/{id}/submit [post]
+// @Router       /reports/my/{id}/submit [patch]
 func (h *SecretGuestHandler) SubmitMyReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -1006,7 +1113,7 @@ func (h *SecretGuestHandler) SubmitMyReport(w http.ResponseWriter, r *http.Reque
 // @Failure      404 {object} ErrorResponse "Report not found or does not belong to user"
 // @Failure      409 {object} ErrorResponse "Report is not in a draft state"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /reports/my/{id}/refuse [post]
+// @Router       /reports/my/{id}/refuse [patch]
 func (h *SecretGuestHandler) RefuseMyReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -1060,13 +1167,14 @@ func (h *SecretGuestHandler) GetAllReports(w http.ResponseWriter, r *http.Reques
 	log := logger.GetLoggerFromCtx(ctx)
 
 	page, limit := h.parsePagination(r)
-	reporterID, statusIDs, _ := h.parseFilterParams(r)
+	reporterID, statusIDs, listingTypeIDs := h.parseFilterParams(r)
 
 	dto := GetAllReportsRequestDTO{
-		Page:       page,
-		Limit:      limit,
-		ReporterID: reporterID,
-		StatusIDs:  statusIDs,
+		Page:           page,
+		Limit:          limit,
+		ReporterID:     reporterID,
+		StatusIDs:      statusIDs,
+		ListingTypeIDs: listingTypeIDs,
 	}
 
 	reports, err := h.service.GetAllReports(ctx, dto)
@@ -1130,7 +1238,7 @@ func (h *SecretGuestHandler) GetReportByID_AsStaff(w http.ResponseWriter, r *htt
 // @Failure      404 {object} ErrorResponse "Report not found"
 // @Failure      409 {object} ErrorResponse "Report cannot be approved (e.g., wrong status)"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /reports/{id}/approve [post]
+// @Router       /staff/reports/{id}/approve [patch]
 func (h *SecretGuestHandler) ApproveReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -1178,7 +1286,7 @@ func (h *SecretGuestHandler) ApproveReport(w http.ResponseWriter, r *http.Reques
 // @Failure      404 {object} ErrorResponse "Report not found"
 // @Failure      409 {object} ErrorResponse "Report cannot be rejected (e.g., wrong status)"
 // @Failure      500 {object} ErrorResponse "Internal server error"
-// @Router       /reports/{id}/reject [post]
+// @Router       /staff/reports/{id}/reject [patch]
 func (h *SecretGuestHandler) RejectReport(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -2316,4 +2424,135 @@ func (h *SecretGuestHandler) GetAllUsers(w http.ResponseWriter, r *http.Request)
 	}
 
 	h.writeJSONResponse(ctx, w, http.StatusOK, users)
+}
+
+// profiles
+
+// @Summary      Get My Profile
+// @Security     BearerAuth
+// @Description  Returns the profile information for the currently authenticated user.
+// @Tags         Profiles (User)
+// @Produce      json
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.ProfileResponseDTO
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "Profile not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /profiles/my [get]
+func (h *SecretGuestHandler) GetMyProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUserAndID(w, r)
+	if !ok {
+		return
+	}
+
+	profile, err := h.service.GetMyProfile(ctx, userID)
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Profile not found")
+		} else {
+			log.Error(ctx, "Failed to get my profile", zap.Error(err), zap.String("user_id", userID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, profile)
+}
+
+// @Summary      Get All Profiles (Staff)
+// @Security     BearerAuth
+// @Description  Returns a paginated list of all user profiles. Available for staff only.
+// @Tags         Profiles (Staff)
+// @Produce      json
+// @Param        page query int false "Page number for pagination" default(1)
+// @Param        limit query int false "Number of items per page" default(50)
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.ProfilesResponse
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /staff/profiles [get]
+func (h *SecretGuestHandler) GetAllProfiles(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	page, limit := h.parsePagination(r)
+	dto := GetAllProfilesRequestDTO{
+		Page:  page,
+		Limit: limit,
+	}
+
+	profiles, err := h.service.GetAllProfiles(ctx, dto)
+	if err != nil {
+		log.Error(ctx, "Failed to get all profiles", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, profiles)
+}
+
+// @Summary      Get Profile By User ID (Staff)
+// @Security     BearerAuth
+// @Description  Returns a single user profile by their user ID. Available for staff only.
+// @Tags         Profiles (Staff)
+// @Produce      json
+// @Param        id path string true "User ID" format(uuid)
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.ProfileResponseDTO
+// @Failure      400 {object} ErrorResponse "Invalid User ID format"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      404 {object} ErrorResponse "Profile not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /staff/profiles/{id} [get]
+func (h *SecretGuestHandler) GetProfileByUserID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUUIDFromPath(w, r, "user_id")
+	if !ok {
+		return
+	}
+
+	profile, err := h.service.GetMyProfile(ctx, userID) // Reusing the same service method as for GetMyProfile
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Profile not found")
+		} else {
+			log.Error(ctx, "Failed to get profile by user ID", zap.Error(err), zap.String("user_id", userID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, profile)
+}
+
+// @Summary      Get Statistics (Staff)
+// @Security     BearerAuth
+// @Description  Returns basic statistics about the system
+// @Tags         Statistics (Staff)
+// @Produce      json
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.StatisticsResponseDTO
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /staff/statistics [get]
+func (h *SecretGuestHandler) GetStatistics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	stats, err := h.service.GetStatistics(ctx)
+	if err != nil {
+		log.Error(ctx, "Failed to get statistics", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, stats)
 }

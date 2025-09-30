@@ -1,108 +1,120 @@
-Описание HTTP API эндпоинтов сервиса Secret Guest
-==================================================
+У меня получилось вот так.
+
+# Описание HTTP API эндпоинтов сервиса Secret Guest
+================================================
 
 Файл содержит список всех доступных API-ручек, сгруппированных по уровню доступа (публичные, для пользователей, для персонала, для администраторов) и по сущностям.
 
+---
 
-1. Публичные эндпоинты (Аутентификация не требуется)
----------------------------------------------------
+## 1. Публичные эндпоинты (Аутентификация не требуется)
 
 ### Аутентификация
-- `POST   /auth/register`      : Регистрация нового пользователя.
-- `POST   /auth/token`         : Получение пары токенов (access, refresh) по логину и паролю.
-- `POST   /auth/refresh`       : Обновление access-токена с помощью refresh-токена.
-- `POST   /auth/validate`      : Валидация access-токена (используется middleware, но сам эндпоинт публичный для проверки).
+- `POST /auth/register`      : Регистрация нового пользователя
+- `POST /auth/token`         : Получение пары токенов (access, refresh) по логину и паролю
+- `POST /auth/refresh`       : Обновление access-токена с помощью refresh-токена
+- `POST /auth/validate`      : Валидация access-токена (используется middleware, но сам эндпоинт публичный для проверки)
 
 ### Документация
-- `POST    /swagger/*`          : Доступ к Swagger UI для интерактивной документации API.
+- `GET /swagger/*`          : Доступ к Swagger UI для интерактивной документации API
 
+---
 
-2. Эндпоинты для аутентифицированных пользователей (Любая роль)
---------------------------------------------------------------
+## 2. Эндпоинты для аутентифицированных пользователей (Любая роль)
 
 ### Объекты размещения (Listings)
-- `GET    /listings`           : Получение списка всех активных объектов размещения (с пагинацией).
-- `GET    /listings/{id}`      : Получение детальной информации об одном объекте размещения по его ID.
+- `GET /listings`           : Получение списка всех активных объектов размещения (с пагинацией)
+- `GET /listings/{id}`      : Получение детальной информации об одном объекте размещения по его ID
 
 ### Предложения (Assignments)
-- `GET    /assignments/my`               : Получение списка своих активных предложений.
-- `GET    /assignments/my/{id}`          : Получение детальной информации о своем предложении по ID.
-- `POST   /assignments/my/{id}/accept`   : Принять предложение.
-- `POST   /assignments/my/{id}/decline`  : Отклонить предложение.
+- `GET /assignments/my`                : Получение списка своих активных предложений
+- `GET /assignments/my/{id}`           : Получение детальной информации о своем предложении по ID
+- `PATCH /assignments/my/{id}/accept`  : Принять предложение
+- `PATCH /assignments/my/{id}/decline` : Отклонить предложение(освободить бронь)
+- `GET /assignments`                   : Получение списка свободных (доступных) предложений
+- `GET /assignments/{id}`              : Получение детальной информации о свободном(доступном) предложении по ID
+- `PATCH /assignments/{id}/take`       : Взять предложение(статус останется Offered, но теперь предложение можно акцептовать)
 
 ### Отчеты (Reports)
-- `GET    /reports/my`                   : Получение списка своих отчетов в работе.
-- `GET    /reports/my/{id}`              : Получение своего отчета по UUID для заполнения.
-- `PATCH  /reports/my/{id}`              : Обновить/сохранить черновик своего отчета.
-- `POST   /reports/my/{id}/submit`       : Сдать готовый отчет на проверку.
-- `POST   /reports/my/{id}/refuse`       : Отказаться от продолжения заполнения отчета
+- `GET /reports/my`                  : Получение списка своих отчетов в работе
+- `GET /reports/my/{id}`             : Получение своего отчета по UUID для заполнения
+- `POST /reports/my/{id}`           : Обновить/сохранить черновик своего отчета
+- `PATCH /reports/my/{id}/submit`    : Сдать готовый отчет на проверку
+- `PATCH /reports/my/{id}/refuse`    : Отказаться от продолжения заполнения отчета
+
+### Профили пользователей (Profiles)
+- `GET /profiles/my`			   : Получение своего профиля
 
 ### Загрузка файлов (Uploads)
-- `POST   /uploads/generate-url`         : Сгенерировать presigned URL для загрузки файла в хранилище.
+- `POST /uploads/generate-url`       : Сгенерировать presigned URL для загрузки файла в хранилище
 
+---
 
+## 3. Эндпоинты для персонала (Роли: Администратор, Модератор)
 
-3. Эндпоинты для персонала (Роли: Администратор, Модератор)
-----------------------------------------------------------
+### Статистика (по разным таблицам)
+- `GET /staff/statistics`              : Получение нескольких статистических показателей по таблицам системы(только для демо)
 
 ### Вх.бронирования (ota_sg_reservations)
-- `GET    /sg_reservations`              : Получение списка поступивших от OTA бронирований.
-- `GET    /sg_reservations/{id}`         : Получение информации о поступившем от OTA бронировании по ID.
-- `POST   /sg_reservations/{id}/no-show` : Установка статуса No-show у броинрования OTA.
+- `GET /staff/sg_reservations`              : Получение списка поступивших от OTA бронирований
+- `GET /staff/sg_reservations/{id}`         : Получение информации о поступившем от OTA бронировании по ID
+- `PATCH /staff/sg_reservations/{id}/no-show` : Установка статуса No-show у бронирования OTA
 
 ### Предложения (Assignments)
-- `GET    /assignments`                  : Получение списка всех предложений с возможностью фильтрации.
-- `GET    /assignments/{id}`             : Получение информации о любом предложении по ID.
-- `GET    /assignments/{id}/cancel`      : Отменить любое предложение.
+- `GET /staff/assignments`                  : Получение списка всех предложений с возможностью фильтрации
+- `GET /staff/assignments/{id}`             : Получение информации о любом предложении по ID
+- `PATCH /staff/assignments/{id}/cancel`    : Отменить любое предложение (из любого статуса)
 
 ### Отчеты (Reports)
-- `GET    /reports`                      : Получение списка всех отчетов с возможностью фильтрации.
-- `GET    /reports/{id}`                 : Получение информации о любом отчете по ID.
-- `POST   /reports/{id}/approve`         : Одобрить отчет.
-- `POST   /reports/{id}/reject`          : Отклонить отчет.
+- `GET /staff/reports`                      : Получение списка всех отчетов с возможностью фильтрации
+- `GET /staff/reports/{id}`                 : Получение информации о любом отчете по ID
+- `PATCH /staff/reports/{id}/approve`       : Одобрить отчет(модерация)
+- `PATCH /staff/reports/{id}/reject`        : Отклонить отчет(модерация)
 
 ### Пользователи (Users)
-- `GET    /users`           : Получение списка всех пользователей(с указанием их роли).
+- `GET /staff/users`                        : Получение списка всех пользователей (с указанием их роли)
+
+### Профили пользователей (Profiles)
+- `GET /staff/profiles` 					: Получение списка всех профилей
+- `GET /staff/profiles/{user_id}`	: Получение профиля пользователя по его идентификатору
 
 ### Типы ответов (Answer Types)
-- `GET    /answer_types`                 : Получение списка всех типов ответов.
-- `POST   /answer_types`                 : Создание нового типа ответа.
-- `GET    /answer_types/{id}`            : Получение типа ответа по ID.
-- `PATCH  /answer_types/{id}`            : Обновление типа ответа по ID.
-- `DELETE /answer_types/{id}`            : Удаление типа ответа по ID.
+- `GET /staff/answer_types`                 : Получение списка всех типов ответов
+- `POST /staff/answer_types`                : Создание нового типа ответа
+- `GET /staff/answer_types/{id}`            : Получение типа ответа по ID
+- `PATCH /staff/answer_types/{id}`          : Обновление типа ответа по ID
+- `DELETE /staff/answer_types/{id}`         : Удаление типа ответа по ID
 
 ### Требования к медиа (Media Requirements)
-- `GET    /media_requirements`           : Получение списка всех требований к медиа.
+- `GET /staff/media_requirements`           : Получение списка всех требований к медиа
 
 ### Типы объектов (Listing Types)
-- `GET    /listing_types`                : Получение списка всех типов объектов.
-- `POST   /listing_types`                : Создание нового типа объекта.
-- `GET    /listing_types/{id}`           : Получение типа объекта по ID.
-- `PATCH  /listing_types/{id}`           : Обновление типа объекта по ID.
-- `DELETE /listing_types/{id}`           : Удаление типа объекта по ID.
+- `GET /staff/listing_types`                : Получение списка всех типов объектов
+- `POST /staff/listing_types`               : Создание нового типа объекта
+- `GET /staff/listing_types/{id}`           : Получение типа объекта по ID
+- `PATCH /staff/listing_types/{id}`         : Обновление типа объекта по ID
+- `DELETE /staff/listing_types/{id}`        : Удаление типа объекта по ID
 
 ### Секции чек-листа (Checklist Sections)
-- `GET    /checklist_sections`           : Получение списка всех секций.
-- `POST   /checklist_sections`           : Создание новой секции.
-- `GET    /checklist_sections/{id}`      : Получение секции по ID.
-- `PATCH  /checklist_sections/{id}`      : Обновление секции по ID.
-- `DELETE /checklist_sections/{id}`      : Удаление секции по ID.
+- `GET /staff/checklist_sections`           : Получение списка всех секций
+- `POST /staff/checklist_sections`          : Создание новой секции
+- `GET /staff/checklist_sections/{id}`      : Получение секции по ID
+- `PATCH /staff/checklist_sections/{id}`    : Обновление секции по ID
+- `DELETE /staff/checklist_sections/{id}`   : Удаление секции по ID
 
 ### Пункты чек-листа (Checklist Items)
-- `GET    /checklist_items`              : Получение списка всех пунктов.
-- `POST   /checklist_items`              : Создание нового пункта.
-- `GET    /checklist_items/{id}`         : Получение пункта по ID.
-- `PATCH  /checklist_items/{id}`         : Обновление пункта по ID.
-- `DELETE /checklist_items/{id}`         : Удаление пункта по ID.
- 
+- `GET /staff/checklist_items`              : Получение списка всех пунктов
+- `POST /staff/checklist_items`             : Создание нового пункта
+- `GET /staff/checklist_items/{id}`         : Получение пункта по ID
+- `PATCH /staff/checklist_items/{id}`       : Обновление пункта по ID
+- `DELETE /staff/checklist_items/{id}`      : Удаление пункта по ID
 
+---
 
-
-4. Эндпоинты только для Администраторов
----------------------------------------
+## 4. Эндпоинты только для Администраторов
 
 ### Объекты размещения (Listings)
-- `POST   /admin/listings`            : Создание нового объекта размещения.
+- `POST /admin/listings`            : Создание нового объекта размещения
 
 ### Вх.бронирования (ota_sg_reservations)
-- `POST   /admin/sg_reservations`     : Создание нового поступившего от OTA бронирования.
+- `POST /admin/sg_reservations`     : Создание нового поступившего от OTA бронирования

@@ -81,7 +81,7 @@ type OTAReservationListingDTO struct {
 	ID          uuid.UUID           `json:"id" validate:"required,uuid"`
 	Title       string              `json:"title" validate:"required"`
 	Description string              `json:"description" validate:"required"`
-	MainPicture string              `json:"main_picture" validate:"required"`
+	MainPicture *string             `json:"main_picture" validate:"required"`
 	ListingType ListingTypeResponse `json:"listing_type" validate:"required"`
 	Address     string              `json:"address" validate:"required"`
 	City        string              `json:"city" validate:"required"`
@@ -166,12 +166,18 @@ type GetAllAssignmentsRequestDTO struct {
 	ListingTypeIDs []int
 }
 
+type AssignmentReservationDates struct {
+	Checkin  time.Time `json:"checkin" validate:"required"`
+	Checkout time.Time `json:"checkout" validate:"required"`
+}
+
 type AssignmentResponseDTO struct {
 	ID uuid.UUID `json:"id"`
 
-	OtaSgReservationID uuid.UUID       `json:"reservation_id"`
-	Pricing            json.RawMessage `json:"pricing" swaggertype:"object"`
-	Guests             json.RawMessage `json:"guests" swaggertype:"object"`
+	OtaSgReservationID uuid.UUID                  `json:"reservation_id"`
+	Pricing            json.RawMessage            `json:"pricing" swaggertype:"object"`
+	Guests             json.RawMessage            `json:"guests" swaggertype:"object"`
+	Dates              AssignmentReservationDates `json:"dates" validate:"required"`
 
 	Purpose  string               `json:"purpose"`
 	Listing  ListingShortResponse `json:"listing"`
@@ -182,7 +188,7 @@ type AssignmentResponseDTO struct {
 	AcceptedAt *time.Time `json:"accepted_at,omitempty"`
 
 	ExpiresAt time.Time  `json:"expires_at"`
-	Deadline  *time.Time `json:"deadline,omitempty"`
+	TakedAt   *time.Time `json:"taked_at,omitempty"`
 }
 
 type AssignmentsResponse struct {
@@ -227,19 +233,33 @@ type GetMyReportsRequestDTO struct {
 }
 
 type GetAllReportsRequestDTO struct {
-	Page       int
-	Limit      int
-	ReporterID *uuid.UUID
-	StatusIDs  []int
+	Page           int
+	Limit          int
+	ReporterID     *uuid.UUID
+	StatusIDs      []int
+	ListingTypeIDs []int
+}
+
+type ReportBookingDetails struct {
+	OTAID              uuid.UUID       `json:"ota_id"`
+	BookingNumber      string          `json:"booking_number"`
+	OtaSgReservationID uuid.UUID       `json:"ota_sg_reservation_id"`
+	Pricing            json.RawMessage `json:"pricing" swaggertype:"object"`
+	Guests             json.RawMessage `json:"guests" swaggertype:"object"`
+	CheckinDate        time.Time       `json:"checkin_date"`
+	CheckoutDate       time.Time       `json:"checkout_date"`
 }
 
 type ReportResponseDTO struct {
-	ID           uuid.UUID            `json:"id"`
-	AssignmentID uuid.UUID            `json:"assignment_id"`
-	Purpose      string               `json:"purpose"`
-	Listing      ListingShortResponse `json:"listing"`
-	Reporter     ReporterResponse     `json:"reporter"`
-	Status       StatusResponse       `json:"status"`
+	ID           uuid.UUID `json:"id"`
+	AssignmentID uuid.UUID `json:"assignment_id"`
+
+	BookingDetails ReportBookingDetails `json:"booking_details"`
+
+	Purpose  string               `json:"purpose"`
+	Listing  ListingShortResponse `json:"listing"`
+	Reporter ReporterResponse     `json:"reporter"`
+	Status   StatusResponse       `json:"status"`
 
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`
@@ -564,4 +584,39 @@ type UsersResponse struct {
 	Users []*UserResponseDTO `json:"users"`
 	Total int                `json:"total"`
 	Page  int                `json:"page"`
+}
+
+// ================================
+
+type ProfileResponseDTO struct {
+	ID                    uuid.UUID       `json:"id"`
+	UserID                uuid.UUID       `json:"user_id"`
+	Username              string          `json:"username"`
+	Email                 string          `json:"email"`
+	AcceptedOffersCount   int             `json:"accepted_offers_count"`
+	SubmittedReportsCount int             `json:"submitted_reports_count"`
+	CorrectReportsCount   int             `json:"correct_reports_count"`
+	RegisteredAt          time.Time       `json:"registered_at"`
+	LastActiveAt          *time.Time      `json:"last_active_at,omitempty"`
+	AdditionalInfo        json.RawMessage `json:"additional_info,omitempty" swaggertype:"object"`
+}
+
+type GetAllProfilesRequestDTO struct {
+	Page  int
+	Limit int
+}
+
+type ProfilesResponse struct {
+	Profiles []*ProfileResponseDTO `json:"profiles"`
+	Total    int                   `json:"total"`
+	Page     int                   `json:"page"`
+}
+
+type StatisticItemDTO struct {
+	Key         string `json:"key"`
+	Value       int    `json:"value"`
+	Description string `json:"description"`
+}
+type StatisticsResponseDTO struct {
+	Statistics []StatisticItemDTO `json:"statistics"`
 }

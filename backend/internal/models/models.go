@@ -48,7 +48,7 @@ type ListingType struct {
 
 // Reservation - бронирование
 type OTAReservation struct {
-	ID            uuid.UUID       `db:"ota_id"`
+	ID            uuid.UUID       `db:"id"`
 	OTAID         uuid.UUID       `db:"ota_id"`
 	BookingNumber string          `db:"booking_number"`
 	ListingID     uuid.UUID       `db:"listing_id"`
@@ -80,12 +80,14 @@ type Assignment struct {
 	OtaSgReservationID uuid.UUID       `db:"ota_sg_reservation_id"`
 	Pricing            json.RawMessage `db:"pricing"`
 	Guests             json.RawMessage `db:"guests"`
+	CheckinDate        time.Time       `db:"checkin_date"`
+	CheckoutDate       time.Time       `db:"checkout_date"`
 
 	Purpose    string     `db:"purpose"`
 	CreatedAt  time.Time  `db:"created_at"`
 	ExpiresAt  time.Time  `db:"expires_at"`
 	AcceptedAt *time.Time `db:"accepted_at"`
-	Deadline   *time.Time `db:"deadline"`
+	TakedAt    *time.Time `db:"taked_at"`
 
 	Listing  ListingShortInfo `db:"-"`
 	Reporter UserShortInfo    `db:"-"`
@@ -127,14 +129,26 @@ type StatusInfo struct {
 
 //================================
 
+type BookingDetails struct {
+	OTAID              uuid.UUID       `db:"ota_id"`
+	BookingNumber      string          `db:"booking_number"`
+	OtaSgReservationID uuid.UUID       `db:"ota_sg_reservation_id"`
+	Pricing            json.RawMessage `db:"pricing"`
+	Guests             json.RawMessage `db:"guests"`
+	CheckinDate        time.Time       `db:"checkin_date"`
+	CheckoutDate       time.Time       `db:"checkout_date"`
+}
+
 // Report - отчет ТГ
 type Report struct {
-	ID           uuid.UUID  `db:"id"`
-	AssignmentID uuid.UUID  `db:"assignment_id"`
-	Purpose      string     `db:"purpose"`
-	CreatedAt    time.Time  `db:"created_at"`
-	UpdatedAt    *time.Time `db:"updated_at"`
-	SubmittedAt  *time.Time `db:"submitted_at"`
+	ID             uuid.UUID      `db:"id"`
+	AssignmentID   uuid.UUID      `db:"assignment_id"`
+	BookingDetails BookingDetails `db:"-"`
+
+	Purpose     string     `db:"purpose"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   *time.Time `db:"updated_at"`
+	SubmittedAt *time.Time `db:"submitted_at"`
 
 	Listing  ListingShortInfo `db:"-"`
 	Reporter UserShortInfo    `db:"-"`
@@ -222,3 +236,38 @@ type ChecklistItemUpdate struct {
 type ChecklistSchema map[string]interface{}
 
 ////
+
+// UserProfile - модель профиля пользователя, обогащенная данными из таблицы users
+type UserProfile struct {
+	ID                    uuid.UUID       `db:"id"`
+	UserID                uuid.UUID       `db:"user_id"`
+	AcceptedOffersCount   int             `db:"accepted_offers_count"`
+	SubmittedReportsCount int             `db:"submitted_reports_count"`
+	CorrectReportsCount   int             `db:"correct_reports_count"`
+	RegisteredAt          time.Time       `db:"registered_at"`
+	LastActiveAt          *time.Time      `db:"last_active_at"`
+	AdditionalInfo        json.RawMessage `db:"additional_info"`
+
+	// Поля из таблицы users
+	Username string `db:"username"`
+	Email    string `db:"email"`
+}
+
+type Statistics struct {
+	// OTA бронирования
+	TotalOtaReservations   int `db:"total_ota_reservations"`
+	OtaReservationsLast24h int `db:"ota_reservations_last_24h"`
+	// Предложения (assignments)
+	TotalAssignments         int `db:"total_assignments"`
+	OpenAssignments          int `db:"open_assignments"`
+	PendingAcceptAssignments int `db:"pending_accept_assignments"`
+	// Отказы по предложениям
+	TotalAssignmentDeclines int `db:"total_assignment_declines"`
+	// Отчёты
+	TotalReports     int `db:"total_reports"`
+	ReportsToday     int `db:"reports_today"`
+	SubmittedReports int `db:"submitted_reports"`
+	// Пользователи
+	TotalSg      int `db:"total_sg"`
+	NewSgLast24h int `db:"new_sg_last_24h"`
+}

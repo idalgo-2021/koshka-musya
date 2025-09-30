@@ -38,8 +38,9 @@ type SecretGuestRepository interface {
 	GetFreeAssignments(ctx context.Context, filter repository.AssignmentsFilter) ([]*models.Assignment, int, error)
 	GetAssignmentByIDAndOwner(ctx context.Context, assignmentID, reporterID uuid.UUID) (*models.Assignment, error)
 	CancelAssignment(ctx context.Context, assignmentID uuid.UUID) error
-	AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt, deadline time.Time) (*models.Report, error)
-	DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, declinedAt time.Time) error
+	AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt time.Time) (*models.Report, error)
+	DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, takedAt, declinedAt time.Time) error
+	TakeFreeAssignmentsByID(ctx context.Context, assignmentID, userID uuid.UUID, takenAt time.Time) error
 
 	// reports
 	GetReports(ctx context.Context, filter repository.ReportsFilter) ([]*models.Report, int, error)
@@ -89,6 +90,13 @@ type SecretGuestRepository interface {
 
 	// users
 	GetAllUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error)
+
+	// profiles
+	GetUserProfileByID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
+	GetAllUserProfiles(ctx context.Context, limit, offset int) ([]*models.UserProfile, int, error)
+
+	// statistics
+	GetStatistics(ctx context.Context) (*models.Statistics, error)
 }
 
 type SecretGuestService struct {
@@ -257,6 +265,31 @@ func (s *SecretGuestService) GetFreeAssignments(ctx context.Context, dto GetFree
 
 }
 
+func (s *SecretGuestService) GetFreeAssignmentsByID(ctx context.Context, assignmentID uuid.UUID) (*AssignmentResponseDTO, error) {
+	assignment, err := s.repo.GetAssignmentByID(ctx, assignmentID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assignment by id %s: %w", assignmentID.String(), err)
+	}
+
+	// TO DO: Правильнее передавать в репозиторий статус, чтобы не делать проверку здесь.
+	// Чекаем, что предложение действительно свободное
+	if assignment.ReporterID != uuid.Nil || assignment.StatusID != models.AssignmentStatusOffered {
+		return nil, models.ErrAssignmentNotFound
+	}
+
+	return toAssignmentResponseDTO(assignment), nil
+
+}
+
+func (s *SecretGuestService) TakeFreeAssignmentsByID(ctx context.Context, userID, assignmentID uuid.UUID) error {
+
+	err := s.repo.TakeFreeAssignmentsByID(ctx, assignmentID, userID, time.Now())
+	if err != nil {
+		return fmt.Errorf("failed to take assignment %s for user %s: %w", assignmentID.String(), userID.String(), err)
+	}
+	return nil
+}
+
 func (s *SecretGuestService) GetMyActiveAssignments(ctx context.Context, dto GetMyAssignmentsRequestDTO) (*AssignmentsResponse, error) {
 
 	activeStatuses := []int{models.AssignmentStatusOffered} // only offered
@@ -316,6 +349,10 @@ func toAssignmentResponseDTO(a *models.Assignment) *AssignmentResponseDTO {
 		OtaSgReservationID: a.OtaSgReservationID,
 		Pricing:            a.Pricing,
 		Guests:             a.Guests,
+		Dates: AssignmentReservationDates{
+			Checkin:  a.CheckinDate,
+			Checkout: a.CheckoutDate,
+		},
 
 		Purpose: a.Purpose,
 		Listing: ListingShortResponse{
@@ -347,7 +384,7 @@ func toAssignmentResponseDTO(a *models.Assignment) *AssignmentResponseDTO {
 		CreatedAt:  a.CreatedAt,
 		AcceptedAt: a.AcceptedAt,
 		ExpiresAt:  a.ExpiresAt,
-		Deadline:   a.Deadline,
+		TakedAt:    a.TakedAt,
 	}
 }
 
@@ -358,7 +395,7 @@ func (s *SecretGuestService) GetMyAssignmentByID(ctx context.Context, userID, as
 		return nil, fmt.Errorf("failed to get assignment by id %s for owner %s: %w", assignmentID.String(), userID.String(), err)
 	}
 
-	// TO DO: Возможно передавать в репозиторий статус, чтобы не делать проверку здесь?
+	// TO DO: Правильнее передавать в репозиторий статус, чтобы не делать проверку здесь.
 	if assignment.StatusID != models.AssignmentStatusOffered {
 		return nil, models.ErrAssignmentNotFound
 	}
@@ -378,12 +415,23 @@ func (s *SecretGuestService) GetAssignmentByID_AsStaff(ctx context.Context, assi
 
 func (s *SecretGuestService) AcceptMyAssignment(ctx context.Context, userID, assignmentID uuid.UUID) error {
 
-	// TO DO: прояснить нужен ли дедлайн предложению вообще?
-	deadlineDuration := time.Duration(s.cfg.AssignmentDeadlineDays) * 24 * time.Hour
-	now := time.Now()
-	deadline := now.Add(deadlineDuration)
+	// как в GetMyAssignmentByID
+	assignment, err := s.repo.GetAssignmentByIDAndOwner(ctx, assignmentID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to get assignment by id %s for owner %s: %w", assignmentID.String(), userID.String(), err)
+	}
+	if assignment.StatusID != models.AssignmentStatusOffered {
+		return models.ErrAssignmentNotFound
+	}
 
-	report, err := s.repo.AcceptMyAssignment(ctx, assignmentID, userID, now, deadline)
+	now := time.Now()
+	maxBeforeCheckin := time.Duration(s.cfg.AssignmentDeadlineHours) * time.Hour
+	timeUntilCheckin := assignment.ExpiresAt.Sub(now)
+	if timeUntilCheckin > maxBeforeCheckin {
+		return fmt.Errorf("accept is allowed only within %d hours before check-in", s.cfg.AssignmentDeadlineHours)
+	}
+
+	report, err := s.repo.AcceptMyAssignment(ctx, assignmentID, userID, now)
 	if err != nil {
 		return fmt.Errorf("failed to accept assignment %s for user %s: %w", assignmentID.String(), userID.String(), err)
 	}
@@ -395,7 +443,19 @@ func (s *SecretGuestService) AcceptMyAssignment(ctx context.Context, userID, ass
 
 func (s *SecretGuestService) DeclineMyAssignment(ctx context.Context, userID, assignmentID uuid.UUID) error {
 
-	err := s.repo.DeclineMyAssignment(ctx, assignmentID, userID, time.Now())
+	// как в GetMyAssignmentByID
+	assignment, err := s.repo.GetAssignmentByIDAndOwner(ctx, assignmentID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to get assignment by id %s for owner %s: %w", assignmentID.String(), userID.String(), err)
+	}
+	if assignment.StatusID != models.AssignmentStatusOffered {
+		return models.ErrAssignmentNotFound
+	}
+
+	takedAt := assignment.TakedAt
+	declinedAt := time.Now()
+
+	err = s.repo.DeclineMyAssignment(ctx, assignmentID, userID, *takedAt, declinedAt)
 	if err != nil {
 		return fmt.Errorf("failed to decline assignment %s for user %s: %w", assignmentID.String(), userID.String(), err)
 	}
@@ -442,6 +502,7 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 			Country:       dto.Reservation.Listing.Country,
 			Latitude:      dto.Reservation.Listing.Latitude,
 			Longitude:     dto.Reservation.Listing.Longitude,
+			MainPicture:   dto.Reservation.Listing.MainPicture,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create listing %s: %w", dto.Reservation.OTAID.String(), err)
@@ -483,9 +544,8 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 		CheckoutDate:  dto.Reservation.Dates.Checkout,
 		StatusID:      reservationStatusID,
 		SourceMsg:     otaSourceMsg,
-
-		Pricing: otaPricing,
-		Guests:  otaGuests,
+		Pricing:       otaPricing,
+		Guests:        otaGuests,
 	}
 
 	reservationID, err := s.repo.CreateOTAReservation(ctx, &otaReservation)
@@ -534,10 +594,12 @@ func (s *SecretGuestService) createAssignmentFromOTAReservation(ctx context.Cont
 			Pricing:            otaReservation.Pricing,
 			Guests:             otaReservation.Guests,
 			ListingID:          otaReservation.ListingID,
+			CheckinDate:        otaReservation.CheckinDate,
+			CheckoutDate:       otaReservation.CheckoutDate,
 
 			Purpose:   "Проверка объекта по бронированию от OTA",
 			CreatedAt: time.Now(),
-			ExpiresAt: otaReservation.CheckoutDate, // актуально до даты выезда
+			ExpiresAt: otaReservation.CheckinDate,
 		}
 
 		assignmentID, err := s.repo.CreateAssignment(taskCtx, &assignment)
@@ -656,10 +718,11 @@ func (s *SecretGuestService) GetMyReports(ctx context.Context, dto GetMyReportsR
 func (s *SecretGuestService) GetAllReports(ctx context.Context, dto GetAllReportsRequestDTO) (*ReportsResponse, error) {
 
 	filter := repository.ReportsFilter{
-		ReporterID: dto.ReporterID,
-		StatusIDs:  dto.StatusIDs,
-		Limit:      dto.Limit,
-		Offset:     (dto.Page - 1) * dto.Limit,
+		ReporterID:     dto.ReporterID,
+		StatusIDs:      dto.StatusIDs,
+		ListingTypeIDs: dto.ListingTypeIDs,
+		Limit:          dto.Limit,
+		Offset:         (dto.Page - 1) * dto.Limit,
 	}
 
 	return s.getReportsWithFilter(ctx, filter, dto.Page)
@@ -673,6 +736,17 @@ func toReportResponseDTO(r *models.Report) *ReportResponseDTO {
 		ID:           r.ID,
 		AssignmentID: r.AssignmentID,
 		Purpose:      r.Purpose,
+
+		BookingDetails: ReportBookingDetails{
+			OTAID:              r.BookingDetails.OTAID,
+			BookingNumber:      r.BookingDetails.BookingNumber,
+			OtaSgReservationID: r.BookingDetails.OtaSgReservationID,
+			Pricing:            r.BookingDetails.Pricing,
+			Guests:             r.BookingDetails.Guests,
+			CheckinDate:        r.BookingDetails.CheckinDate,
+			CheckoutDate:       r.BookingDetails.CheckoutDate,
+		},
+
 		Listing: ListingShortResponse{
 			ID:          r.Listing.ID,
 			Code:        r.Listing.Code,
@@ -1373,4 +1447,77 @@ func toGenerateUploadURLResponseDTO(s *storage.UploadResponse) *GenerateUploadUR
 		FormData:  UploadFormDataDTO(s.FormData),
 		Headers:   s.Headers,
 	}
+}
+
+// Profile
+
+func toProfileResponseDTO(p *models.UserProfile) *ProfileResponseDTO {
+	return &ProfileResponseDTO{
+		ID:                    p.ID,
+		UserID:                p.UserID,
+		Username:              p.Username,
+		Email:                 p.Email,
+		AcceptedOffersCount:   p.AcceptedOffersCount,
+		SubmittedReportsCount: p.SubmittedReportsCount,
+		CorrectReportsCount:   p.CorrectReportsCount,
+		RegisteredAt:          p.RegisteredAt,
+		LastActiveAt:          p.LastActiveAt,
+		AdditionalInfo:        p.AdditionalInfo,
+	}
+}
+
+func (s *SecretGuestService) GetMyProfile(ctx context.Context, userID uuid.UUID) (*ProfileResponseDTO, error) {
+	profile, err := s.repo.GetUserProfileByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user profile by id %s from repository: %w", userID.String(), err)
+	}
+
+	return toProfileResponseDTO(profile), nil
+}
+
+func (s *SecretGuestService) GetAllProfiles(ctx context.Context, dto GetAllProfilesRequestDTO) (*ProfilesResponse, error) {
+	offset := (dto.Page - 1) * dto.Limit
+
+	dbProfiles, total, err := s.repo.GetAllUserProfiles(ctx, dto.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all user profiles from repository: %w", err)
+	}
+
+	responseDTOs := make([]*ProfileResponseDTO, 0, len(dbProfiles))
+	for _, p := range dbProfiles {
+		responseDTOs = append(responseDTOs, toProfileResponseDTO(p))
+	}
+
+	response := &ProfilesResponse{
+		Profiles: responseDTOs,
+		Total:    total,
+		Page:     dto.Page,
+	}
+
+	return response, nil
+}
+
+// statistics
+
+func (s *SecretGuestService) GetStatistics(ctx context.Context) (*StatisticsResponseDTO, error) {
+	stat, err := s.repo.GetStatistics(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get statistics information from repository: %w", err)
+	}
+
+	items := []StatisticItemDTO{
+		{Key: "total_ota_reservations", Value: stat.TotalOtaReservations, Description: "Всего бронирований от OTA"},
+		{Key: "ota_reservations_last_24h", Value: stat.OtaReservationsLast24h, Description: "Новых бронирований от OTA за 24 часа"},
+		{Key: "total_assignments", Value: stat.TotalAssignments, Description: "Всего предложений"},
+		{Key: "open_assignments", Value: stat.OpenAssignments, Description: "Свободных предложений"},
+		{Key: "pending_accept_assignments", Value: stat.PendingAcceptAssignments, Description: "Предложений, ожидающих принятия"},
+		{Key: "total_assignment_declines", Value: stat.TotalAssignmentDeclines, Description: "Всего отказов от предложений"},
+		{Key: "total_reports", Value: stat.TotalReports, Description: "Всего отчетов"},
+		{Key: "reports_today", Value: stat.ReportsToday, Description: "Отчетов создано сегодня"},
+		{Key: "submitted_reports", Value: stat.SubmittedReports, Description: "Отчетов ожидают модерации"},
+		{Key: "total_sg", Value: stat.TotalSg, Description: "Всего тайных гостей"},
+		{Key: "new_sg_last_24h", Value: stat.NewSgLast24h, Description: "Новых тайных гостей за 24 часа"},
+	}
+
+	return &StatisticsResponseDTO{Statistics: items}, nil
 }
