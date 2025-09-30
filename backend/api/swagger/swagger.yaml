@@ -680,33 +680,21 @@ definitions:
       total:
         type: integer
     type: object
+  secret_guest.StatisticItemDTO:
+    properties:
+      description:
+        type: string
+      key:
+        type: string
+      value:
+        type: integer
+    type: object
   secret_guest.StatisticsResponseDTO:
     properties:
-      new_sg_last_24h:
-        type: integer
-      open_assignments:
-        type: integer
-      ota_reservations_last_24h:
-        type: integer
-      pending_accept_assignments:
-        type: integer
-      reports_today:
-        type: integer
-      total_assignment_declines:
-        description: Отказы по предложениям
-        type: integer
-      total_assignments:
-        description: Предложения (assignments)
-        type: integer
-      total_ota_reservations:
-        description: OTA бронирования
-        type: integer
-      total_reports:
-        description: Отчёты
-        type: integer
-      total_sg:
-        description: Пользователи
-        type: integer
+      statistics:
+        items:
+          $ref: '#/definitions/secret_guest.StatisticItemDTO'
+        type: array
     type: object
   secret_guest.StatusResponse:
     properties:

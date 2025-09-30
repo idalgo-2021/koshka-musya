@@ -4585,43 +4585,28 @@ const docTemplate = `{
                 }
             }
         },
+        "secret_guest.StatisticItemDTO": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
         "secret_guest.StatisticsResponseDTO": {
             "type": "object",
             "properties": {
-                "new_sg_last_24h": {
-                    "type": "integer"
-                },
-                "open_assignments": {
-                    "type": "integer"
-                },
-                "ota_reservations_last_24h": {
-                    "type": "integer"
-                },
-                "pending_accept_assignments": {
-                    "type": "integer"
-                },
-                "reports_today": {
-                    "type": "integer"
-                },
-                "total_assignment_declines": {
-                    "description": "Отказы по предложениям",
-                    "type": "integer"
-                },
-                "total_assignments": {
-                    "description": "Предложения (assignments)",
-                    "type": "integer"
-                },
-                "total_ota_reservations": {
-                    "description": "OTA бронирования",
-                    "type": "integer"
-                },
-                "total_reports": {
-                    "description": "Отчёты",
-                    "type": "integer"
-                },
-                "total_sg": {
-                    "description": "Пользователи",
-                    "type": "integer"
+                "statistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/secret_guest.StatisticItemDTO"
+                    }
                 }
             }
         },
