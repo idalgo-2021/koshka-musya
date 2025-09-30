@@ -48,15 +48,23 @@ type ListingType struct {
 
 // Reservation - бронирование
 type OTAReservation struct {
-	ID            uuid.UUID       `db:"ota_id"`
+	ID            uuid.UUID       `db:"id"`
 	OTAID         uuid.UUID       `db:"ota_id"`
 	BookingNumber string          `db:"booking_number"`
 	ListingID     uuid.UUID       `db:"listing_id"`
 	CheckinDate   time.Time       `db:"checkin_date"`
 	CheckoutDate  time.Time       `db:"checkout_date"`
-	Pricing       json.RawMessage `db:"pricing"`
 	StatusID      int             `db:"status_id"`
 	SourceMsg     json.RawMessage `db:"source_msg"`
+
+	Pricing json.RawMessage `db:"pricing"`
+	Guests  json.RawMessage `db:"guests"`
+	// Adults        int     `db:"adults"`
+	// Children      int     `db:"children"`
+	// PricePerNight float64 `db:"price_per_night"`
+	// TotalPrice    float64 `db:"total_price"`
+	// PriceCurrency string  `db:"price_currency"`
+	// Nights        int     `db:"nights"`
 
 	Status StatusInfo `db:"-"`
 }
@@ -67,14 +75,19 @@ type OTAReservation struct {
 
 // Assignment - задание(предложения) быть ТГ и провести обследование объекта
 type Assignment struct {
-	ID         uuid.UUID  `db:"id"`
-	Code       uuid.UUID  `db:"code"`
+	ID uuid.UUID `db:"id"`
+
+	OtaSgReservationID uuid.UUID       `db:"ota_sg_reservation_id"`
+	Pricing            json.RawMessage `db:"pricing"`
+	Guests             json.RawMessage `db:"guests"`
+	CheckinDate        time.Time       `db:"checkin_date"`
+	CheckoutDate       time.Time       `db:"checkout_date"`
+
 	Purpose    string     `db:"purpose"`
 	CreatedAt  time.Time  `db:"created_at"`
 	ExpiresAt  time.Time  `db:"expires_at"`
 	AcceptedAt *time.Time `db:"accepted_at"`
-	DeclinedAt *time.Time `db:"declined_at"`
-	Deadline   *time.Time `db:"deadline"`
+	TakedAt    *time.Time `db:"taked_at"`
 
 	Listing  ListingShortInfo `db:"-"`
 	Reporter UserShortInfo    `db:"-"`
@@ -105,6 +118,7 @@ type ListingShortInfo struct {
 type UserShortInfo struct {
 	ID       uuid.UUID `db:"reporter_id"`
 	Username string    `db:"reporter_username"`
+	// Username sql.NullString `db:"reporter_username"`
 }
 
 type StatusInfo struct {
@@ -115,14 +129,26 @@ type StatusInfo struct {
 
 //================================
 
+type BookingDetails struct {
+	OTAID              uuid.UUID       `db:"ota_id"`
+	BookingNumber      string          `db:"booking_number"`
+	OtaSgReservationID uuid.UUID       `db:"ota_sg_reservation_id"`
+	Pricing            json.RawMessage `db:"pricing"`
+	Guests             json.RawMessage `db:"guests"`
+	CheckinDate        time.Time       `db:"checkin_date"`
+	CheckoutDate       time.Time       `db:"checkout_date"`
+}
+
 // Report - отчет ТГ
 type Report struct {
-	ID           uuid.UUID  `db:"id"`
-	AssignmentID uuid.UUID  `db:"assignment_id"`
-	Purpose      string     `db:"purpose"`
-	CreatedAt    time.Time  `db:"created_at"`
-	UpdatedAt    *time.Time `db:"updated_at"`
-	SubmittedAt  *time.Time `db:"submitted_at"`
+	ID             uuid.UUID      `db:"id"`
+	AssignmentID   uuid.UUID      `db:"assignment_id"`
+	BookingDetails BookingDetails `db:"-"`
+
+	Purpose     string     `db:"purpose"`
+	CreatedAt   time.Time  `db:"created_at"`
+	UpdatedAt   *time.Time `db:"updated_at"`
+	SubmittedAt *time.Time `db:"submitted_at"`
 
 	Listing  ListingShortInfo `db:"-"`
 	Reporter UserShortInfo    `db:"-"`
@@ -210,10 +236,3 @@ type ChecklistItemUpdate struct {
 type ChecklistSchema map[string]interface{}
 
 ////
-
-// MediaRequirementSlugs - константы для слагов требований к медиафайлам.
-const (
-	MediaRequirementNone     = "none"
-	MediaRequirementOptional = "optional"
-	MediaRequirementRequired = "required"
-)

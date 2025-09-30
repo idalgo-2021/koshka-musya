@@ -1,0 +1,41 @@
+{
+    "source": "Booking.com",
+    "received_at": "2025-09-28T08:30:00Z",
+    "reservation": {
+        "booking_number": "BK-20250928-XY9876",
+        "dates": {
+            "checkin": "2025-11-02T14:00:00Z",
+            "checkout": "2025-11-07T12:00:00Z"
+        },
+        "guests": {
+            "adults": 1,
+            "children": 0
+        },
+        "ota_id": "d32e4c8a-45e7-4a5d-9b14-b3c09c4d2f5b",
+        "status": "reserved",
+        "listing": {
+            "id": "a1b2c3d4-e5f6-7a8b-9c0d-ef1234567890",
+            "city": "Санкт-Петербург",
+            "title": "Бутик-отель «Невский Берег»",
+            "address": "Невский проспект, д. 120",
+            "country": "Россия",
+            "latitude": 59.9343,
+            "longitude": 30.3351,
+            "description": "Уютный бутик-отель рядом с Московским вокзалом.",
+            "listing_type": {
+                "id": 2,
+                "name": "Бутик-отель",
+                "slug": "boutique_hotel"
+            },
+            "main_picture": "https://cdn.worldota.net/t/1200x616/extranet/b4/5e/b45efcf3cfcb1c6ef47cae6c3427a97e18a39d5c.jpeg"
+        },
+        "pricing": {
+            "total": 45000,
+            "currency": "RUB",
+            "breakdown": {
+                "nights": 5,
+                "per_night": 9000
+            }
+        }
+    }
+}

@@ -15,82 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/admin/assignments": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Creates new assignment object. Available for admin only.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Assignments (Admin)"
-                ],
-                "summary": "Create new Assignment (Admin)",
-                "parameters": [
-                    {
-                        "description": "Assignment Payload",
-                        "name": "input",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.CreateAssignmentRequestDTO"
-                        }
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.AssignmentResponseDTO"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid payload",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Assignment cannot be created (e.g., wrong payload)",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/admin/listings": {
             "post": {
                 "security": [
@@ -760,7 +684,7 @@ const docTemplate = `{
             }
         },
         "/assignments/my/{id}/accept": {
-            "post": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -826,7 +750,7 @@ const docTemplate = `{
             }
         },
         "/assignments/my/{id}/decline": {
-            "post": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -963,18 +887,18 @@ const docTemplate = `{
                 }
             }
         },
-        "/assignments/{id}/cancel": {
-            "post": {
+        "/assignments/{id}/take": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Cancel an assignment offer.",
+                "description": "Allows a user to take a free assignment, assigning it to themselves. The assignment status becomes 'offered' to this specific user.",
                 "tags": [
-                    "Assignments (Staff)"
+                    "Assignments (User)"
                 ],
-                "summary": "Decline Assignment",
+                "summary": "Take a Free Assignment",
                 "parameters": [
                     {
                         "type": "string",
@@ -1009,13 +933,13 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Assignment not found or does not belong to user",
+                        "description": "Assignment not found or not available",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }
                     },
                     "409": {
-                        "description": "Assignment cannot be cancelled",
+                        "description": "Assignment cannot be taken (e.g., already taken, or user has other active offers)",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }
@@ -2578,7 +2502,7 @@ const docTemplate = `{
                     }
                 }
             },
-            "patch": {
+            "post": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -2656,7 +2580,7 @@ const docTemplate = `{
             }
         },
         "/reports/my/{id}/refuse": {
-            "post": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -2722,7 +2646,7 @@ const docTemplate = `{
             }
         },
         "/reports/my/{id}/submit": {
-            "post": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -2846,150 +2770,6 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Report not found",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/reports/{id}/approve": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Approves a submitted secret guest report. Available for staff only.",
-                "tags": [
-                    "Reports (Staff)"
-                ],
-                "summary": "Approve a Report (Staff)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Report ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Invalid report ID format",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Report not found",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Report cannot be approved (e.g., wrong status)",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/reports/{id}/reject": {
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Rejects a submitted secret guest report. Available for staff only. This action does not require a request body.",
-                "tags": [
-                    "Reports (Staff)"
-                ],
-                "summary": "Reject a Report (Staff)",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Report ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "Bearer Access Token",
-                        "name": "Authorization",
-                        "in": "header",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "400": {
-                        "description": "Invalid report ID format",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Report not found",
-                        "schema": {
-                            "$ref": "#/definitions/secret_guest.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "Report cannot be rejected (e.g., wrong status)",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }
@@ -3141,7 +2921,7 @@ const docTemplate = `{
             }
         },
         "/sg_reservations/{id}/no-show": {
-            "post": {
+            "patch": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -3193,6 +2973,216 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Reservation not found",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/staff/assignments/{id}/cancel": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Cancel an assignment offer.",
+                "tags": [
+                    "Assignments (Staff)"
+                ],
+                "summary": "Cancel Assignment",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Assignment ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid assignment ID format",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Assignment not found or does not belong to user",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Assignment cannot be cancelled",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/staff/reports/{id}/approve": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Approves a submitted secret guest report. Available for staff only.",
+                "tags": [
+                    "Reports (Staff)"
+                ],
+                "summary": "Approve a Report (Staff)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid report ID format",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Report cannot be approved (e.g., wrong status)",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/staff/reports/{id}/reject": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Rejects a submitted secret guest report. Available for staff only. This action does not require a request body.",
+                "tags": [
+                    "Reports (Staff)"
+                ],
+                "summary": "Reject a Report (Staff)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Report ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Invalid report ID format",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Report not found",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Report cannot be rejected (e.g., wrong status)",
                         "schema": {
                             "$ref": "#/definitions/secret_guest.ErrorResponse"
                         }
@@ -3454,26 +3444,41 @@ const docTemplate = `{
                 }
             }
         },
-        "secret_guest.AssignmentResponseDTO": {
+        "secret_guest.AssignmentReservationDates": {
             "type": "object",
+            "required": [
+                "checkin",
+                "checkout"
+            ],
             "properties": {
-                "accepted_at": {
+                "checkin": {
                     "type": "string"
                 },
-                "code": {
+                "checkout": {
+                    "type": "string"
+                }
+            }
+        },
+        "secret_guest.AssignmentResponseDTO": {
+            "type": "object",
+            "required": [
+                "dates"
+            ],
+            "properties": {
+                "accepted_at": {
                     "type": "string"
                 },
                 "created_at": {
                     "type": "string"
                 },
-                "deadline": {
-                    "type": "string"
-                },
-                "declined_at": {
-                    "type": "string"
+                "dates": {
+                    "$ref": "#/definitions/secret_guest.AssignmentReservationDates"
                 },
                 "expires_at": {
                     "type": "string"
+                },
+                "guests": {
+                    "type": "object"
                 },
                 "id": {
                     "type": "string"
@@ -3481,14 +3486,23 @@ const docTemplate = `{
                 "listing": {
                     "$ref": "#/definitions/secret_guest.ListingShortResponse"
                 },
+                "pricing": {
+                    "type": "object"
+                },
                 "purpose": {
                     "type": "string"
                 },
                 "reporter": {
                     "$ref": "#/definitions/secret_guest.ReporterResponse"
                 },
+                "reservation_id": {
+                    "type": "string"
+                },
                 "status": {
                     "$ref": "#/definitions/secret_guest.StatusResponse"
+                },
+                "taked_at": {
+                    "type": "string"
                 }
             }
         },
@@ -3664,33 +3678,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "slug": {
-                    "type": "string"
-                }
-            }
-        },
-        "secret_guest.CreateAssignmentRequestDTO": {
-            "type": "object",
-            "required": [
-                "code",
-                "expires_at",
-                "listing_id",
-                "purpose",
-                "reporter_id"
-            ],
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "expires_at": {
-                    "type": "string"
-                },
-                "listing_id": {
-                    "type": "string"
-                },
-                "purpose": {
-                    "type": "string"
-                },
-                "reporter_id": {
                     "type": "string"
                 }
             }
@@ -4062,12 +4049,9 @@ const docTemplate = `{
         },
         "secret_guest.OTAReservationGuests": {
             "type": "object",
-            "required": [
-                "adults",
-                "children"
-            ],
             "properties": {
                 "adults": {
+                    "description": "Adults   int ` + "`" + `json:\"adults\" validate:\"required,gte=0\"` + "`" + `\nChildren int ` + "`" + `json:\"children\" validate:\"required,gte=0\"` + "`" + `",
                     "type": "integer",
                     "minimum": 0
                 },
@@ -4195,6 +4179,9 @@ const docTemplate = `{
                 "checkoutDate": {
                     "type": "string"
                 },
+                "guests": {
+                    "type": "object"
+                },
                 "id": {
                     "type": "string"
                 },
@@ -4204,8 +4191,37 @@ const docTemplate = `{
                 "ota_id": {
                     "type": "string"
                 },
+                "pricing": {
+                    "type": "object"
+                },
                 "status": {
                     "$ref": "#/definitions/secret_guest.StatusResponse"
+                }
+            }
+        },
+        "secret_guest.ReportBookingDetails": {
+            "type": "object",
+            "properties": {
+                "booking_number": {
+                    "type": "string"
+                },
+                "checkin_date": {
+                    "type": "string"
+                },
+                "checkout_date": {
+                    "type": "string"
+                },
+                "guests": {
+                    "type": "object"
+                },
+                "ota_id": {
+                    "type": "string"
+                },
+                "ota_sg_reservation_id": {
+                    "type": "string"
+                },
+                "pricing": {
+                    "type": "object"
                 }
             }
         },
@@ -4214,6 +4230,9 @@ const docTemplate = `{
             "properties": {
                 "assignment_id": {
                     "type": "string"
+                },
+                "booking_details": {
+                    "$ref": "#/definitions/secret_guest.ReportBookingDetails"
                 },
                 "checklist_schema": {
                     "$ref": "#/definitions/models.ChecklistSchema"

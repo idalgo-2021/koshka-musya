@@ -75,30 +75,46 @@ definitions:
           $ref: '#/definitions/secret_guest.AnswerTypeResponse'
         type: array
     type: object
+  secret_guest.AssignmentReservationDates:
+    properties:
+      checkin:
+        type: string
+      checkout:
+        type: string
+    required:
+    - checkin
+    - checkout
+    type: object
   secret_guest.AssignmentResponseDTO:
     properties:
       accepted_at:
         type: string
-      code:
-        type: string
       created_at:
         type: string
-      deadline:
-        type: string
-      declined_at:
-        type: string
+      dates:
+        $ref: '#/definitions/secret_guest.AssignmentReservationDates'
       expires_at:
         type: string
+      guests:
+        type: object
       id:
         type: string
       listing:
         $ref: '#/definitions/secret_guest.ListingShortResponse'
+      pricing:
+        type: object
       purpose:
         type: string
       reporter:
         $ref: '#/definitions/secret_guest.ReporterResponse'
+      reservation_id:
+        type: string
       status:
         $ref: '#/definitions/secret_guest.StatusResponse'
+      taked_at:
+        type: string
+    required:
+    - dates
     type: object
   secret_guest.AssignmentsResponse:
     properties:
@@ -214,25 +230,6 @@ definitions:
     required:
     - name
     - slug
-    type: object
-  secret_guest.CreateAssignmentRequestDTO:
-    properties:
-      code:
-        type: string
-      expires_at:
-        type: string
-      listing_id:
-        type: string
-      purpose:
-        type: string
-      reporter_id:
-        type: string
-    required:
-    - code
-    - expires_at
-    - listing_id
-    - purpose
-    - reporter_id
     type: object
   secret_guest.CreateChecklistItemRequestDTO:
     properties:
@@ -484,14 +481,14 @@ definitions:
   secret_guest.OTAReservationGuests:
     properties:
       adults:
+        description: |-
+          Adults   int `json:"adults" validate:"required,gte=0"`
+          Children int `json:"children" validate:"required,gte=0"`
         minimum: 0
         type: integer
       children:
         minimum: 0
         type: integer
-    required:
-    - adults
-    - children
     type: object
   secret_guest.OTAReservationListingDTO:
     properties:
@@ -574,21 +571,44 @@ definitions:
         type: string
       checkoutDate:
         type: string
+      guests:
+        type: object
       id:
         type: string
       listingID:
         type: string
       ota_id:
         type: string
+      pricing:
+        type: object
       status:
         $ref: '#/definitions/secret_guest.StatusResponse'
     required:
     - ota_id
     type: object
+  secret_guest.ReportBookingDetails:
+    properties:
+      booking_number:
+        type: string
+      checkin_date:
+        type: string
+      checkout_date:
+        type: string
+      guests:
+        type: object
+      ota_id:
+        type: string
+      ota_sg_reservation_id:
+        type: string
+      pricing:
+        type: object
+    type: object
   secret_guest.ReportResponseDTO:
     properties:
       assignment_id:
         type: string
+      booking_details:
+        $ref: '#/definitions/secret_guest.ReportBookingDetails'
       checklist_schema:
         $ref: '#/definitions/models.ChecklistSchema'
       created_at:
@@ -747,55 +767,6 @@ info:
   title: Secret Guest API
   version: "1.0"
 paths:
-  /admin/assignments:
-    post:
-      consumes:
-      - application/json
-      description: Creates new assignment object. Available for admin only.
-      parameters:
-      - description: Assignment Payload
-        in: body
-        name: input
-        required: true
-        schema:
-          $ref: '#/definitions/secret_guest.CreateAssignmentRequestDTO'
-      - description: Bearer Access Token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/secret_guest.AssignmentResponseDTO'
-        "400":
-          description: Invalid payload
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "409":
-          description: Assignment cannot be created (e.g., wrong payload)
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Create new Assignment (Admin)
-      tags:
-      - Assignments (Admin)
   /admin/listings:
     post:
       consumes:
@@ -1197,9 +1168,10 @@ paths:
       summary: Get Assignment By ID (Staff)
       tags:
       - Assignments (Staff)
-  /assignments/{id}/cancel:
-    post:
-      description: Cancel an assignment offer.
+  /assignments/{id}/take:
+    patch:
+      description: Allows a user to take a free assignment, assigning it to themselves.
+        The assignment status becomes 'offered' to this specific user.
       parameters:
       - description: Assignment ID
         format: uuid
@@ -1224,11 +1196,12 @@ paths:
           schema:
             $ref: '#/definitions/secret_guest.ErrorResponse'
         "404":
-          description: Assignment not found or does not belong to user
+          description: Assignment not found or not available
           schema:
             $ref: '#/definitions/secret_guest.ErrorResponse'
         "409":
-          description: Assignment cannot be cancelled
+          description: Assignment cannot be taken (e.g., already taken, or user has
+            other active offers)
           schema:
             $ref: '#/definitions/secret_guest.ErrorResponse'
         "500":
@@ -1237,9 +1210,9 @@ paths:
             $ref: '#/definitions/secret_guest.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Decline Assignment
+      summary: Take a Free Assignment
       tags:
-      - Assignments (Staff)
+      - Assignments (User)
   /assignments/my:
     get:
       description: Returns a paginated list of assignments for the current user.
@@ -1324,7 +1297,7 @@ paths:
       tags:
       - Assignments (User)
   /assignments/my/{id}/accept:
-    post:
+    patch:
       description: Accept an assignment offer. This will start an asynchronous process
         to generate a report.
       parameters:
@@ -1368,7 +1341,7 @@ paths:
       tags:
       - Assignments (User)
   /assignments/my/{id}/decline:
-    post:
+    patch:
       description: Decline an assignment offer.
       parameters:
       - description: Assignment ID
@@ -2388,101 +2361,6 @@ paths:
       summary: Get Report By ID (Staff)
       tags:
       - Reports (Staff)
-  /reports/{id}/approve:
-    post:
-      description: Approves a submitted secret guest report. Available for staff only.
-      parameters:
-      - description: Report ID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Bearer Access Token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Invalid report ID format
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "404":
-          description: Report not found
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "409":
-          description: Report cannot be approved (e.g., wrong status)
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Approve a Report (Staff)
-      tags:
-      - Reports (Staff)
-  /reports/{id}/reject:
-    post:
-      description: Rejects a submitted secret guest report. Available for staff only.
-        This action does not require a request body.
-      parameters:
-      - description: Report ID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Bearer Access Token
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      responses:
-        "204":
-          description: No Content
-        "400":
-          description: Invalid report ID format
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "404":
-          description: Report not found
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "409":
-          description: Report cannot be rejected (e.g., wrong status)
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/secret_guest.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Reject a Report (Staff)
-      tags:
-      - Reports (Staff)
   /reports/my:
     get:
       description: Returns a paginated list of reports for the current user that are
@@ -2567,7 +2445,7 @@ paths:
       summary: Get My Report By ID
       tags:
       - Reports (User)
-    patch:
+    post:
       consumes:
       - application/json
       description: Saves the current state of a report draft.
@@ -2618,7 +2496,7 @@ paths:
       tags:
       - Reports (User)
   /reports/my/{id}/refuse:
-    post:
+    patch:
       description: Refuses a report, setting its status to 'refused'. The report can
         no longer be edited after this.
       parameters:
@@ -2662,7 +2540,7 @@ paths:
       tags:
       - Reports (User)
   /reports/my/{id}/submit:
-    post:
+    patch:
       description: Submits a completed report for review. The report can no longer
         be edited after this.
       parameters:
@@ -2798,7 +2676,7 @@ paths:
       tags:
       - Reservations (Staff)
   /sg_reservations/{id}/no-show:
-    post:
+    patch:
       description: Changes OTA Reservation status to NoShow. Available for staff only.
       parameters:
       - description: Reservation ID
@@ -2840,6 +2718,144 @@ paths:
       summary: Hide an OTA Reservation (Staff)
       tags:
       - Reservations (Staff)
+  /staff/assignments/{id}/cancel:
+    patch:
+      description: Cancel an assignment offer.
+      parameters:
+      - description: Assignment ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid assignment ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Assignment not found or does not belong to user
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Assignment cannot be cancelled
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel Assignment
+      tags:
+      - Assignments (Staff)
+  /staff/reports/{id}/approve:
+    patch:
+      description: Approves a submitted secret guest report. Available for staff only.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid report ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Report cannot be approved (e.g., wrong status)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a Report (Staff)
+      tags:
+      - Reports (Staff)
+  /staff/reports/{id}/reject:
+    patch:
+      description: Rejects a submitted secret guest report. Available for staff only.
+        This action does not require a request body.
+      parameters:
+      - description: Report ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bearer Access Token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Invalid report ID format
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "404":
+          description: Report not found
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "409":
+          description: Report cannot be rejected (e.g., wrong status)
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/secret_guest.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject a Report (Staff)
+      tags:
+      - Reports (Staff)
   /uploads/generate-url:
     post:
       consumes:

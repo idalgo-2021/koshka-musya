@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -31,8 +32,19 @@ func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *mode
 	log := logger.GetLoggerFromCtx(ctx)
 
 	query := `
-		INSERT INTO listings (code, title, description, listing_type_id, address, city, country, latitude, longitude)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		INSERT INTO listings (
+			code, 
+			title, 
+			description, 
+			listing_type_id, 
+			address, 
+			city, 
+			country, 
+			latitude, 
+			longitude,
+			main_picture
+		)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10)
 		RETURNING id;
 	`
 
@@ -46,6 +58,7 @@ func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *mode
 		listing.Country,
 		listing.Latitude,
 		listing.Longitude,
+		listing.MainPicture,
 	)
 
 	var id uuid.UUID
@@ -267,6 +280,8 @@ func (r *SecretGuestRepository) scanOTAReservation(row pgx.Row) (*models.OTARese
 		&rs.StatusID,
 		&rs.Status.Slug,
 		&rs.Status.Name,
+		&rs.Pricing,
+		&rs.Guests,
 	); err != nil {
 		return nil, err
 	}
@@ -278,8 +293,8 @@ func (r *SecretGuestRepository) scanOTAReservation(row pgx.Row) (*models.OTARese
 
 func (r *SecretGuestRepository) CreateOTAReservation(ctx context.Context, reservation *models.OTAReservation) (uuid.UUID, error) {
 	query := `
-		INSERT INTO ota_sg_reservations (ota_id, booking_number, listing_id, checkin_date, checkout_date, pricing, status_id, source_msg)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO ota_sg_reservations (ota_id, booking_number, listing_id, checkin_date, checkout_date, pricing, status_id, source_msg, guests)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id;
 	`
 
@@ -292,6 +307,7 @@ func (r *SecretGuestRepository) CreateOTAReservation(ctx context.Context, reserv
 		reservation.Pricing,
 		reservation.StatusID,
 		reservation.SourceMsg,
+		reservation.Guests,
 	)
 
 	var id uuid.UUID
@@ -327,7 +343,7 @@ func (r *SecretGuestRepository) GetOTAReservations(ctx context.Context, filter O
 
 	baseQuery := `
 		SELECT r.id, r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
-			s.slug as "status_slug", s.name as "status_name"
+			s.slug as "status_slug", s.name as "status_name", r.pricing, r.guests
 		FROM ota_sg_reservations r
 		JOIN ota_sg_reservation_statuses s ON r.status_id = s.id
 	`
@@ -360,6 +376,8 @@ func (r *SecretGuestRepository) GetOTAReservations(ctx context.Context, filter O
 			&r.StatusID,
 			&r.Status.Slug,
 			&r.Status.Name,
+			&r.Pricing,
+			&r.Guests,
 		); err != nil {
 			log.Error(ctx, "Failed to scan reservation row", zap.Error(err))
 			// Прерываем выполнение, так как ошибка сканирования может указывать на серьезную проблему.
@@ -384,7 +402,7 @@ func (r *SecretGuestRepository) GetOTAReservationByID(ctx context.Context, Reser
 
 	query := `
 		SELECT r.id, r.ota_id, r.booking_number, r.listing_id, r.checkin_date, r.checkout_date, r.status_id,
-			s.slug as "status_slug", s.name as "status_name"
+			s.slug as "status_slug", s.name as "status_name", r.pricing, r.guests
 		FROM ota_sg_reservations r
 		JOIN ota_sg_reservation_statuses s ON r.status_id = s.id
 		WHERE r.id = $1
@@ -428,11 +446,12 @@ func (r *SecretGuestRepository) UpdateOTAReservationStatus(ctx context.Context, 
 // assignments
 
 type AssignmentsFilter struct {
-	AssignmentID *uuid.UUID
-	ReporterID   *uuid.UUID
-	StatusIDs    []int
-	Limit        int
-	Offset       int
+	AssignmentID   *uuid.UUID
+	ReporterID     *uuid.UUID
+	StatusIDs      []int
+	ListingTypeIDs []int
+	Limit          int
+	Offset         int
 }
 
 func buildAssignmentWhereClause(filter AssignmentsFilter) (string, []interface{}, int) {
@@ -453,32 +472,54 @@ func buildAssignmentWhereClause(filter AssignmentsFilter) (string, []interface{}
 	}
 
 	if len(filter.StatusIDs) > 0 {
-		placeholders := make([]string, len(filter.StatusIDs))
-		for i, id := range filter.StatusIDs {
-			placeholders[i] = fmt.Sprintf("$%d", paramCount)
+		placeholders := make([]string, 0, len(filter.StatusIDs))
+		for _, id := range filter.StatusIDs {
+			placeholders = append(placeholders, fmt.Sprintf("$%d", paramCount))
 			args = append(args, id)
 			paramCount++
 		}
-		conditions = append(conditions, fmt.Sprintf("a.status_id IN (%s)", strings.Join(placeholders, ",")))
+		conditions = append(conditions,
+			fmt.Sprintf("a.status_id IN (%s)", strings.Join(placeholders, ",")),
+		)
+	}
+
+	if len(filter.ListingTypeIDs) > 0 {
+		placeholders := make([]string, 0, len(filter.ListingTypeIDs))
+		for _, id := range filter.ListingTypeIDs {
+			placeholders = append(placeholders, fmt.Sprintf("$%d", paramCount))
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions,
+			fmt.Sprintf("l.listing_type_id IN (%s)", strings.Join(placeholders, ",")),
+		)
 	}
 
 	whereClause := strings.Join(conditions, " AND ")
-
 	return whereClause, args, paramCount
 }
 
 func (r *SecretGuestRepository) scanAssignment(row pgx.Row) (*models.Assignment, error) {
 	var a models.Assignment
 	if err := row.Scan(
-		&a.ID, &a.Code, &a.ListingID, &a.ReporterID, &a.StatusID,
+		&a.ID,
+
+		&a.OtaSgReservationID,
+		&a.Pricing,
+		&a.Guests,
+		&a.CheckinDate,
+		&a.CheckoutDate,
+
+		&a.ListingID, &a.ReporterID, &a.StatusID,
 
 		&a.Purpose,
 		&a.CreatedAt,
 		&a.ExpiresAt,
 		&a.AcceptedAt,
-		&a.DeclinedAt,
-		&a.Deadline,
 
+		&a.TakedAt,
+
+		&a.Listing.ID,
 		&a.Listing.Code,
 		&a.Listing.Title,
 		&a.Listing.Description,
@@ -508,29 +549,38 @@ func (r *SecretGuestRepository) CreateAssignment(ctx context.Context, assignment
 	log := logger.GetLoggerFromCtx(ctx)
 
 	query := `
-		INSERT INTO assignments (code, listing_id, reporter_id, purpose, expires_at, status_id)
-		VALUES ($1, $2, $3, $4, (SELECT id FROM assignment_statuses WHERE slug = 'offered'))
+		INSERT INTO assignments (
+			ota_sg_reservation_id, 
+			pricing,
+			guests,
+			checkin_date,
+			checkout_date,
+
+			listing_id,
+			purpose,
+			created_at,
+			expires_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id;
 	`
 
 	row := r.db.QueryRow(ctx, query,
-		assignment.Code,
+		assignment.OtaSgReservationID,
+		assignment.Pricing,
+		assignment.Guests,
+		assignment.CheckinDate,
+		assignment.CheckoutDate,
+
 		assignment.ListingID,
-		assignment.ReporterID,
 		assignment.Purpose,
+		assignment.CreatedAt,
 		assignment.ExpiresAt,
 	)
 
 	var id uuid.UUID
 	if err := row.Scan(&id); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-			if strings.Contains(pgErr.ConstraintName, "assignments_code_uniq_key") {
-				log.Warn(ctx, "Attempt to register assignment with existent code", zap.String("code", assignment.Code.String()))
-				return id, models.ErrAssignmentCannotBeCreated
-			}
-		}
-
+		log.Error(ctx, "Failed to create assignment", zap.Error(err),
+			zap.Any("assignment", assignment))
 		return uuid.UUID{}, err
 	}
 
@@ -542,12 +592,21 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 	log := logger.GetLoggerFromCtx(ctx)
 
 	whereClause, args, paramCount := buildAssignmentWhereClause(filter)
+	countQuery := `
+		SELECT COUNT(a.id)
+		FROM assignments a
+		JOIN assignment_statuses s ON a.status_id = s.id
+	`
 
-	countQuery := "SELECT COUNT(a.id) FROM assignments a JOIN assignment_statuses s ON a.status_id = s.id"
+	if len(filter.ListingTypeIDs) > 0 {
+		countQuery += " JOIN listings l ON a.listing_id = l.id "
+	}
+
 	if whereClause != "" {
 		countQuery += " WHERE " + whereClause
 	}
 
+	//
 	var total int
 	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
 		log.Error(ctx, "Failed to query total assignments count", zap.Error(err), zap.Any("filter", filter))
@@ -560,13 +619,21 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 
 	baseQuery := `
 		SELECT
-			a.id, a.code, a.listing_id, a.reporter_id, a.status_id,
+			a.id, 
+			
+			a.ota_sg_reservation_id,
+			a.pricing,
+			a.guests, 
+			a.checkin_date,
+			a.checkout_date,
+			
+			a.listing_id, a.reporter_id, a.status_id,
 			a.purpose,
 			a.created_at,
 			a.expires_at,
 			a.accepted_at,
-			a.declined_at,
-			a.deadline,
+			
+			a.taked_at,
 
 			l.code as "listing_code",
 			l.title as "listing_title",
@@ -585,14 +652,14 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 			l.latitude as "listing_latitude",
 			l.longitude as "listing_longitude",
 
-			u.username as "reporter_username",
+			COALESCE(u.username, '') as reporter_username,
 
 			s.slug as "status_slug",
 			s.name as "status_name"
 
 		FROM assignments a
 		JOIN listings l ON a.listing_id = l.id
-		JOIN users u ON a.reporter_id = u.id
+		LEFT JOIN users u ON a.reporter_id = u.id
 		JOIN listing_types lt ON l.listing_type_id = lt.id
 		JOIN assignment_statuses s ON a.status_id = s.id
 	`
@@ -603,7 +670,6 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 	}
 
 	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
-
 	args = append(args, filter.Limit, filter.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -618,13 +684,21 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 	for rows.Next() {
 		var a models.Assignment
 		if err := rows.Scan(
-			&a.ID, &a.Code, &a.ListingID, &a.ReporterID, &a.StatusID,
+			&a.ID,
+
+			&a.OtaSgReservationID,
+			&a.Pricing,
+			&a.Guests,
+			&a.CheckinDate,
+			&a.CheckoutDate,
+
+			&a.ListingID, &a.ReporterID, &a.StatusID,
 			&a.Purpose,
 			&a.CreatedAt,
 			&a.ExpiresAt,
 			&a.AcceptedAt,
-			&a.DeclinedAt,
-			&a.Deadline,
+
+			&a.TakedAt,
 
 			&a.Listing.Code,
 			&a.Listing.Title,
@@ -664,12 +738,180 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 	return assignments, total, nil
 }
 
+func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter AssignmentsFilter) ([]*models.Assignment, int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	whereClause, args, paramCount := buildAssignmentWhereClause(filter)
+
+	if whereClause != "" {
+		whereClause += " AND "
+	}
+
+	whereClause += "a.reporter_id IS NULL"
+
+	countQuery := `
+		SELECT COUNT(a.id)
+		FROM assignments a
+		JOIN assignment_statuses s ON a.status_id = s.id
+	`
+	if len(filter.ListingTypeIDs) > 0 {
+		countQuery += " JOIN listings l ON a.listing_id = l.id "
+	}
+
+	if whereClause != "" {
+		countQuery += " WHERE " + whereClause
+	}
+
+	var total int
+	if err := r.db.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		log.Error(ctx, "Failed to query total free assignments count", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.Assignment{}, 0, nil
+	}
+
+	baseQuery := `
+		SELECT
+			a.id, 
+			
+			a.ota_sg_reservation_id,
+			a.pricing,
+			a.guests, 
+			a.checkin_date,
+			a.checkout_date,
+			
+			a.listing_id, a.reporter_id, a.status_id,
+			a.purpose,
+			a.created_at,
+			a.expires_at,
+			a.accepted_at,
+			
+			a.taked_at,
+
+			l.id,
+			l.code as "listing_code",
+			l.title as "listing_title",
+			l.description as "listing_description",
+
+			l.main_picture as "listing_main_picture",
+			l.listing_type_id,
+
+			lt.slug as "listing_type_slug",
+			lt.name as "listing_type_name",
+
+			l.address as "listing_address",
+			l.city as "listing_city",
+			l.country as "listing_country",
+
+			l.latitude as "listing_latitude",
+			l.longitude as "listing_longitude",
+
+			COALESCE(u.username, '') as reporter_username,
+
+			s.slug as "status_slug",
+			s.name as "status_name"
+
+		FROM assignments a
+		JOIN listings l ON a.listing_id = l.id
+		LEFT JOIN users u ON a.reporter_id = u.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		JOIN assignment_statuses s ON a.status_id = s.id
+	`
+
+	query := baseQuery
+	if whereClause != "" {
+		query += " WHERE " + whereClause
+	}
+
+	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
+	args = append(args, filter.Limit, filter.Offset)
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		log.Error(ctx, "Failed to query free assignments", zap.Error(err), zap.Any("filter", filter))
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	assignments := make([]*models.Assignment, 0, filter.Limit)
+
+	for rows.Next() {
+		var a models.Assignment
+		if err := rows.Scan(
+			&a.ID,
+
+			&a.OtaSgReservationID,
+			&a.Pricing,
+			&a.Guests,
+			&a.CheckinDate,
+			&a.CheckoutDate,
+
+			&a.ListingID, &a.ReporterID, &a.StatusID,
+			&a.Purpose,
+			&a.CreatedAt,
+			&a.ExpiresAt,
+			&a.AcceptedAt,
+
+			&a.TakedAt,
+
+			&a.Listing.ID,
+			&a.Listing.Code,
+			&a.Listing.Title,
+			&a.Listing.Description,
+
+			&a.Listing.MainPicture,
+			&a.Listing.ListingTypeID,
+			&a.Listing.ListingTypeSlug,
+			&a.Listing.ListingTypeName,
+
+			&a.Listing.Address, &a.Listing.City, &a.Listing.Country,
+			&a.Listing.Latitude,
+			&a.Listing.Longitude,
+
+			&a.Reporter.Username,
+
+			&a.Status.Slug,
+			&a.Status.Name,
+		); err != nil {
+			log.Error(ctx, "Failed to scan free assignment row", zap.Error(err))
+			return nil, total, err
+		}
+
+		a.Listing.ID = a.ListingID
+		a.Reporter.ID = a.ReporterID
+		a.Status.ID = a.StatusID
+
+		assignments = append(assignments, &a)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error(ctx, "Error after iterating over free assignment rows", zap.Error(err))
+		return nil, total, err
+	}
+
+	return assignments, total, nil
+}
+
 func (r *SecretGuestRepository) GetAssignmentByID(ctx context.Context, assignmentID uuid.UUID) (*models.Assignment, error) {
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			a.id, a.code, a.listing_id, a.reporter_id, a.status_id,
-			a.purpose, a.created_at, a.expires_at, a.accepted_at, a.declined_at, a.deadline, l.code as "listing_code",
+			a.id, 
+
+			a.ota_sg_reservation_id,
+			a.pricing,
+			a.guests, 
+			a.checkin_date,
+			a.checkout_date,
+			
+			a.listing_id, a.reporter_id, a.status_id,
+			a.purpose, a.created_at, a.expires_at, a.accepted_at, 
+			a.taked_at,
+
+			l.id,
+			l.code as "listing_code",
 
 			l.title as "listing_title",
 			l.description as "listing_description",
@@ -682,11 +924,12 @@ func (r *SecretGuestRepository) GetAssignmentByID(ctx context.Context, assignmen
 			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
 			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
 
-			u.username as "reporter_username",
+			COALESCE(u.username, '') as reporter_username,
+
 			s.slug as "status_slug", s.name as "status_name"
 		FROM assignments a
 		JOIN listings l ON a.listing_id = l.id
-		JOIN users u ON a.reporter_id = u.id
+		LEFT JOIN users u ON a.reporter_id = u.id
 		JOIN listing_types lt ON l.listing_type_id = lt.id
 		JOIN assignment_statuses s ON a.status_id = s.id
 		WHERE a.id = $1
@@ -738,21 +981,34 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			a.id, a.code, a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, a.declined_at, a.deadline, l.code as "listing_code",
+			a.id, 
+			
+			a.ota_sg_reservation_id,
+			a.pricing,
+			a.guests,  
+			a.checkin_date,
+			a.checkout_date,
+						
+			a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, 
+			a.taked_at,
+
+			l.id,
+			l.code as "listing_code",
 
 			l.title as "listing_title", l.description as "listing_description", l.main_picture as "listing_main_picture",
 
 			l.listing_type_id,
-			lt.slug as "listing_type_slug", lt.name as "listing_type_name"
+			lt.slug as "listing_type_slug", lt.name as "listing_type_name",
 
 			l.address as "listing_address", l.city as "listing_city", l.country as "listing_country",
 			l.latitude as "listing_latitude", l.longitude as "listing_longitude",
 
-			u.username as "reporter_username",
+			COALESCE(u.username, '') as reporter_username,
+
 			s.slug as "status_slug", s.name as "status_name"
 		FROM assignments a
 		JOIN listings l ON a.listing_id = l.id
-		JOIN users u ON a.reporter_id = u.id
+		LEFT JOIN users u ON a.reporter_id = u.id
 		JOIN listing_types lt ON l.listing_type_id = lt.id
 		JOIN assignment_statuses s ON a.status_id = s.id
 		WHERE a.id = $1 AND a.reporter_id = $2
@@ -770,7 +1026,10 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 	return assignment, nil
 }
 
-func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt, deadline time.Time) (*models.Report, error) {
+func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, acceptedAt time.Time) (*models.Report, error) {
+
+	//TODO: Переписать!!!
+
 	log := logger.GetLoggerFromCtx(ctx)
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -780,20 +1039,43 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 
 	updateQuery := `
 		UPDATE assignments
-		SET status_id = $1, accepted_at = $2, deadline = $3
-		WHERE id = $4 AND reporter_id = $5 AND status_id = $6
-		RETURNING listing_id, purpose`
+		SET 
+			status_id = $1, 
+			accepted_at = $2
+		WHERE 
+			id = $3 
+			AND reporter_id = $4 
+			AND status_id = $5
+		RETURNING 
+			listing_id, 
+			purpose, 
+			ota_sg_reservation_id,
+			pricing,
+			guests,
+			checkin_date,
+			checkout_date`
 
 	var listingID uuid.UUID
 	var purpose string
+	var otaSgReservationID uuid.UUID
+	var pricing json.RawMessage
+	var guests json.RawMessage
+	var checkinDate time.Time
+	var checkoutDate time.Time
+
 	err = tx.QueryRow(ctx, updateQuery,
 		models.AssignmentStatusAccepted, // new assignment status
 		acceptedAt,
-		deadline,
 		assignmentID,
 		reporterID,
 		models.AssignmentStatusOffered, // current assignment status
-	).Scan(&listingID, &purpose)
+	).Scan(&listingID,
+		&purpose,
+		&otaSgReservationID,
+		&pricing,
+		&guests,
+		&checkinDate,
+		&checkoutDate)
 
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -801,6 +1083,24 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 		}
 		return nil, err
 	}
+
+	// ДЕргаем документ-основание - бронирование из ota_sg_reservations
+	var otaID uuid.UUID
+	var bookingNumber string
+
+	if otaSgReservationID != uuid.Nil {
+		err = tx.QueryRow(ctx,
+			`SELECT ota_id, booking_number FROM ota_sg_reservations WHERE id = $1`,
+			otaSgReservationID,
+		).Scan(&otaID, &bookingNumber)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log.Error(ctx, "Assignment has no linked OTA reservation", zap.String("assignment_id", assignmentID.String()))
+		return nil, fmt.Errorf("assignment %s has no linked OTA reservation", assignmentID)
+	}
+	//////
 
 	// Create report
 	report := &models.Report{
@@ -810,46 +1110,95 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 		Purpose:      purpose,
 		ReporterID:   reporterID,
 		StatusID:     models.ReportStatusGenerating,
+		BookingDetails: models.BookingDetails{
+			OTAID:              otaID,
+			BookingNumber:      bookingNumber,
+			OtaSgReservationID: otaSgReservationID,
+			Pricing:            pricing,
+			Guests:             guests,
+			CheckinDate:        checkinDate,
+			CheckoutDate:       checkoutDate,
+		},
 	}
-	insertQuery := `INSERT INTO reports (id, assignment_id, listing_id, purpose, reporter_id, status_id) VALUES ($1, $2, $3, $4, $5, $6)`
-	if _, err := tx.Exec(ctx, insertQuery, report.ID, report.AssignmentID, report.ListingID, report.Purpose, report.ReporterID, report.StatusID); err != nil {
+
+	insertQuery := `
+		INSERT INTO reports (
+			id, 
+			assignment_id, 
+			listing_id, 
+			purpose, 
+			reporter_id, 
+			status_id,
+			ota_id, 
+			booking_number,
+			ota_sg_reservation_id,
+			pricing,
+			guests,
+			checkin_date,
+			checkout_date
+		) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+	`
+	if _, err := tx.Exec(ctx, insertQuery,
+		report.ID,
+		report.AssignmentID,
+		report.ListingID,
+		report.Purpose,
+		report.ReporterID,
+		report.StatusID,
+		report.BookingDetails.OTAID,
+		report.BookingDetails.BookingNumber,
+		report.BookingDetails.OtaSgReservationID,
+		report.BookingDetails.Pricing,
+		report.BookingDetails.Guests,
+		report.BookingDetails.CheckinDate,
+		report.BookingDetails.CheckoutDate,
+	); err != nil {
 		log.Error(ctx, "Failed to create report in transaction", zap.Error(err))
 		return nil, err
 	}
 
+	// Коммитим транзакцию
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
+
 	return report, nil
 }
 
-func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, declinedAt time.Time) error {
-
+func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignmentID, reporterID uuid.UUID, takedAt, declinedAt time.Time) error {
 	log := logger.GetLoggerFromCtx(ctx)
 
-	updateQuery := `
-		UPDATE assignments
-		SET status_id = $1, declined_at = $2
-		WHERE id = $3 AND reporter_id = $4 AND status_id = $5
-	`
-
-	ct, err := r.db.Exec(ctx, updateQuery,
-		models.AssignmentStatusDeclined, // new assignment status
-		declinedAt,
-		assignmentID,
-		reporterID,
-		models.AssignmentStatusOffered, // current assignment status
-	)
-
+	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		log.Error(ctx, "DB error on declining assignment",
-			zap.Error(err),
-			zap.String("assignment_id", assignmentID.String()),
-			zap.String("reporter_id", reporterID.String()),
-		)
+		log.Error(ctx, "Failed to begin transaction", zap.Error(err))
 		return err
 	}
+	defer tx.Rollback(ctx)
 
+	// Обновляем статус задания и очищаем reporter_id
+	updateQuery := `
+		UPDATE assignments
+		SET 
+			status_id   = $1,
+			reporter_id = NULL,
+			taked_at    = NULL
+		WHERE 
+			id = $2 
+			AND reporter_id = $3 
+			AND status_id = $4
+	`
+
+	ct, err := tx.Exec(ctx, updateQuery,
+		// models.AssignmentStatusDeclined,
+		models.AssignmentStatusOffered, // Возвращаем в статус "предложено"
+		assignmentID,
+		reporterID,
+		models.AssignmentStatusOffered,
+	)
+	if err != nil {
+		log.Error(ctx, "DB error on declining assignment", zap.Error(err))
+		return err
+	}
 	if ct.RowsAffected() == 0 {
 		log.Warn(ctx, "Attempt to decline assignment failed: conditions not met",
 			zap.String("assignment_id", assignmentID.String()),
@@ -859,18 +1208,99 @@ func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignm
 		return models.ErrAssignmentCannotBeDeclined
 	}
 
-	return nil
+	// TODO: Возможно, стоит переписать всё в рамках одной транзакции.
+	// Регистрируем отказ
+	insertQuery := `
+		INSERT INTO assignment_declines (assignment_id, reporter_id, taked_at, declined_at)
+		VALUES ($1, $2, $3, $4)
+	`
+	_, err = tx.Exec(ctx, insertQuery, assignmentID, reporterID, takedAt, declinedAt)
+	if err != nil {
+		log.Error(ctx, "Failed to insert assignment decline history", zap.Error(err))
+		return err
+	}
 
+	if err := tx.Commit(ctx); err != nil {
+		log.Error(ctx, "Failed to commit decline transaction", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, assignmentID, userID uuid.UUID, takenAt time.Time) error {
+
+	// TODO: добавить временную метку taken_at в assignments, или отдльную таблицу и т.п.
+
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback(ctx)
+
+	// Проверяем, что у пользователя нет других предложений Offered
+	var count int
+	err = tx.QueryRow(ctx, `
+		SELECT COUNT(*)
+		FROM 
+			assignments
+		WHERE 
+			reporter_id = $1 
+			AND status_id = $2
+	`, userID, models.AssignmentStatusOffered).Scan(&count)
+	if err != nil {
+		return fmt.Errorf("failed to check existing offered assignments: %w", err)
+	}
+	if count > 0 {
+		// return models.ErrAssignmentCannotBeTaken
+		return fmt.Errorf("user %s already has %d active assignments", userID, count)
+	}
+
+	updateQuery := `
+		UPDATE assignments
+		SET 
+			reporter_id = $1, 
+			status_id = $2, 
+			taked_at = $3
+		WHERE 
+			id = $4
+		  	AND status_id = $5
+		  	AND reporter_id IS NULL
+		RETURNING id
+	`
+
+	var id uuid.UUID
+	err = tx.QueryRow(ctx, updateQuery,
+		userID,
+		models.AssignmentStatusOffered, // новый статус, пока пусть тот же
+		takenAt,
+		assignmentID,
+		models.AssignmentStatusOffered, // текущий статус
+	).Scan(&id)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return models.ErrAssignmentCannotBeTaken
+		}
+		return fmt.Errorf("failed to update assignment: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 // reports
 
 type ReportsFilter struct {
-	ReportID   *uuid.UUID
-	ReporterID *uuid.UUID
-	StatusIDs  []int
-	Limit      int
-	Offset     int
+	ReportID       *uuid.UUID
+	ReporterID     *uuid.UUID
+	StatusIDs      []int
+	ListingTypeIDs []int
+	Limit          int
+	Offset         int
 }
 
 func buildReportWhereClause(filter ReportsFilter) (string, []interface{}, int) {
@@ -900,8 +1330,19 @@ func buildReportWhereClause(filter ReportsFilter) (string, []interface{}, int) {
 		conditions = append(conditions, fmt.Sprintf("r.status_id IN (%s)", strings.Join(placeholders, ",")))
 	}
 
-	whereClause := strings.Join(conditions, " AND ")
+	if len(filter.ListingTypeIDs) > 0 {
+		placeholders := make([]string, 0, len(filter.ListingTypeIDs))
+		for _, id := range filter.ListingTypeIDs {
+			placeholders = append(placeholders, fmt.Sprintf("$%d", paramCount))
+			args = append(args, id)
+			paramCount++
+		}
+		conditions = append(conditions,
+			fmt.Sprintf("l.listing_type_id IN (%s)", strings.Join(placeholders, ",")),
+		)
+	}
 
+	whereClause := strings.Join(conditions, " AND ")
 	return whereClause, args, paramCount
 }
 
@@ -909,7 +1350,19 @@ func (r *SecretGuestRepository) scanReport(row pgx.Row) (*models.Report, error) 
 	var rep models.Report
 	if err := row.Scan(
 		&rep.ID,
-		&rep.AssignmentID, &rep.ListingID, &rep.ReporterID, &rep.StatusID,
+		&rep.AssignmentID,
+
+		&rep.BookingDetails.OTAID,
+		&rep.BookingDetails.BookingNumber,
+		&rep.BookingDetails.OtaSgReservationID,
+		&rep.BookingDetails.Pricing,
+		&rep.BookingDetails.Guests,
+		&rep.BookingDetails.CheckinDate,
+		&rep.BookingDetails.CheckoutDate,
+
+		&rep.ListingID,
+		&rep.ReporterID,
+		&rep.StatusID,
 		&rep.Purpose,
 		&rep.CreatedAt,
 		&rep.UpdatedAt,
@@ -945,12 +1398,19 @@ func (r *SecretGuestRepository) scanReport(row pgx.Row) (*models.Report, error) 
 }
 
 func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFilter) ([]*models.Report, int, error) {
-
 	log := logger.GetLoggerFromCtx(ctx)
 
 	whereClause, args, paramCount := buildReportWhereClause(filter)
 
-	countQuery := "SELECT COUNT(r.id) FROM reports r JOIN report_statuses s ON r.status_id = s.id"
+	countQuery := `
+		SELECT COUNT(r.id) 
+		FROM reports r 
+		JOIN report_statuses s ON r.status_id = s.id
+		`
+	if len(filter.ListingTypeIDs) > 0 {
+		countQuery += " JOIN listings l ON r.listing_id = l.id "
+	}
+
 	if whereClause != "" {
 		countQuery += " WHERE " + whereClause
 	}
@@ -968,7 +1428,17 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 	baseQuery := `
 		SELECT
 			r.id,
-			r.assignment_id, r.listing_id, r.reporter_id, r.status_id,
+			r.assignment_id, 
+			
+			r.ota_id,
+			r.booking_number,
+			r.ota_sg_reservation_id,
+			r.pricing,
+			r.guests,
+			r.checkin_date,
+			r.checkout_date,
+						
+			r.listing_id, r.reporter_id, r.status_id,
 			r.purpose,
 			r.created_at,
 			r.updated_at,
@@ -976,6 +1446,7 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 
 			r.checklist_schema,
 
+			l.ID,
 			l.code as "listing_code",
 			l.title as "listing_title",
 			l.description as "listing_description",
@@ -994,7 +1465,7 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 
 		FROM reports r
 		JOIN listings l ON r.listing_id = l.id
-		JOIN users u ON r.reporter_id = u.id
+		LEFT JOIN users u ON r.reporter_id = u.id
 		JOIN report_statuses s ON r.status_id = s.id
 		JOIN listing_types lt ON l.listing_type_id = lt.id
 	`
@@ -1020,7 +1491,17 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 		var r models.Report
 		if err := rows.Scan(
 			&r.ID,
-			&r.AssignmentID, &r.ListingID, &r.ReporterID, &r.StatusID,
+			&r.AssignmentID,
+
+			&r.BookingDetails.OTAID,
+			&r.BookingDetails.BookingNumber,
+			&r.BookingDetails.OtaSgReservationID,
+			&r.BookingDetails.Pricing,
+			&r.BookingDetails.Guests,
+			&r.BookingDetails.CheckinDate,
+			&r.BookingDetails.CheckoutDate,
+
+			&r.ListingID, &r.ReporterID, &r.StatusID,
 			&r.Purpose,
 			&r.CreatedAt,
 			&r.UpdatedAt,
@@ -1028,6 +1509,7 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 
 			&r.ChecklistSchema,
 
+			&r.Listing.ID,
 			&r.Listing.Code,
 			&r.Listing.Title,
 			&r.Listing.Description,
@@ -1070,8 +1552,22 @@ func (r *SecretGuestRepository) GetReportByID(ctx context.Context, reportID uuid
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
+			r.id, 
+			r.assignment_id, 
+			
+			r.ota_id,
+			r.booking_number,
+			r.ota_sg_reservation_id,
+			r.pricing,
+			r.guests,
+			r.checkin_date,
+			r.checkout_date,
+						
+			r.listing_id, r.reporter_id, r.status_id, r.purpose,
+			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, 
+			
+			l.ID,
+			l.code as "listing_code",
 			l.title as "listing_title", l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
 
@@ -1108,8 +1604,21 @@ func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, repor
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			r.id, r.assignment_id, r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, l.code as "listing_code",
+			r.id, 
+			r.assignment_id, 
+			
+			r.ota_id,
+			r.booking_number,
+			r.ota_sg_reservation_id,
+			r.pricing,
+			r.guests,
+			r.checkin_date,
+			r.checkout_date,
+			
+			r.listing_id, r.reporter_id, r.status_id, r.purpose,
+			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, 
+			l.ID,
+			l.code as "listing_code",
 			l.title as "listing_title", l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
 
