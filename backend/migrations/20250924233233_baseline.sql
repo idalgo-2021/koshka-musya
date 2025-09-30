@@ -84,10 +84,8 @@ CREATE TABLE "public"."assignments" (
   "expires_at" timestamp NOT NULL, -- после наступления этой даты, предложение протухает(становится неактивным)
   
   "reporter_id" uuid NULL, -- исполнитель, т.е. ТГ
+  "taked_at" timestamp NULL, -- дата когда ТГ выбрал предложение
   "accepted_at" timestamp NULL, -- дата принятия предложения со стороны ТГ
-
-
-  "deadline" timestamp NULL, -- Дедлайн(дата) СДАЧИ отчета (устанавливается после accepted_at)
 
   "status_id" integer NOT NULL DEFAULT 1,
   
@@ -104,7 +102,8 @@ CREATE TABLE assignment_declines (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     assignment_id UUID NOT NULL REFERENCES assignments(id) ON DELETE CASCADE,
     reporter_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    declined_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    taked_at timestamp NULL, 
+    declined_at timestamp NULL
 );
 
 
@@ -134,13 +133,6 @@ CREATE TABLE "public"."ota_sg_reservations" (
   
   "pricing" jsonb NULL,  -- инфо по стоимости
   "guests" jsonb NULL,  -- инфо по гостям
-  -- "adults" integer NOT NULL DEFAULT 0, -- количество взрослых
-  -- "children" integer NOT NULL DEFAULT 0, -- количество детей
-  -- "price_per_night" numeric(12,2) NOT NULL, -- цена за ночь
-  -- "total_price" numeric(12,2) NOT NULL, -- общая сумма брони
-  -- "price_currency" text NOT NULL, -- валюта брони
-  -- -- "discount_amount" -- скидка
-  -- "nights"  integer NOT NULL DEFAULT 0, -- количество ночей
 
   PRIMARY KEY ("id"),
   CONSTRAINT "ota_sg_reservations_ota_id_key" UNIQUE ("ota_id"),
@@ -214,7 +206,16 @@ CREATE TABLE "public"."report_statuses" (
 -- Create "reports" table
 CREATE TABLE "public"."reports" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  
   "assignment_id" uuid NOT NULL,
+  "ota_id" uuid NOT NULL,    -- идентификатор брони в системе OTA
+  "booking_number" text NOT NULL, -- код бронирования(ТГ показывает вахтёру при заселении)
+  "ota_sg_reservation_id" uuid NULL, -- привязка к бронированию
+  "pricing" jsonb NULL,  -- инфо по стоимости
+  "guests" jsonb NULL,  -- инфо по гостям
+  "checkin_date" timestamp NOT NULL,  -- дата начала брони, когда надо въехать
+  "checkout_date" timestamp NOT NULL, -- окончание брони, когда надо выезжать  
+
   "purpose" text NOT NULL,
   "listing_id" uuid NOT NULL,
   "reporter_id" uuid NOT NULL,
@@ -223,6 +224,7 @@ CREATE TABLE "public"."reports" (
   "submitted_at" timestamp NULL,
   "status_id" integer NOT NULL DEFAULT 1,
   "checklist_schema" jsonb NULL,
+
   PRIMARY KEY ("id"),
   CONSTRAINT "reports_assignment_id_key" UNIQUE ("assignment_id"),
   CONSTRAINT "reports_assignment_id_fkey" FOREIGN KEY ("assignment_id") REFERENCES "public"."assignments" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,

@@ -188,7 +188,7 @@ type AssignmentResponseDTO struct {
 	AcceptedAt *time.Time `json:"accepted_at,omitempty"`
 
 	ExpiresAt time.Time  `json:"expires_at"`
-	Deadline  *time.Time `json:"deadline,omitempty"`
+	TakedAt   *time.Time `json:"taked_at,omitempty"`
 }
 
 type AssignmentsResponse struct {
@@ -239,13 +239,26 @@ type GetAllReportsRequestDTO struct {
 	StatusIDs  []int
 }
 
+type ReportBookingDetails struct {
+	OTAID              uuid.UUID       `json:"ota_id"`
+	BookingNumber      string          `json:"booking_number"`
+	OtaSgReservationID uuid.UUID       `json:"ota_sg_reservation_id"`
+	Pricing            json.RawMessage `json:"pricing" swaggertype:"object"`
+	Guests             json.RawMessage `json:"guests" swaggertype:"object"`
+	CheckinDate        time.Time       `json:"checkin_date"`
+	CheckoutDate       time.Time       `json:"checkout_date"`
+}
+
 type ReportResponseDTO struct {
-	ID           uuid.UUID            `json:"id"`
-	AssignmentID uuid.UUID            `json:"assignment_id"`
-	Purpose      string               `json:"purpose"`
-	Listing      ListingShortResponse `json:"listing"`
-	Reporter     ReporterResponse     `json:"reporter"`
-	Status       StatusResponse       `json:"status"`
+	ID           uuid.UUID `json:"id"`
+	AssignmentID uuid.UUID `json:"assignment_id"`
+
+	BookingDetails ReportBookingDetails `json:"booking_details"`
+
+	Purpose  string               `json:"purpose"`
+	Listing  ListingShortResponse `json:"listing"`
+	Reporter ReporterResponse     `json:"reporter"`
+	Status   StatusResponse       `json:"status"`
 
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   *time.Time `json:"updated_at"`

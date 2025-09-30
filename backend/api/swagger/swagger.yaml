@@ -93,8 +93,6 @@ definitions:
         type: string
       dates:
         $ref: '#/definitions/secret_guest.AssignmentReservationDates'
-      deadline:
-        type: string
       expires_at:
         type: string
       guests:
@@ -113,6 +111,8 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/secret_guest.StatusResponse'
+      taked_at:
+        type: string
     required:
     - dates
     type: object
@@ -586,10 +586,29 @@ definitions:
     required:
     - ota_id
     type: object
+  secret_guest.ReportBookingDetails:
+    properties:
+      booking_number:
+        type: string
+      checkin_date:
+        type: string
+      checkout_date:
+        type: string
+      guests:
+        type: object
+      ota_id:
+        type: string
+      ota_sg_reservation_id:
+        type: string
+      pricing:
+        type: object
+    type: object
   secret_guest.ReportResponseDTO:
     properties:
       assignment_id:
         type: string
+      booking_details:
+        $ref: '#/definitions/secret_guest.ReportBookingDetails'
       checklist_schema:
         $ref: '#/definitions/models.ChecklistSchema'
       created_at:
