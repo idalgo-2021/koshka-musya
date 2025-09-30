@@ -1,10 +1,10 @@
 "use client";
 import * as React from 'react';
-import {useParams, useRouter} from 'next/navigation';
+import {redirect, useParams, useRouter} from 'next/navigation';
 import {toast} from 'sonner';
 import {useMutation} from "@tanstack/react-query";
 
-import {useAuth} from '@/entities/auth/useAuth';
+import {useAuth, USER_ROLE} from '@/entities/auth/useAuth';
 import {ReportsApi} from '@/entities/reports/api';
 import type {ChecklistSchema, Report} from '@/entities/reports/types';
 import { useConfirmation } from '@/entities/modals/ModalContext';
@@ -494,7 +494,9 @@ export default function ReportPage() {
       </div>
     );
   }
-
+  if (user?.role === USER_ROLE.Admin || user?.role === USER_ROLE.Staff) {
+    return redirect('/admin')
+  }
   const disabled = submitted;
 
   return (

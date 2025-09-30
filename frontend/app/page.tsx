@@ -5,10 +5,11 @@ import AuthForm from "../components/AuthForm"
 import { Toaster } from "@/components/ui/sonner";
 import { Loader } from "@/components/Loader";
 
-import { useAuth } from "@/entities/auth/useAuth";
+import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import {redirect} from "next/navigation";
 
 export default function Home() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
 
   const checkAuth = useCallback(() => {
     console.log('Home useEffect triggered:', JSON.stringify({
@@ -54,7 +55,9 @@ export default function Home() {
   if (isAuthenticated) {
     return null; // Will redirect to dashboard
   }
-
+  if (user?.role === USER_ROLE.Admin || user?.role === USER_ROLE.Staff) {
+    return redirect('/admin')
+  }
   return (
     <div className="min-h-screen flex items-center justify-center bg-accentgreen">
       <AuthForm />
