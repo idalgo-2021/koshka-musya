@@ -112,7 +112,7 @@ export default function AnswerTypesListPage() {
 
       {/* Confirmation Modal */}
       {deleteModalOpen && itemToDelete && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <ConfirmationModal
             title="Удалить тип ответа"
             message={`Вы уверены, что хотите удалить тип ответа "${itemToDelete.name}"? Это действие нельзя отменить.`}

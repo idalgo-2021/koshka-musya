@@ -1,441 +1,204 @@
 "use client"
 
-import * as React from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import * as z from 'zod'
-import { redirect } from 'next/navigation'
-
+import { useState } from 'react'
+import { useSgReservations, useMarkAsNoShow } from '@/entities/sgReservations/useSgReservations'
+import { SgReservationsFilters } from '@/entities/sgReservations/types'
+import SgReservationCard from '@/components/SgReservationCard'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import Select from '@/components/ui/select'
-import { RefreshCw } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Filter, RotateCcw } from 'lucide-react'
+import { SG_RESERVATION_STATUSES } from '@/entities/sgReservations/constants'
 
-import { SGReservationsApi, SG_RESERVATION_STATUSES, type CreateSGReservationRequest } from '@/entities/sgReservations/api'
-import { useAuth, USER_ROLE } from '@/entities/auth/useAuth'
-import { ListingsApi } from '@/entities/listings/api'
+const ITEMS_PER_PAGE = 10
 
-// Form validation schema
-const reservationSchema = z.object({
-  received_at: z.string().min(1, 'Дата получения обязательна'),
-  booking_number: z.string().min(1, 'Номер бронирования обязателен'),
-  checkin: z.string().min(1, 'Дата заезда обязательна'),
-  checkout: z.string().min(1, 'Дата выезда обязательна'),
-  adults: z.number().min(1, 'Количество взрослых должно быть больше 0'),
-  children: z.number().min(0, 'Количество детей не может быть отрицательным'),
-  listing_id: z.string().min(1, 'Объект размещения обязателен'),
-  ota_id: z.string().min(1, 'OTA ID обязателен'),
-  nights: z.number().min(1, 'Количество ночей должно быть больше 0'),
-  per_night: z.number().min(0, 'Цена за ночь не может быть отрицательной'),
-  currency: z.string().min(1, 'Валюта обязательна'),
-  total: z.number().min(0, 'Общая сумма не может быть отрицательной'),
-  status: z.string().min(1, 'Статус обязателен'),
-  source: z.string().min(1, 'Источник обязателен'),
-})
-
-type ReservationFormValues = z.infer<typeof reservationSchema>
-
-export default function SGReservationsPage() {
-  const { user } = useAuth()
-  const queryClient = useQueryClient()
-
-  React.useEffect(() => {
-    if (user && user.role !== USER_ROLE.Admin) {
-      redirect('/dashboard')
-    }
-  }, [user])
-
-  // Fetch listing types and listings
-  // const { data: listingTypesData } = useQuery({
-  //   queryKey: ['listing_types'],
-  //   queryFn: () => ListingsApi.getListingTypes(),
-  // })
-
-  const { data: listingsData } = useQuery({
-    queryKey: ['listings'],
-    queryFn: () => ListingsApi.getPublicListings(1, 100), // Fetch first 100 listings
+export default function SgReservationsPage() {
+  const [filters, setFilters] = useState<SgReservationsFilters>({
+    page: 1,
+    limit: ITEMS_PER_PAGE
   })
-  console.log({ listingsData })
 
-  // Use hardcoded reservation statuses
-  const reservationStatuses = SG_RESERVATION_STATUSES
+  const { data, isLoading, error, refetch } = useSgReservations(filters)
+//   const { data: statuses } = useSgReservationStatuses()
+  const markAsNoShowMutation = useMarkAsNoShow()
 
-  // Generate UUID function
-  const generateUUID = (): string => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0
-      const v = c === 'x' ? r : (r & 0x3 | 0x8)
-      return v.toString(16)
-    })
+  const handleStatusFilter = (statusId: string) => {
+    const newFilters = { ...filters, page: 1 }
+    if (statusId === 'all') {
+      delete newFilters.status_id
+    } else {
+      newFilters.status_id = parseInt(statusId)
+    }
+    setFilters(newFilters)
   }
 
-  // Form setup
-  const form = useForm<ReservationFormValues>({
-    resolver: zodResolver(reservationSchema),
-    defaultValues: {
-      received_at: new Date().toISOString().slice(0, 16), // Current datetime
-      adults: 1,
-      children: 0,
-      nights: 1,
-      per_night: 0,
-      currency: 'RUB',
-      total: 0,
-    },
-  })
-
-  // Create reservation mutation
-  const createReservationMutation = useMutation({
-    mutationFn: (data: CreateSGReservationRequest) => SGReservationsApi.createReservation(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sg_reservations'] })
-      form.reset()
-      // Show success message (you can add toast notification here)
-      alert('Бронирование успешно создано!')
-    },
-    onError: (error) => {
-      console.error('Error creating reservation:', error)
-      alert('Ошибка при создании бронирования')
-    },
-  })
-
-  // Calculate total when nights or per_night changes
-  const watchedNights = form.watch('nights')
-  const watchedPerNight = form.watch('per_night')
-
-  React.useEffect(() => {
-    const total = watchedNights * watchedPerNight
-    form.setValue('total', total)
-  }, [watchedNights, watchedPerNight, form])
-
-  const onSubmit = (data: ReservationFormValues) => {
-    // Find selected listing
-    const selectedListing = listingsData?.listings?.find(listing => listing.id === data.listing_id)
-    if (!selectedListing) {
-      alert('Пожалуйста, выберите объект размещения')
-      return
-    }
-
-    // Find selected status
-    const selectedStatus = reservationStatuses?.find(rs => rs.id.toString() === data.status)
-    if (!selectedStatus) {
-      alert('Пожалуйста, выберите статус')
-      return
-    }
-
-    // Format dates to ISO 8601 with timezone
-    const formatDateToISO = (dateString: string): string => {
-      const date = new Date(dateString)
-      return date.toISOString()
-    }
-
-    console.log('Formatted dates:', {
-      received_at: formatDateToISO(data.received_at),
-      checkin: formatDateToISO(data.checkin),
-      checkout: formatDateToISO(data.checkout)
-    })
-
-    const reservationData: CreateSGReservationRequest = {
-      received_at: formatDateToISO(data.received_at),
-      source: data.source,
-      reservation: {
-        booking_number: data.booking_number,
-        dates: {
-          checkIn: formatDateToISO(data.checkin),
-          checkOut: formatDateToISO(data.checkout),
-        },
-        guests: {
-          adults: data.adults,
-          children: data.children,
-        },
-        listing: {
-          id: selectedListing.id,
-          title: selectedListing.title,
-          description: selectedListing.description,
-          address: selectedListing.address,
-          city: selectedListing.city,
-          country: selectedListing.country,
-          latitude: selectedListing.latitude,
-          longitude: selectedListing.longitude,
-          main_picture: selectedListing.mainPicture || '',
-          listing_type: {
-            id: selectedListing.listing_type.id,
-            name: selectedListing.listing_type.name,
-            slug: selectedListing.listing_type.slug,
-          },
-        },
-        ota_id: data.ota_id,
-        pricing: {
-          breakdown: {
-            nights: data.nights,
-            per_night: data.per_night,
-          },
-          currency: data.currency,
-          total: data.total,
-        },
-        status: selectedStatus.slug,
-      },
-    }
-
-    createReservationMutation.mutate(reservationData)
+  const handlePageChange = (newPage: number) => {
+    setFilters(prev => ({ ...prev, page: newPage }))
   }
 
-  if (!user || user.role !== USER_ROLE.Admin) {
-    return <div>Loading...</div>
-    // return redirect('/dashboard');
+  const handleMarkAsNoShow = (id: string) => {
+    markAsNoShowMutation.mutate(id)
+  }
+
+  const clearFilters = () => {
+    setFilters({ page: 1, limit: ITEMS_PER_PAGE })
+  }
+
+  const totalPages = data ? Math.ceil(data.total / ITEMS_PER_PAGE) : 0
+  const currentPage = filters.page || 1
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Загрузка резерваций...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">Ошибка загрузки резерваций</p>
+          <Button onClick={() => refetch()} variant="outline">
+            Попробовать снова
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="container max-w-4xl py-6 space-y-6">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">SG Reservations</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">OTA Резервации</h1>
+          <p className="text-gray-600 mt-1">
+            Управление резервациями от OTA партнеров
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Создать новое бронирование</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="received_at">Дата получения</Label>
-                <Input
-                  id="received_at"
-                  type="datetime-local"
-                  {...form.register('received_at')}
-                />
-                {form.formState.errors.received_at && (
-                  <p className="text-sm text-red-600">{form.formState.errors.received_at.message}</p>
-                )}
-              </div>
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Фильтры:</span>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="booking_number">Номер бронирования</Label>
-                <Input
-                  id="booking_number"
-                  {...form.register('booking_number')}
-                  placeholder="BK123456"
-                />
-                {form.formState.errors.booking_number && (
-                  <p className="text-sm text-red-600">{form.formState.errors.booking_number.message}</p>
-                )}
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">Статус:</label>
+            <Select
+              value={filters.status_id?.toString() || 'all'}
+              onChange={handleStatusFilter}
+              placeholder="Все статусы"
+              options={[
+                { value: 'all', label: 'Все статусы' },
+                ...(SG_RESERVATION_STATUSES?.map((status) => ({
+                  value: status.id.toString(),
+                  label: status.name
+                })) || [])
+              ]}
+            />
+          </div>
 
-            {/* Dates */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="checkin">Дата заезда</Label>
-                <Input
-                  id="checkin"
-                  type="date"
-                  {...form.register('checkin')}
-                />
-                {form.formState.errors.checkin && (
-                  <p className="text-sm text-red-600">{form.formState.errors.checkin.message}</p>
-                )}
-              </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearFilters}
+            className="flex items-center gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Сбросить
+          </Button>
+        </div>
+      </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="checkout">Дата выезда</Label>
-                <Input
-                  id="checkout"
-                  type="date"
-                  {...form.register('checkout')}
-                />
-                {form.formState.errors.checkout && (
-                  <p className="text-sm text-red-600">{form.formState.errors.checkout.message}</p>
-                )}
-              </div>
-            </div>
+      {/* Results Info */}
+      {Array.isArray(data?.reservations) && data.reservations.length > 0 && (
+        <div className="text-sm text-gray-600">
+          Показано {data.reservations.length} из {data.total} резерваций
+          {filters.status_id && (
+            <span className="ml-2">
+              (статус: {SG_RESERVATION_STATUSES?.find(s => s.id === filters.status_id)?.name})
+            </span>
+          )}
+        </div>
+      )}
 
-            {/* Guests */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="adults">Взрослые</Label>
-                <Input
-                  id="adults"
-                  type="number"
-                  min="1"
-                  {...form.register('adults', { valueAsNumber: true })}
-                />
-                {form.formState.errors.adults && (
-                  <p className="text-sm text-red-600">{form.formState.errors.adults.message}</p>
-                )}
-              </div>
+      {/* Reservations Grid */}
+      {data && data.reservations?.length > 0 ? (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {data.reservations.map((reservation) => (
+            <SgReservationCard
+              key={reservation.id}
+              reservation={reservation}
+              onMarkAsNoShow={handleMarkAsNoShow}
+              isMarkingAsNoShow={markAsNoShowMutation.isPending}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-gray-50 rounded-lg">
+          <p className="text-gray-500">Резервации не найдены</p>
+        </div>
+      )}
 
-              <div className="space-y-2">
-                <Label htmlFor="children">Дети</Label>
-                <Input
-                  id="children"
-                  type="number"
-                  min="0"
-                  {...form.register('children', { valueAsNumber: true })}
-                />
-                {form.formState.errors.children && (
-                  <p className="text-sm text-red-600">{form.formState.errors.children.message}</p>
-                )}
-              </div>
-            </div>
+      {/* Pagination */}
+      {data && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage <= 1}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Предыдущая
+          </Button>
 
-            {/* Listing and OTA */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="listing_id">Объект размещения</Label>
-                <Select
-                  value={form.watch('listing_id') || ''}
-                  onChange={(value) => form.setValue('listing_id', String(value || ''))}
-                  placeholder="Выберите объект размещения"
-                  options={listingsData?.listings?.map((listing) => ({
-                    value: listing.id,
-                    label: `${listing.title} (${listing.listing_type?.name})`
-                  })) || []}
-                />
-                {form.formState.errors.listing_id && (
-                  <p className="text-sm text-red-600">{form.formState.errors.listing_id.message}</p>
-                )}
-              </div>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              let pageNum
+              if (totalPages <= 5) {
+                pageNum = i + 1
+              } else if (currentPage <= 3) {
+                pageNum = i + 1
+              } else if (currentPage >= totalPages - 2) {
+                pageNum = totalPages - 4 + i
+              } else {
+                pageNum = currentPage - 2 + i
+              }
 
-              <div className="space-y-2">
-                <Label htmlFor="ota_id">OTA ID</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="ota_id"
-                    {...form.register('ota_id')}
-                    placeholder="booking.com, expedia.com"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => form.setValue('ota_id', generateUUID())}
-                    className="px-3"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
-                </div>
-                {form.formState.errors.ota_id && (
-                  <p className="text-sm text-red-600">{form.formState.errors.ota_id.message}</p>
-                )}
-              </div>
-            </div>
+              return (
+                <Button
+                  key={pageNum}
+                  variant={currentPage === pageNum ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handlePageChange(pageNum)}
+                  className="w-8 h-8 p-0"
+                >
+                  {pageNum}
+                </Button>
+              )
+            })}
+          </div>
 
-            {/* Pricing */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="nights">Ночи</Label>
-                <Input
-                  id="nights"
-                  type="number"
-                  min="1"
-                  {...form.register('nights', { valueAsNumber: true })}
-                />
-                {form.formState.errors.nights && (
-                  <p className="text-sm text-red-600">{form.formState.errors.nights.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="per_night">Цена за ночь</Label>
-                <Input
-                  id="per_night"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  {...form.register('per_night', { valueAsNumber: true })}
-                />
-                {form.formState.errors.per_night && (
-                  <p className="text-sm text-red-600">{form.formState.errors.per_night.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="currency">Валюта</Label>
-                <Select
-                  value={form.watch('currency') || 'RUB'}
-                  onChange={(value) => form.setValue('currency', String(value || 'RUB'))}
-                  options={[
-                    { value: 'RUB', label: 'RUB' },
-                    { value: 'USD', label: 'USD' },
-                    { value: 'EUR', label: 'EUR' },
-                  ]}
-                />
-                {form.formState.errors.currency && (
-                  <p className="text-sm text-red-600">{form.formState.errors.currency.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="total">Общая сумма</Label>
-                <Input
-                  id="total"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  {...form.register('total', { valueAsNumber: true })}
-                  readOnly
-                />
-                {form.formState.errors.total && (
-                  <p className="text-sm text-red-600">{form.formState.errors.total.message}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Status and Source */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="status">Статус</Label>
-                <Select
-                  value={form.watch('status') || ''}
-                  onChange={(value) => form.setValue('status', String(value || ''))}
-                  placeholder="Выберите статус"
-                  options={reservationStatuses?.map((status) => ({
-                    value: status.id.toString(),
-                    label: status.name
-                  })) || []}
-                />
-                {form.formState.errors.status && (
-                  <p className="text-sm text-red-600">{form.formState.errors.status.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="source">Источник</Label>
-                <Input
-                  id="source"
-                  {...form.register('source')}
-                  placeholder="booking.com, expedia.com"
-                />
-                {form.formState.errors.source && (
-                  <p className="text-sm text-red-600">{form.formState.errors.source.message}</p>
-                )}
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={createReservationMutation.isPending}
-                className="min-w-32"
-              >
-                {createReservationMutation.isPending ? (
-                  <div className="flex items-center gap-2">
-                    Создание...
-                  </div>
-                ) : (
-                  'Создать бронирование'
-                )}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage >= totalPages}
+          >
+            Следующая
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
