@@ -495,6 +495,7 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 			Country:       dto.Reservation.Listing.Country,
 			Latitude:      dto.Reservation.Listing.Latitude,
 			Longitude:     dto.Reservation.Listing.Longitude,
+			MainPicture:   dto.Reservation.Listing.MainPicture,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create listing %s: %w", dto.Reservation.OTAID.String(), err)

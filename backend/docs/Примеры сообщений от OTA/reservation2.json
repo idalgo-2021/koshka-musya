@@ -1,0 +1,41 @@
+{
+  "source": "Airbnb",
+  "received_at": "2025-09-29T12:45:00Z",
+  "reservation": {
+    "booking_number": "AB-20250929-QW4321",
+    "dates": {
+      "checkin": "2025-12-20T16:00:00Z",
+      "checkout": "2025-12-27T10:00:00Z"
+    },
+    "guests": {
+      "adults": 2,
+      "children": 2
+    },
+    "ota_id": "9fa73b44-5a7f-4e6e-8e9d-123456abcdef",
+    "status": "reserved",
+    "listing": {
+      "id": "c9d8e7f6-b5a4-3210-98ef-abcdefabcdef",
+      "city": "Прага",
+      "title": "Апартаменты в Старом городе",
+      "address": "Karlova 15, Praha 1",
+      "country": "Чехия",
+      "latitude": 50.0875,
+      "longitude": 14.4213,
+      "description": "Просторные апартаменты в центре Праги с видом на Карлов мост.",
+      "listing_type": {
+        "id": 3,
+        "name": "Апартаменты",
+        "slug": "apartment"
+      },
+      "main_picture": "https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg"
+    },
+    "pricing": {
+      "total": 1200,
+      "currency": "EUR",
+      "breakdown": {
+        "nights": 7,
+        "per_night": 171
+      }
+    }
+  }
+}

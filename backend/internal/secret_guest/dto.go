@@ -81,7 +81,7 @@ type OTAReservationListingDTO struct {
 	ID          uuid.UUID           `json:"id" validate:"required,uuid"`
 	Title       string              `json:"title" validate:"required"`
 	Description string              `json:"description" validate:"required"`
-	MainPicture string              `json:"main_picture" validate:"required"`
+	MainPicture *string             `json:"main_picture" validate:"required"`
 	ListingType ListingTypeResponse `json:"listing_type" validate:"required"`
 	Address     string              `json:"address" validate:"required"`
 	City        string              `json:"city" validate:"required"`
