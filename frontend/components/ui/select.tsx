@@ -165,22 +165,22 @@ export default function Select({
         )}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <ChevronDown 
+        <ChevronDown
           className={cn(
             "h-4 w-4 text-gray-400 transition-transform duration-200",
             isOpen && "rotate-180"
-          )} 
+          )}
         />
       </button>
 
       {isOpen && (
-        <div 
+        <div
           className="absolute z-50 mt-1 rounded-md border border-gray-200 bg-white shadow-lg"
           style={{ width: buttonWidth || '100%', minWidth: '100%' }}
         >
           <ul
             role="listbox"
-            className="max-h-60 overflow-auto py-1"
+            className="max-h-80 overflow-auto py-1"
             aria-labelledby={id ? `${id}-label` : undefined}
           >
             {options.map((option, index) => (

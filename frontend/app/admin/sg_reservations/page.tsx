@@ -7,7 +7,8 @@ import SgReservationCard from '@/components/SgReservationCard'
 import { Button } from '@/components/ui/button'
 import {ChevronLeft, ChevronRight,  Plus, ExternalLink} from 'lucide-react'
 import { SG_RESERVATION_STATUSES } from '@/entities/sgReservations/constants'
-import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import * as React from "react";
 import Link from 'next/link'
 import SelectRow from "@/components/ui/select-row";
@@ -28,7 +29,7 @@ export default function SgReservationsPage() {
     limit: ITEMS_PER_PAGE
   })
 
-  const [isTableView, toggle] = useToggleWithStorage(false, 'sg-reservations-view');
+  const [isTableView, toggle] = useResponsiveToggle(false, 'sg-reservations-view');
 
   const { data, isLoading, error, refetch } = useSgReservations(filters)
 //   const { data: statuses } = useSgReservationStatuses()

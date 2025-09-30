@@ -11,7 +11,7 @@ import ChecklistContainer from '@/components/ChecklistContainer'
 import { ChecklistApi } from '@/entities/checklist/api'
 import { ListingsApi } from '@/entities/listings/api'
 import type { ChecklistSchema } from '@/entities/reports/types'
-import { Loader } from '@/components/Loader'
+import { AdminLoader as Loader } from '@/components/AdminLoader'
 
 export default function ChecklistPreviewPage() {
   const router = useRouter()

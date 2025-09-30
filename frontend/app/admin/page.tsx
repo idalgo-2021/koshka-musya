@@ -8,6 +8,8 @@ import AdminGroupedStatisticCard from '@/components/AdminGroupedStatisticCard'
 import AdminStatisticCard from '@/components/AdminStatisticCard'
 import { StatisticCard } from '@/entities/admin/types'
 import ErrorState from '@/components/ErrorState'
+import { Button } from '@/components/ui/button'
+import { RefreshCw } from 'lucide-react'
 
 const cardConfig: Record<string, { icon: string; color: string }> = {
   //  reservations
@@ -76,7 +78,7 @@ const groupStatisticsByCategory = (statistics: StatisticCard[]) => {
 }
 
 export default function AdminDashboard() {
-  const { data, isLoading, error, refetch } = useAdminStatistics()
+  const { data, isLoading, isRefetching, error, refetch } = useAdminStatistics()
 
   if (isLoading) {
     return (
@@ -103,11 +105,30 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Админ панель</h1>
-        <p className="text-gray-600 mt-1">
-          Обзор статистики и ключевых показателей
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Админ панель</h1>
+          <p className="text-gray-600 mt-1">
+            Обзор статистики и ключевых показателей
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isRefetching && (
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       {/* Mobile: Grouped cards */}
