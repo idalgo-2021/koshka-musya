@@ -31,6 +31,12 @@ const parseAnswerTypeMeta = (meta: unknown): { min: number; max: number } => {
 };
 
 
+function parseCommentValue(it: any,  resultValue: string | undefined, comment: string) {
+  // Комментарии нужны не  для всех типов
+  const isBool = it.answer_types.slug === 'boolean';
+  return isBool && resultValue === 'false' ? comment : undefined;
+}
+
 export default function ReportPage() {
   const params = useParams();
   const router = useRouter();
@@ -290,12 +296,6 @@ export default function ReportPage() {
     return () => { mounted = false; };
   }, [reportId, router]);
 
-  function parseCommentValue(it: any,  resultValue: string | undefined, key: string) {
-    // Комментарии нужны не  для всех типов
-    const isBool = it.answer_types.slug === 'boolean';
-    return isBool && resultValue === 'false' ? comments[key] : undefined;
-  }
-
 // Debounce autosave
   React.useEffect(() => {
     if (loading || !checklistSchema) return;
@@ -312,7 +312,7 @@ export default function ReportPage() {
             items: sec.items.map((it) => {
               const key = `item_${it.id}`;
               const resultValue = getItemValueById(it, key)
-              const commentValue = parseCommentValue(it, resultValue, key);
+              const commentValue = parseCommentValue(it, resultValue, comments[key]);
 
               return {
                 ...it,
@@ -453,7 +453,7 @@ export default function ReportPage() {
           items: sec.items.map((it) => {
             const key = `item_${it.id}`;
             const resultValue = getItemValueById(it, key)
-            const commentValue = parseCommentValue(it, resultValue, key);
+            const commentValue = parseCommentValue(it, resultValue, comments[key]);
 
             return {
               ...it,

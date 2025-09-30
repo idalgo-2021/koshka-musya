@@ -139,7 +139,7 @@ function ChecklistSectionCard({
     setSectionTitle(section.title)
     setSectionSlug(section.slug)
     setSectionListingTypeId(section.listing_type_id)
-  }, [section.title, section.slug, section.listing_type_id, openEditSectionModal])
+  }, [section.id, section.title, section.slug, section.listing_type_id, openEditSectionModal])
 
   const handleSaveSectionEdit = React.useCallback(async () => {
     if (!sectionTitle.trim()) return
