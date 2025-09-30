@@ -236,3 +236,19 @@ type ChecklistItemUpdate struct {
 type ChecklistSchema map[string]interface{}
 
 ////
+
+// UserProfile - модель профиля пользователя, обогащенная данными из таблицы users
+type UserProfile struct {
+	ID                    uuid.UUID       `db:"id"`
+	UserID                uuid.UUID       `db:"user_id"`
+	AcceptedOffersCount   int             `db:"accepted_offers_count"`
+	SubmittedReportsCount int             `db:"submitted_reports_count"`
+	CorrectReportsCount   int             `db:"correct_reports_count"`
+	RegisteredAt          time.Time       `db:"registered_at"`
+	LastActiveAt          *time.Time      `db:"last_active_at"`
+	AdditionalInfo        json.RawMessage `db:"additional_info"`
+
+	// Поля из таблицы users
+	Username string `db:"username"`
+	Email    string `db:"email"`
+}

@@ -2703,6 +2703,117 @@ func (r *SecretGuestRepository) GetAllUsers(ctx context.Context, limit, offset i
 	return users, total, nil
 }
 
+// profiles
+
+func (r *SecretGuestRepository) GetUserProfileByID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+	query := `
+		SELECT
+			up.id,
+			up.user_id,
+			up.accepted_offers_count,
+			up.submitted_reports_count,
+			up.correct_reports_count,
+			up.registered_at,
+			up.last_active_at,
+			up.additional_info,
+			u.username,
+			u.email
+		FROM user_profiles up
+		JOIN users u ON up.user_id = u.id
+		WHERE up.user_id = $1
+	`
+	row := r.db.QueryRow(ctx, query, userID)
+
+	var p models.UserProfile
+	err := row.Scan(
+		&p.ID,
+		&p.UserID,
+		&p.AcceptedOffersCount,
+		&p.SubmittedReportsCount,
+		&p.CorrectReportsCount,
+		&p.RegisteredAt,
+		&p.LastActiveAt,
+		&p.AdditionalInfo,
+		&p.Username,
+		&p.Email,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Info(ctx, "User profile not found by user ID", zap.String("user_id", userID.String()))
+			return nil, models.ErrNotFound
+		}
+		log.Error(ctx, "Failed to query user profile by ID", zap.Error(err), zap.String("user_id", userID.String()))
+		return nil, err
+	}
+	return &p, nil
+}
+
+func (r *SecretGuestRepository) GetAllUserProfiles(ctx context.Context, limit, offset int) ([]*models.UserProfile, int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	countQuery := `SELECT COUNT(*) FROM user_profiles;`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery).Scan(&total)
+	if err != nil {
+		log.Error(ctx, "Failed to query total user profiles count", zap.Error(err))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.UserProfile{}, 0, nil
+	}
+
+	query := `
+		SELECT
+			up.id,
+			up.user_id,
+			up.accepted_offers_count,
+			up.submitted_reports_count,
+			up.correct_reports_count,
+			up.registered_at,
+			up.last_active_at,
+			up.additional_info,
+			u.username,
+			u.email
+		FROM user_profiles up
+		JOIN users u ON up.user_id = u.id
+		ORDER BY up.registered_at DESC
+		LIMIT $1 OFFSET $2;
+	`
+
+	rows, err := r.db.Query(ctx, query, limit, offset)
+	if err != nil {
+		log.Error(ctx, "Failed to query user profiles", zap.Error(err))
+		return nil, total, err
+	}
+	defer rows.Close()
+
+	profiles := make([]*models.UserProfile, 0, limit)
+	for rows.Next() {
+		var p models.UserProfile
+		err = rows.Scan(
+			&p.ID,
+			&p.UserID,
+			&p.AcceptedOffersCount,
+			&p.SubmittedReportsCount,
+			&p.CorrectReportsCount,
+			&p.RegisteredAt,
+			&p.LastActiveAt,
+			&p.AdditionalInfo,
+			&p.Username,
+			&p.Email,
+		)
+		if err != nil {
+			log.Error(ctx, "Failed to scan user profile row", zap.Error(err))
+			return nil, total, err
+		}
+		profiles = append(profiles, &p)
+	}
+
+	return profiles, total, nil
+}
+
 // ГЕнерация отчета
 
 func (r *SecretGuestRepository) GetListingTypeID(ctx context.Context, listingID uuid.UUID) (int, error) {

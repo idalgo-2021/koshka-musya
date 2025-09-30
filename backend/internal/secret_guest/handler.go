@@ -179,7 +179,7 @@ func (h *SecretGuestHandler) parseFilterParams(r *http.Request) (*uuid.UUID, []i
 // @Failure      400 {object} ErrorResponse "Invalid payload"
 // @Failure      401 {object} ErrorResponse "Unauthorized"
 // @Failure      403 {object} ErrorResponse "Forbidden"
-// @Failure      409 {object} ErrorResponse "Listing cannot be created (e.g., wrong payload)"
+// @Failure      409 {object} ErrorResponse "Listing cannot be created (e.g., duplicate listing or conflict)"
 // @Failure      500 {object} ErrorResponse "Internal server error"
 // @Router       /admin/listings [post]
 func (h *SecretGuestHandler) CreateListing(w http.ResponseWriter, r *http.Request) {
@@ -221,7 +221,7 @@ func (h *SecretGuestHandler) CreateListing(w http.ResponseWriter, r *http.Reques
 // @Produce      json
 // @Param        page query int false "Page number for pagination" default(1) min(1)
 // @Param        limit query int false "Number of items per page" default(20) min(1)
-// @Param        listing_type_id query []int false "Filter by one or more listing type IDs" collectionFormat(multi)
+// @Param        listing_type_id query []int false "Filter by one or more listing type IDs (invalid IDs are ignored)" collectionFormat(multi)
 // @Success      200 {object} secret_guest.ListingsResponse
 // @Failure      500 {object} ErrorResponse "Internal server error"
 // @Router       /listings [get]
@@ -2424,4 +2424,110 @@ func (h *SecretGuestHandler) GetAllUsers(w http.ResponseWriter, r *http.Request)
 	}
 
 	h.writeJSONResponse(ctx, w, http.StatusOK, users)
+}
+
+// profiles
+
+// @Summary      Get My Profile
+// @Security     BearerAuth
+// @Description  Returns the profile information for the currently authenticated user.
+// @Tags         Profiles (User)
+// @Produce      json
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.ProfileResponseDTO
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      404 {object} ErrorResponse "Profile not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /profiles/my [get]
+func (h *SecretGuestHandler) GetMyProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUserAndID(w, r)
+	if !ok {
+		return
+	}
+
+	profile, err := h.service.GetMyProfile(ctx, userID)
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Profile not found")
+		} else {
+			log.Error(ctx, "Failed to get my profile", zap.Error(err), zap.String("user_id", userID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, profile)
+}
+
+// @Summary      Get All Profiles (Staff)
+// @Security     BearerAuth
+// @Description  Returns a paginated list of all user profiles. Available for staff only.
+// @Tags         Profiles (Staff)
+// @Produce      json
+// @Param        page query int false "Page number for pagination" default(1)
+// @Param        limit query int false "Number of items per page" default(50)
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.ProfilesResponse
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /staff/profiles [get]
+func (h *SecretGuestHandler) GetAllProfiles(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	page, limit := h.parsePagination(r)
+	dto := GetAllProfilesRequestDTO{
+		Page:  page,
+		Limit: limit,
+	}
+
+	profiles, err := h.service.GetAllProfiles(ctx, dto)
+	if err != nil {
+		log.Error(ctx, "Failed to get all profiles", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, profiles)
+}
+
+// @Summary      Get Profile By User ID (Staff)
+// @Security     BearerAuth
+// @Description  Returns a single user profile by their user ID. Available for staff only.
+// @Tags         Profiles (Staff)
+// @Produce      json
+// @Param        id path string true "User ID" format(uuid)
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.ProfileResponseDTO
+// @Failure      400 {object} ErrorResponse "Invalid User ID format"
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      404 {object} ErrorResponse "Profile not found"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /staff/profiles/{id} [get]
+func (h *SecretGuestHandler) GetProfileByUserID(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUUIDFromPath(w, r, "user_id")
+	if !ok {
+		return
+	}
+
+	profile, err := h.service.GetMyProfile(ctx, userID) // Reusing the same service method as for GetMyProfile
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			h.writeErrorResponse(ctx, w, http.StatusNotFound, "Profile not found")
+		} else {
+			log.Error(ctx, "Failed to get profile by user ID", zap.Error(err), zap.String("user_id", userID.String()))
+			h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		}
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, profile)
 }

@@ -90,6 +90,10 @@ type SecretGuestRepository interface {
 
 	// users
 	GetAllUsers(ctx context.Context, limit, offset int) ([]*models.User, int, error)
+
+	// profiles
+	GetUserProfileByID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
+	GetAllUserProfiles(ctx context.Context, limit, offset int) ([]*models.UserProfile, int, error)
 }
 
 type SecretGuestService struct {
@@ -1440,4 +1444,52 @@ func toGenerateUploadURLResponseDTO(s *storage.UploadResponse) *GenerateUploadUR
 		FormData:  UploadFormDataDTO(s.FormData),
 		Headers:   s.Headers,
 	}
+}
+
+// Profile
+
+func toProfileResponseDTO(p *models.UserProfile) *ProfileResponseDTO {
+	return &ProfileResponseDTO{
+		ID:                    p.ID,
+		UserID:                p.UserID,
+		Username:              p.Username,
+		Email:                 p.Email,
+		AcceptedOffersCount:   p.AcceptedOffersCount,
+		SubmittedReportsCount: p.SubmittedReportsCount,
+		CorrectReportsCount:   p.CorrectReportsCount,
+		RegisteredAt:          p.RegisteredAt,
+		LastActiveAt:          p.LastActiveAt,
+		AdditionalInfo:        p.AdditionalInfo,
+	}
+}
+
+func (s *SecretGuestService) GetMyProfile(ctx context.Context, userID uuid.UUID) (*ProfileResponseDTO, error) {
+	profile, err := s.repo.GetUserProfileByID(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user profile by id %s from repository: %w", userID.String(), err)
+	}
+
+	return toProfileResponseDTO(profile), nil
+}
+
+func (s *SecretGuestService) GetAllProfiles(ctx context.Context, dto GetAllProfilesRequestDTO) (*ProfilesResponse, error) {
+	offset := (dto.Page - 1) * dto.Limit
+
+	dbProfiles, total, err := s.repo.GetAllUserProfiles(ctx, dto.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all user profiles from repository: %w", err)
+	}
+
+	responseDTOs := make([]*ProfileResponseDTO, 0, len(dbProfiles))
+	for _, p := range dbProfiles {
+		responseDTOs = append(responseDTOs, toProfileResponseDTO(p))
+	}
+
+	response := &ProfilesResponse{
+		Profiles: responseDTOs,
+		Total:    total,
+		Page:     dto.Page,
+	}
+
+	return response, nil
 }
