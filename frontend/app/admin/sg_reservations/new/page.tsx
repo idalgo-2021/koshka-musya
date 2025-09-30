@@ -122,7 +122,7 @@ export default function SGReservationsPage() {
     if (watchedCheckin && watchedCheckout) {
       const checkinDate = new Date(watchedCheckin)
       const checkoutDate = new Date(watchedCheckout)
-      
+
       if (checkoutDate > checkinDate) {
         const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime())
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
@@ -173,7 +173,7 @@ export default function SGReservationsPage() {
           country: selectedListing.country,
           latitude: selectedListing.latitude,
           longitude: selectedListing.longitude,
-          main_picture: selectedListing.main_picture || 'g',
+          main_picture: selectedListing.main_picture || 'https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg',
           listing_type: {
             id: selectedListing.listing_type.id,
             name: selectedListing.listing_type.name,

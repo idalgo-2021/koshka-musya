@@ -1,4 +1,5 @@
 import { api } from '@/shared/api/http';
+import {toast} from "sonner";
 
 export interface User {
   id: string;
@@ -45,16 +46,17 @@ export const UsersApi = {
   },
 
   async changeUserRole(userId: string, data: ChangeUserRoleRequest): Promise<void> {
-    return api.patch<void>(`/staff/users/${userId}/change-role`, data as any, true);
+    toast.error('mock change user role' + userId + data.role_id)
+    // return api.patch<void>(`/staff/users/${userId}/change-role`, data as any, true);
   },
 
   async resetUserPassword(userId: string, data: ResetPasswordRequest): Promise<void> {
-    alert('mock reset user password' + userId + data.new_password)
+    toast.error('mock reset user password' + userId + data.new_password)
     // return api.post<void>(`/staff/users/${userId}/reset-password`, data as any, true);
   },
 
   async blockUser(userId: string, data: BlockUserRequest): Promise<void> {
-    alert('mock block user' + userId + data.blocked)
+    toast.error('mock block user' + userId + data.blocked)
     // return api.patch<void>(`/staff/users/${userId}/block`, data as any, true);
   },
 };
