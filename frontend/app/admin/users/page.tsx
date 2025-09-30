@@ -4,7 +4,8 @@ import * as React from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +26,7 @@ import { Tabs } from '@/components/ui/tabs'
 function UsersTab() {
   const [page, setPage] = React.useState(1)
   const limit = 12
-  const [isShow, setIsShow] = useToggleWithStorage(false, 'users-view-mode')
+  const [isShow, setIsShow] = useResponsiveToggle(false, 'users-view-mode')
   const [searchUsername, setSearchUsername] = React.useState('')
   const [searchRoleId, setSearchRoleId] = React.useState<number | undefined>(undefined)
 

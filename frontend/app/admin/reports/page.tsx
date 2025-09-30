@@ -10,7 +10,8 @@ import { Button } from '@/components/ui/button'
 import SelectRow from '@/components/ui/select-row'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import {ToggleButton, useToggleWithStorage} from "@/components/ToggleButton";
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import HotelImage from "@/components/HotelImage";
 import {reportStatusOptions} from "@/entities/reports/const";
 import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
@@ -20,7 +21,7 @@ export default function ReportsStaffPage() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(50)
   const [statusId, setStatusId] = React.useState<string>('')
-  const [isShow, setIsShow] = useToggleWithStorage(false);
+  const [isShow, setIsShow] = useResponsiveToggle(false, 'reports-view-mode');
 
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ['reports_staff', page, limit, statusId],

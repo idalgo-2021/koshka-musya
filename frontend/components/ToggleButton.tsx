@@ -28,31 +28,8 @@ function GetButton({
   );
 }
 
-const STORAGE_KEY = 'admin-view-mode';
-export function useToggleWithStorage(
-  defaultValue: boolean = false,
-  storageKey: string = STORAGE_KEY
-): [boolean, (value: boolean) => void] {
-  const [value, setValue] = React.useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const storedValue = localStorage.getItem(storageKey);
-      return storedValue !== null ? JSON.parse(storedValue) : defaultValue;
-    }
-    return defaultValue;
-  });
-
-  const setStoredValue = React.useCallback(
-    (newValue: boolean) => {
-      setValue(newValue);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(storageKey, JSON.stringify(newValue));
-      }
-    },
-    [storageKey]
-  );
-
-  return [value, setStoredValue];
-}
+// useToggleWithStorage has been replaced with useResponsiveToggle
+// Import useResponsiveToggle from '@/hooks/useResponsiveToggle' instead
 
 
 export function ToggleButton({
