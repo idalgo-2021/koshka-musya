@@ -2,7 +2,10 @@
 
 import Image from 'next/image';
 
-export default function NoAssignmentsCard() {
+export default function NoAssignmentsCard({
+  title = 'Нет предложений',
+  descr='Предложения не созданы',
+}) {
 
   return (
     <div className="bg-white rounded-3xl shadow-2xl border-0 overflow-hidden hover:shadow-3xl transition-all duration-300 hover:scale-[1.02] group">
@@ -11,8 +14,8 @@ export default function NoAssignmentsCard() {
         <div className="h-40 relative overflow-hidden bg-gradient-to-br from-accentgreen/20 via-accenttext/10 to-accentgreen/30">
           {/* Animated background pattern */}
           <div className="absolute inset-0 bg-gradient-to-br from-accenttext/5 via-transparent to-accentgreen/10 animate-pulse"></div>
-          
-          
+
+
           {/* Main icon */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative">
@@ -38,16 +41,16 @@ export default function NoAssignmentsCard() {
         <div className="p-8 space-y-6">
           {/* Main Message */}
           <div className="text-center space-y-4">
-            <h3 className="text-xl font-bold text-gray-900 whitespace-nowrap text-center">У Вас нет доступных предложений</h3>
+            <h3 className="text-xl font-bold text-gray-900 whitespace-nowrap text-center">{title}</h3>
             <p className="text-sm text-gray-600 leading-relaxed">
-              Предложения появятся в ближайшее время
+              {descr}
             </p>
           </div>
 
 
           {/* Action Buttons */}
           <div className="flex justify-center">
-            <button 
+            <button
               onClick={() => window.location.reload()}
               className="bg-gradient-to-r from-accenttext to-accenttext/80 hover:from-accenttext/90 hover:to-accenttext/70 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl"
             >

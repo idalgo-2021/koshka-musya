@@ -20,6 +20,8 @@ import DashboardHeader from "@/components/DashboardHeader";
 import MainHeading from "@/components/MainHeading";
 
 import { calculateReportProgress } from "@/lib/report-progress";
+import {tree} from "next/dist/build/templates/app-page";
+import {AssignmentsResponse} from "@/entities/assignments/types";
 
 
 interface AppError {
@@ -31,7 +33,7 @@ interface AppError {
 
 function DashboardContent() {
   const { user, isAuthenticated, loading, logout } = useAuth();
-  const { assignments, loading: assignmentsLoading, error: assignmentsError, retry, acceptAssignment, declineAssignment, fetchAssignments } = useAssignments();
+  const { assignments, loading: assignmentsLoading, setError, setLoading, error: assignmentsError, retry, acceptAssignment, declineAssignment, fetchAssignments, setAssignments } = useAssignments();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [acceptedAssignment, setAcceptedAssignment] = useState<string | null>(null);
@@ -48,8 +50,19 @@ function DashboardContent() {
   const [selectedListingType, setSelectedListingType] = useState<string>('');
 
   // Обработчик изменения типа объекта
-  const handleListingTypeChange = (type: string) => {
-    setSelectedListingType(type);
+  const handleListingTypeChange = async (newTypeId: number | undefined) => {
+    try {
+      setSelectedListingType(newTypeId)
+      setLoading(true)
+      // debugger;
+      const offeredResponse: AssignmentsResponse = await AssignmentsApi.getAvailableAssignments(1, 20, newTypeId);
+      setAssignments(offeredResponse.assignments);
+      // debugger;
+      setLoading(false)
+    } catch (error) {
+      setLoading(false)
+
+    }
     setCurrentAssignmentIndex(0); // Сбрасываем индекс при смене фильтра
   };
 
@@ -67,6 +80,8 @@ function DashboardContent() {
   const displayAssignments = assignments.filter(assignment =>
     assignment.status.slug === 'offered'
   );
+
+  console.log({displayAssignments });
 
   // Проверяем, есть ли активные задания
   const hasActiveAssignments = acceptedAssignments.length > 0 || takenAssignments.length > 0;
@@ -214,7 +229,7 @@ function DashboardContent() {
 
       if (report) {
         console.log('Navigating to report:', report.id);
-        
+
         // Проверяем статус отчета (generating и draft считаем рабочими статусами)
         if (report.status?.slug === 'draft' || report.status?.slug === 'generating') {
           // Для новых отчетов (без checklist_schema) используем start страницу
@@ -236,7 +251,7 @@ function DashboardContent() {
     } catch (error) {
       console.error('Error finding report:', error);
       console.error('Error details:', error);
-      
+
       // Показываем более детальную ошибку
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       if (errorMessage.includes('500') || errorMessage.includes('Internal server error')) {
@@ -287,7 +302,7 @@ function DashboardContent() {
     console.log("=== HANDLE ACCEPT ASSIGNMENT ===");
     console.log("Assignment ID:", assignmentId);
     console.log("Display assignments:", displayAssignments);
-    
+
     const current = displayAssignments.find(a => a.id === assignmentId);
     console.log("Current assignment:", current);
     console.log("Current assignment reporter:", current?.reporter);
@@ -296,16 +311,16 @@ function DashboardContent() {
     console.log("Reporter ID === null:", current?.reporter?.id === null);
     console.log("Reporter ID === undefined:", current?.reporter?.id === undefined);
     console.log("Reporter ID === '00000000-0000-0000-0000-000000000000':", current?.reporter?.id === '00000000-0000-0000-0000-000000000000');
-    
+
     // Проверяем, взято ли задание текущим пользователем
-    const isAssignedToCurrentUser = current?.reporter?.id && 
-                                   current.reporter.id !== null && 
-                                   current.reporter.id !== undefined && 
+    const isAssignedToCurrentUser = current?.reporter?.id &&
+                                   current.reporter.id !== null &&
+                                   current.reporter.id !== undefined &&
                                    current.reporter.id !== '00000000-0000-0000-0000-000000000000' &&
                                    current.reporter.id === user?.id;
-    
+
     console.log("Is assigned to current user:", isAssignedToCurrentUser);
-    
+
     if (isAssignedToCurrentUser) {
       // Если задание уже взято пользователем - показываем Памятку Агента
       console.log("Assignment is taken by user, showing agent instructions");
@@ -346,7 +361,7 @@ function DashboardContent() {
   const handleTakeAssignment = async (assignmentId: string) => {
     console.log("=== HANDLE TAKE ASSIGNMENT ===");
     console.log("Assignment ID:", assignmentId);
-    
+
     try {
       // Используем API для взятия предложения
       await AssignmentsApi.takeFreeAssignment(assignmentId);
@@ -386,7 +401,7 @@ function DashboardContent() {
         setShowInstructions(false);
         setFromReportCard(false);
         setReportSearchLoading(false);
-        
+
         // Проверяем, есть ли checklist_schema для определения правильного маршрута
         if (!existingReport.checklist_schema || Object.keys(existingReport.checklist_schema).length === 0) {
           console.log('Existing report without schema, using start page');
@@ -402,7 +417,7 @@ function DashboardContent() {
       console.log("Assignment ID:", assignmentId);
       await acceptAssignment(assignmentId);
       console.log("acceptAssignment completed successfully");
-      
+
       // Обновляем список заданий после принятия
       await fetchAssignments();
 
@@ -498,7 +513,7 @@ function DashboardContent() {
 
       // Обрабатываем разные типы ошибок
       const errorMessage = (error as AppError)?.message || 'Неизвестная ошибка';
-      
+
       if ((error as AppError)?.status === 409) {
         // Специальная обработка для ошибки времени
         if (errorMessage.includes('24 hours before check-in')) {
@@ -531,7 +546,7 @@ function DashboardContent() {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return <p>sdfasf</p>;
   }
 
   return (
@@ -631,7 +646,7 @@ function DashboardContent() {
               )}
 
               {/* Assignments from DB */}
-              {!assignmentsLoading && displayAssignments.length > 0 && (
+              {!assignmentsLoading && displayAssignments.length >= 0 && (
                 <AssignmentCarousel
                   assignments={displayAssignments}
                   currentIndex={currentAssignmentIndex}
@@ -651,6 +666,10 @@ function DashboardContent() {
                   onListingTypeChange={handleListingTypeChange}
                 />
               )}
+
+              {/*{displayAssignments.length === 0 && (*/}
+              {/*  <p>empty state</p>*/}
+              {/*)}*/}
 
               {/* Loading State */}
               {assignmentsLoading && (
@@ -739,9 +758,13 @@ function DashboardContent() {
                 </div>
               )}
 
+              {/*{displayAssignments.length === 0 }*/}
               {/* No Tasks Message */}
-              {!assignmentsLoading && displayAssignments.length === 0 && acceptedAssignments.length === 0 && takenAssignments.length === 0 && !showInstructions && !acceptedAssignment && !storedHotelName && (
-                <NoAssignmentsCard />
+              {!assignmentsLoading && displayAssignments.length === 0&&  acceptedAssignments.length === 0 && takenAssignments.length === 0 && !showInstructions && !acceptedAssignment && !storedHotelName && (
+                <NoAssignmentsCard
+                  title={displayAssignments.length === 0 ? 'Не найдены предложения' : undefined}
+                  descr={displayAssignments.length === 0 ? 'Попробуйте другой тип объекта' : undefined}
+                />
               )}
             </div>
           )}

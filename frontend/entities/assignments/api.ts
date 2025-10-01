@@ -53,11 +53,14 @@ export const AssignmentsApi = {
   },
 
   // Get all available assignments (free assignments that can be taken)
-  async getAvailableAssignments(page = 1, limit = 50): Promise<AssignmentsResponse> {
+  async getAvailableAssignments(page = 1, limit = 50, listingTypeId?: number): Promise<AssignmentsResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
-      limit: limit.toString()
+      limit: limit.toString(),
     });
+    if (listingTypeId) {
+      params.append('listing_type_id', listingTypeId.toString())
+    }
     return api.get<AssignmentsResponse>(`/assignments?${params.toString()}`, true);
   },
 
