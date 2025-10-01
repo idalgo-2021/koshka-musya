@@ -84,6 +84,14 @@ export function useAssignments() {
         console.log("=== MY ASSIGNMENTS ===");
         console.log("My assignments:", myAssignmentsResponse.assignments);
         console.log("My assignments count:", myAssignmentsResponse.assignments.length);
+        if (myAssignmentsResponse.assignments.length > 0) {
+          console.log("First my assignment details:", {
+            id: myAssignmentsResponse.assignments[0].id,
+            status: myAssignmentsResponse.assignments[0].status,
+            reporter: myAssignmentsResponse.assignments[0].reporter,
+            reporter_id: myAssignmentsResponse.assignments[0].reporter?.id
+          });
+        }
         myAssignments = myAssignmentsResponse.assignments;
       } catch (myAssignmentsErr) {
         console.log("No my assignments or error:", myAssignmentsErr);
@@ -209,25 +217,26 @@ export function useAssignments() {
         throw new Error("Assignment not found");
       }
       
-      // Если assignment свободный (нет reporter_id или нулевой UUID), сначала "берем" его
+      // Если assignment свободный (нет reporter_id или нулевой UUID), только "берем" его
       const isUnassigned = !assignment.reporter?.id || assignment.reporter?.id === '00000000-0000-0000-0000-000000000000';
       if (isUnassigned) {
-        console.log("Assignment is free, taking it first...");
+        console.log("Assignment is free, taking it (no need to accept)...");
         await AssignmentsApi.takeFreeAssignment(id);
         console.log("Assignment taken successfully");
+        // Для свободных заданий не нужно вызывать acceptAssignment
+        console.log("Fetching updated assignments...");
+        await fetchAssignments();
+        console.log("fetchAssignments completed after takeFreeAssignment");
+        return;
       }
       
-      // Теперь принимаем assignment
-      console.log("Making API call to accept assignment...");
+      // Если assignment уже назначен пользователю, принимаем его
+      console.log("Assignment is assigned, accepting it...");
       const result = await AssignmentsApi.acceptAssignment(id);
       console.log("AssignmentsApi.acceptAssignment completed successfully:", result);
       
-      // Обновляем список assignments
-      console.log("Fetching updated assignments...");
-      await fetchAssignments();
-      console.log("fetchAssignments completed after acceptAssignment");
       console.log("Assignment status should now be 'accepted' (2) in DB");
-      console.log("Assignments list should be updated in UI");
+      console.log("Skipping fetchAssignments to avoid intermediate 'No offers' state");
     } catch (err) {
       console.log("Error in acceptAssignment:", err);
       console.log("Error type:", typeof err);
@@ -284,17 +293,26 @@ export function useAssignments() {
       saveDeclinedAssignments(newDeclinedSet);
       console.log("Added assignment to declined list:", id);
       
-      // Не нужно вызывать fetchAssignments() - задание уже скрыто локально
-      console.log("Assignment hidden locally, no need to refetch");
+      console.log("Fetching updated assignments...");
+      await fetchAssignments();
+      console.log("fetchAssignments completed after declineAssignment");
     } catch (err) {
       console.log("Error in declineAssignment:", err);
       console.log("Error type:", typeof err);
       console.log("Error message:", err instanceof Error ? err.message : String(err));
       
-      // Не показываем ошибку для 409 - это нормальное поведение
-      if (err instanceof Error && (err.message.includes('409') || err.message.includes('Assignment can not be declined'))) {
-        console.log("Throwing 409 error without handling:", err.message);
-        throw err;
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      
+      if (err instanceof Error && (
+        errorMessage.includes('409') || 
+        errorMessage.includes('Assignment can not be declined')
+      )) {
+        console.log("Assignment cannot be declined, hiding locally instead");
+        // Если задание нельзя отклонить через API, скрываем его локально
+        const newDeclinedSet = new Set([...declinedAssignments, id]);
+        setDeclinedAssignments(newDeclinedSet);
+        saveDeclinedAssignments(newDeclinedSet);
+        return;
       }
       
       console.log("Handling error with handleError");
@@ -303,7 +321,7 @@ export function useAssignments() {
     }
     
     console.log("=== END DECLINE ASSIGNMENT ===");
-  }, [handleError, assignments, declinedAssignments, saveDeclinedAssignments]);
+  }, [assignments, declinedAssignments, fetchAssignments, handleError, saveDeclinedAssignments]);
 
   const retry = React.useCallback(() => {
     setRetryCount(0);

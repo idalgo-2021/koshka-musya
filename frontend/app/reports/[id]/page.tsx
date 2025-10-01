@@ -442,7 +442,7 @@ export default function ReportPage() {
       try {
         setSaving(true);
 
-        // Обновляем схему с ответами пользователя (не генерируем новую)
+        // Обновляем схему с ответами пользователя (сохраняем существующие данные)
         const updatedSchema = {
           ...checklistSchema,
           sections: checklistSchema.sections.map((sec) => ({
@@ -452,12 +452,17 @@ export default function ReportPage() {
               const resultValue = getItemValueById(it, key)
               const commentValue = parseCommentValue(it, resultValue, key);
 
+              // Сохраняем существующие данные answer, обновляем только измененные поля
+              const existingAnswer = it.answer || {};
+              const newMedia = (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type }));
+              
               return {
                 ...it,
                 answer: {
-                  result: resultValue,
-                  comment: commentValue,
-                  media: (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type })),
+                  ...existingAnswer,
+                  result: resultValue !== undefined ? resultValue : existingAnswer.result,
+                  comment: commentValue !== undefined ? commentValue : existingAnswer.comment,
+                  media: newMedia.length > 0 ? newMedia : (existingAnswer.media || []),
                 },
               };
             }),
@@ -545,7 +550,7 @@ export default function ReportPage() {
         return;
       }
 
-      // Обновляем схему с ответами пользователя (не генерируем новую)
+      // Обновляем схему с ответами пользователя (сохраняем существующие данные)
       const updatedSchema = {
         ...checklistSchema,
         sections: checklistSchema.sections.map((sec) => ({
@@ -555,12 +560,17 @@ export default function ReportPage() {
             const resultValue = getItemValueById(it, key)
             const commentValue = parseCommentValue(it, resultValue, key);
 
+            // Сохраняем существующие данные answer, обновляем только измененные поля
+            const existingAnswer = it.answer || {};
+            const newMedia = (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type }));
+            
             return {
               ...it,
               answer: {
-                result: resultValue,
-                comment: commentValue,
-                media: (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type })),
+                ...existingAnswer,
+                result: resultValue !== undefined ? resultValue : existingAnswer.result,
+                comment: commentValue !== undefined ? commentValue : existingAnswer.comment,
+                media: newMedia.length > 0 ? newMedia : (existingAnswer.media || []),
               },
             };
           }),

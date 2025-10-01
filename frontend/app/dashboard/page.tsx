@@ -21,17 +21,6 @@ import MainHeading from "@/components/MainHeading";
 
 import { calculateReportProgress } from "@/lib/report-progress";
 
-// Функция для проверки, можно ли принять задание (в течение 24 часов до заселения)
-const canAcceptAssignment = (assignment: any): boolean => {
-  if (!assignment.expires_at) return true;
-  
-  const expiresAt = new Date(assignment.expires_at);
-  const now = new Date();
-  const timeDiff = expiresAt.getTime() - now.getTime();
-  const hoursDiff = timeDiff / (1000 * 60 * 60);
-  
-  return hoursDiff <= 24 && hoursDiff > 0;
-};
 
 interface AppError {
   message?: string;
@@ -49,6 +38,7 @@ function DashboardContent() {
   const [storedHotelName, setStoredHotelName] = useState<string | null>(null);
   const [showInstructions, setShowInstructions] = useState<boolean>(false);
   const [startLoading, setStartLoading] = useState(false);
+  const [reportSearchLoading, setReportSearchLoading] = useState(false);
   const [fromReportCard, setFromReportCard] = useState<boolean>(false);
   const [reportId, setReportId] = useState<string | null>(null);
   const [hotelDetails, setHotelDetails] = useState<Record<string, HotelDetails>>({});
@@ -81,6 +71,7 @@ function DashboardContent() {
     statusId: a.status.id,
     statusName: a.status.name
   })));
+  console.log("Current user ID for AssignmentCarousel:", user?.id);
   console.log("=== END DASHBOARD DEBUG ===");
 
   // Обработка параметров showFAQ и reportId из URL
@@ -276,25 +267,44 @@ function DashboardContent() {
   };
 
   const handleAcceptAssignment = async (assignmentId: string) => {
+    console.log("=== HANDLE ACCEPT ASSIGNMENT ===");
+    console.log("Assignment ID:", assignmentId);
+    console.log("Display assignments:", displayAssignments);
+    
     const current = displayAssignments.find(a => a.id === assignmentId);
+    console.log("Current assignment:", current);
+    console.log("Current assignment reporter:", current?.reporter);
+    console.log("Current assignment reporter ID:", current?.reporter?.id);
+    console.log("Reporter ID type:", typeof current?.reporter?.id);
+    console.log("Reporter ID === null:", current?.reporter?.id === null);
+    console.log("Reporter ID === undefined:", current?.reporter?.id === undefined);
+    console.log("Reporter ID === '00000000-0000-0000-0000-000000000000':", current?.reporter?.id === '00000000-0000-0000-0000-000000000000');
     
-    // Проверяем, можно ли принять задание
-    if (current && !canAcceptAssignment(current)) {
-      toast.error('Задание можно принять только в течение 24 часов до заселения');
-      return;
-    }
+    // Проверяем, взято ли задание текущим пользователем
+    const isAssignedToCurrentUser = current?.reporter?.id && 
+                                   current.reporter.id !== null && 
+                                   current.reporter.id !== undefined && 
+                                   current.reporter.id !== '00000000-0000-0000-0000-000000000000' &&
+                                   current.reporter.id === user?.id;
     
-    // Не принимаем задание сразу, только показываем FAQ
-    setAcceptedAssignment(assignmentId);
-    setShowInstructions(true);
-    toast.success("Переходим к памятке...");
-
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    if (current?.listing?.title) {
-      setStoredHotelName(current.listing.title);
+    console.log("Is assigned to current user:", isAssignedToCurrentUser);
+    
+    if (isAssignedToCurrentUser) {
+      // Если задание уже взято пользователем - показываем Памятку Агента
+      console.log("Assignment is taken by user, showing agent instructions");
+      setAcceptedAssignment(assignmentId);
+      setShowInstructions(true);
+    } else {
+      // Если задание в общем пуле - просто берем его через API
+      console.log("Assignment is in general pool, taking it via API");
+      try {
+        await acceptAssignment(assignmentId);
+        toast.success("Задание успешно взято!");
+        await fetchAssignments();
+      } catch (error) {
+        console.error('Error taking assignment:', error);
+        toast.error('Ошибка при взятии задания');
+      }
     }
   };
 
@@ -343,6 +353,7 @@ function DashboardContent() {
         setAcceptedAssignment(null);
         setShowInstructions(false);
         setFromReportCard(false);
+        setReportSearchLoading(false);
         
         // Проверяем, есть ли checklist_schema для определения правильного маршрута
         if (!existingReport.checklist_schema || Object.keys(existingReport.checklist_schema).length === 0) {
@@ -360,16 +371,10 @@ function DashboardContent() {
       await acceptAssignment(assignmentId);
       console.log("acceptAssignment completed successfully");
 
-      // Обновляем список заданий после принятия
-      console.log("Assignment accepted, status should be updated in DB");
-      console.log("Waiting for assignments list to update...");
-
       toast.success("Задание принято! Переходим к заполнению отчета...");
 
-      // Сбрасываем состояние перед переходом
-      setAcceptedAssignment(null);
-      setShowInstructions(false);
-      setFromReportCard(false);
+      // Показываем загрузку поиска отчета
+      setReportSearchLoading(true);
 
       // После принятия задания, ждем немного и ищем отчет
       setTimeout(async () => {
@@ -381,6 +386,11 @@ function DashboardContent() {
 
           if (report) {
             console.log("Report found, redirecting to:", report.id);
+            // Сбрасываем состояние перед переходом
+            setAcceptedAssignment(null);
+            setShowInstructions(false);
+            setFromReportCard(false);
+            setReportSearchLoading(false);
             // Для нового отчета всегда используем start страницу (карточка "Начать заполнение")
             router.push(`/reports/${report.id}/start`);
           } else {
@@ -394,10 +404,16 @@ function DashboardContent() {
 
                 if (reportRetry) {
                   console.log("Report found on retry, redirecting to:", reportRetry.id);
+                  // Сбрасываем состояние перед переходом
+                  setAcceptedAssignment(null);
+                  setShowInstructions(false);
+                  setFromReportCard(false);
+                  setReportSearchLoading(false);
                   // Для нового отчета всегда используем start страницу (карточка "Начать заполнение")
                   router.push(`/reports/${reportRetry.id}/start`);
                 } else {
                   console.log("Report still not found after retry");
+                  setReportSearchLoading(false);
                   toast.error('Отчёт не найден. Обратитесь к администратору.');
                 }
               } catch (error) {
@@ -408,6 +424,7 @@ function DashboardContent() {
           }
         } catch (error) {
           console.error('Error finding report:', error);
+          setReportSearchLoading(false);
           toast.error('Ошибка при поиске отчёта');
         }
       }, 1000);
@@ -434,6 +451,8 @@ function DashboardContent() {
             // Сбрасываем состояние перед переходом
             setAcceptedAssignment(null);
             setShowInstructions(false);
+            setFromReportCard(false);
+            setReportSearchLoading(false);
             router.push(`/reports/${existingReport.id}/start`);
             return;
           }
@@ -461,6 +480,7 @@ function DashboardContent() {
       setAcceptedAssignment(null);
       setShowInstructions(false);
       setFromReportCard(false);
+      setReportSearchLoading(false);
     }
   };
 
@@ -486,7 +506,24 @@ function DashboardContent() {
 
         {/* Main Content - Hotel Check Proposal */}
         <main className="min-h-screen">
-          {acceptedAssignment ? (
+          {reportSearchLoading ? (
+            <div className="min-h-screen flex items-center justify-center bg-accentgreen">
+              <div className="text-center max-w-md mx-auto px-6">
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-accenttext border-t-transparent mx-auto mb-6"></div>
+                <h2 className="text-xl font-bold text-accenttext mb-3">Создаем отчет...</h2>
+                <p className="text-accenttext/70 text-sm leading-relaxed">
+                  Пожалуйста, подождите. Мы создаем отчет для вашего задания и подготавливаем все необходимое для заполнения.
+                </p>
+                <div className="mt-6 bg-white/20 rounded-2xl p-4">
+                  <div className="flex items-center justify-center space-x-2 text-accenttext/80">
+                    <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : acceptedAssignment ? (
             <AssignmentProcess
               assignmentId={acceptedAssignment}
               hotelName={
@@ -499,6 +536,7 @@ function DashboardContent() {
                 if (startLoading) return;
                 setStartLoading(true);
                 try {
+                  // Сразу переходим к созданию отчета, минуя промежуточные страницы
                   await handleConfirmAcceptance(acceptedAssignment);
                 } finally {
                   setStartLoading(false);
@@ -517,7 +555,8 @@ function DashboardContent() {
                 if (startLoading) return;
                 setStartLoading(true);
                 try {
-                  await handleConfirmAcceptance(acceptedAssignment);
+                  // Переходим к отчету без изменения статуса задания
+                  router.push(`/reports?assignment=${acceptedAssignment}`);
                 } finally {
                   setStartLoading(false);
                 }
@@ -570,6 +609,7 @@ function DashboardContent() {
                   }}
                   hotelDetails={hotelDetails}
                   hotelLoading={hotelLoading}
+                  currentUserId={user?.id}
                 />
               )}
 
