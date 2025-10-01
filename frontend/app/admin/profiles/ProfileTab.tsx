@@ -106,7 +106,7 @@ export default function ProfileTab() {
                   <th className="px-3 py-2 text-left font-medium">Пользователь</th>
                   <th className="px-3 py-2 text-left font-medium">Email</th>
                   <th className="px-3 py-2 text-left font-medium">Регистрация</th>
-                  <th className="px-3 py-2 text-left font-medium">Последняя активность</th>
+                  {/*<th className="px-3 py-2 text-left font-medium">Последняя активность</th>*/}
                   <th className="px-3 py-2 text-left font-medium">Статистика</th>
                   <th className="px-3 py-2 text-left font-medium">Статус</th>
                 </tr>
@@ -130,11 +130,11 @@ export default function ProfileTab() {
                           {formatDate(profile.registered_at)}
                         </div>
                       </td>
-                      <td className="px-3 py-2">
-                        <div className="text-xs">
-                          {formatDate(profile.last_active_at)}
-                        </div>
-                      </td>
+                      {/*<td className="px-3 py-2">*/}
+                      {/*  <div className="text-xs">*/}
+                      {/*    {formatDate(profile.last_active_at)}*/}
+                      {/*  </div>*/}
+                      {/*</td>*/}
                       <td className="px-3 py-2">
                         <div className="text-xs space-y-1">
                           <div>Принято: <span className="font-medium text-green-600">{profile.accepted_offers_count}</span></div>
