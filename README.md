@@ -34,6 +34,12 @@ make up
 # открыть http://localhost:3000 - фронтенд
 # открыть http://localhost:8000 - бэкенд
 # открыть http://localhost:8000/swagger/index.html - swagger-документация API
+
+
+# Для остановки проекта и удаления контейнеров
+make down
+make prune
+make clean
 ```
 
 ## Зависимости и переменные окружения

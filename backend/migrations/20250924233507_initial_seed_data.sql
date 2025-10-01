@@ -139,24 +139,41 @@ ON CONFLICT (user_id) DO NOTHING;
 
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ listings (ОБЪЕКТЫ РАЗМЕЩЕНИЯ) ===========
 
+-- INSERT INTO listings (
+--     title, description, main_picture, listing_type_id, address, city, country, latitude, longitude, code
+-- ) VALUES
+-- -- --- Отели (listing_type_id = 1) ---
+-- ('Гранд Отель "Центральный"', 'Роскошный отель в самом сердце города с видом на главную площадь.', 'https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg', 1, 'ул. Тверская, д. 1', 'Москва', 'Россия', 55.7558, 37.6176, 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'),
+-- ('Приморская Жемчужина', 'Современный отель на первой береговой линии с собственным пляжем и бассейном.', 'https://cdn.worldota.net/t/1200x616/extranet/da/58/da58a1d236fea6479dd4eb4570ebb8b7f1e1ce88.jpeg', 1, 'ул. Набережная, д. 15', 'Сочи', 'Россия', 43.5855, 39.7231, gen_random_uuid()),
+-- ('Бутик-отель "Старый Город"', 'Уютный отель в историческом здании, каждый номер с уникальным дизайном.', 'https://cdn.worldota.net/t/1200x616/extranet/e4/f4/e4f479e73bb426260123ed7ad9f472ac3f8954bb.jpeg', 1, 'ул. Невский проспект, д. 45', 'Санкт-Петербург', 'Россия', 59.9343, 30.3351, gen_random_uuid()),
+-- -- --- Апартаменты (listing_type_id = 2) ---
+-- ('Лофт на Красном Октябре', 'Стильные апартаменты с панорамными окнами в модном районе.', 'https://cdn.worldota.net/t/1200x616/extranet/1f/e9/1fe9eba4d88422e089f15920d90be7ed660aaba9.jpeg', 2, 'Берсеневская наб., д. 6, стр. 3', 'Москва', 'Россия', 55.7408, 37.6114, gen_random_uuid()),
+-- ('Квартира у моря', 'Светлая двухкомнатная квартира с балконом и видом на море, в 5 минутах от пляжа.', 'https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg', 2, 'ул. Ленина, д. 112', 'Адлер', 'Россия', 43.4299, 39.9234, gen_random_uuid()),
+-- -- --- Хостелы (listing_type_id = 3) ---
+-- ('Хостел "Друзья"', 'Веселый и современный хостел с общей кухней и игровой зоной.', 'https://cdn.worldota.net/t/1200x616/extranet/2e/8c/2e8cfffa97a4f7a39db1f4e57491f60f7a804a35.JPEG', 3, 'ул. Лиговский проспект, д. 50', 'Санкт-Петербург', 'Россия', 59.9256, 30.3587, gen_random_uuid()),
+-- ('Горный Приют', 'Хостел для любителей активного отдыха у подножия гор.', 'https://cdn.worldota.net/t/1200x616/extranet/63/d2/63d241586793115d87818109ac43123d002fa4d8.JPEG', 3, 'пос. Красная Поляна, ул. Защитников Кавказа, д. 77', 'Красная Поляна', 'Россия', 43.6834, 40.2045, gen_random_uuid()),
+-- -- --- Гостевые дома (listing_type_id = 4) ---
+-- ('Уютный дворик', 'Семейный гостевой дом с садом и зоной для барбекю.', 'https://cdn.worldota.net/t/1200x616/extranet/b4/5e/b45efcf3cfcb1c6ef47cae6c3427a97e18a39d5c.jpeg', 4, 'ул. Виноградная, д. 25', 'Суздаль', 'Россия', 56.4168, 40.4499, gen_random_uuid()),
+-- ('Дом у озера', 'Гостевой дом на берегу живописного озера с возможностью рыбалки и проката лодок.', 'https://cdn.worldota.net/t/1200x616/extranet/7c/16/7c16d355fc7c18098445cb227620b1ff29ac1d37.jpeg', 4, 'д. Селигер, ул. Озерная, д. 1', 'Осташков', 'Россия', 57.1481, 33.1039, gen_random_uuid()),
+-- ('Альпийская Вилла', 'Шале в альпийском стиле с сауной и каминным залом.', 'https://cdn.worldota.net/t/1200x616/extranet/2c/f1/2cf13650103ed67ba82ebbbf4953ba30ceac6b70.JPEG', 4, 'ул. Горная, д. 5', 'Красная Поляна', 'Россия', 43.6800, 40.2050, gen_random_uuid());
+
 INSERT INTO listings (
     title, description, main_picture, listing_type_id, address, city, country, latitude, longitude, code
 ) VALUES
 -- --- Отели (listing_type_id = 1) ---
 ('Гранд Отель "Центральный"', 'Роскошный отель в самом сердце города с видом на главную площадь.', 'https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg', 1, 'ул. Тверская, д. 1', 'Москва', 'Россия', 55.7558, 37.6176, 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'),
-('Приморская Жемчужина', 'Современный отель на первой береговой линии с собственным пляжем и бассейном.', 'https://cdn.worldota.net/t/1200x616/extranet/da/58/da58a1d236fea6479dd4eb4570ebb8b7f1e1ce88.jpeg', 1, 'ул. Набережная, д. 15', 'Сочи', 'Россия', 43.5855, 39.7231, gen_random_uuid()),
-('Бутик-отель "Старый Город"', 'Уютный отель в историческом здании, каждый номер с уникальным дизайном.', 'https://cdn.worldota.net/t/1200x616/extranet/e4/f4/e4f479e73bb426260123ed7ad9f472ac3f8954bb.jpeg', 1, 'ул. Невский проспект, д. 45', 'Санкт-Петербург', 'Россия', 59.9343, 30.3351, gen_random_uuid()),
+('Приморская Жемчужина', 'Современный отель на первой береговой линии с собственным пляжем и бассейном.', 'https://cdn.worldota.net/t/1200x616/extranet/da/58/da58a1d236fea6479dd4eb4570ebb8b7f1e1ce88.jpeg', 1, 'ул. Набережная, д. 15', 'Сочи', 'Россия', 43.5855, 39.7231, 'da5811d2-36e4-4d19-9b23-1234567890ab'),
+('Бутик-отель "Старый Город"', 'Уютный отель в историческом здании, каждый номер с уникальным дизайном.', 'https://cdn.worldota.net/t/1200x616/extranet/e4/f4/e4f479e73bb426260123ed7ad9f472ac3f8954bb.jpeg', 1, 'ул. Невский проспект, д. 45', 'Санкт-Петербург', 'Россия', 59.9343, 30.3351, 'e4f479e7-3bb4-4262-6012-3ed7ad9f472a'),
 -- --- Апартаменты (listing_type_id = 2) ---
-('Лофт на Красном Октябре', 'Стильные апартаменты с панорамными окнами в модном районе.', 'https://cdn.worldota.net/t/1200x616/extranet/1f/e9/1fe9eba4d88422e089f15920d90be7ed660aaba9.jpeg', 2, 'Берсеневская наб., д. 6, стр. 3', 'Москва', 'Россия', 55.7408, 37.6114, gen_random_uuid()),
-('Квартира у моря', 'Светлая двухкомнатная квартира с балконом и видом на море, в 5 минутах от пляжа.', 'https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg', 2, 'ул. Ленина, д. 112', 'Адлер', 'Россия', 43.4299, 39.9234, gen_random_uuid()),
+('Лофт на Красном Октябре', 'Стильные апартаменты с панорамными окнами в модном районе.', 'https://cdn.worldota.net/t/1200x616/extranet/1f/e9/1fe9eba4d88422e089f15920d90be7ed660aaba9.jpeg', 2, 'Берсеневская наб., д. 6, стр. 3', 'Москва', 'Россия', 55.7408, 37.6114, '1fe9eba4-d884-22e0-891f-15920d90be7e'),
+('Квартира у моря', 'Светлая двухкомнатная квартира с балконом и видом на море, в 5 минутах от пляжа.', 'https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg', 2, 'ул. Ленина, д. 112', 'Адлер', 'Россия', 43.4299, 39.9234, 'c681b19c-8d17-548d-22f3-80e7266ecc36'),
 -- --- Хостелы (listing_type_id = 3) ---
-('Хостел "Друзья"', 'Веселый и современный хостел с общей кухней и игровой зоной.', 'https://cdn.worldota.net/t/1200x616/extranet/2e/8c/2e8cfffa97a4f7a39db1f4e57491f60f7a804a35.JPEG', 3, 'ул. Лиговский проспект, д. 50', 'Санкт-Петербург', 'Россия', 59.9256, 30.3587, gen_random_uuid()),
-('Горный Приют', 'Хостел для любителей активного отдыха у подножия гор.', 'https://cdn.worldota.net/t/1200x616/extranet/63/d2/63d241586793115d87818109ac43123d002fa4d8.JPEG', 3, 'пос. Красная Поляна, ул. Защитников Кавказа, д. 77', 'Красная Поляна', 'Россия', 43.6834, 40.2045, gen_random_uuid()),
+('Хостел "Друзья"', 'Веселый и современный хостел с общей кухней и игровой зоной.', 'https://cdn.worldota.net/t/1200x616/extranet/2e/8c/2e8cfffa97a4f7a39db1f4e57491f60f7a804a35.JPEG', 3, 'ул. Лиговский проспект, д. 50', 'Санкт-Петербург', 'Россия', 59.9256, 30.3587, '2e8cfffa-97a4-7a39-db1f-4e57491f60f7'),
+('Горный Приют', 'Хостел для любителей активного отдыха у подножия гор.', 'https://cdn.worldota.net/t/1200x616/extranet/63/d2/63d241586793115d87818109ac43123d002fa4d8.JPEG', 3, 'пос. Красная Поляна, ул. Защитников Кавказа, д. 77', 'Красная Поляна', 'Россия', 43.6834, 40.2045, '63d24158-6793-115d-8781-8109ac43123d'),
 -- --- Гостевые дома (listing_type_id = 4) ---
-('Уютный дворик', 'Семейный гостевой дом с садом и зоной для барбекю.', 'https://cdn.worldota.net/t/1200x616/extranet/b4/5e/b45efcf3cfcb1c6ef47cae6c3427a97e18a39d5c.jpeg', 4, 'ул. Виноградная, д. 25', 'Суздаль', 'Россия', 56.4168, 40.4499, gen_random_uuid()),
-('Дом у озера', 'Гостевой дом на берегу живописного озера с возможностью рыбалки и проката лодок.', 'https://cdn.worldota.net/t/1200x616/extranet/7c/16/7c16d355fc7c18098445cb227620b1ff29ac1d37.jpeg', 4, 'д. Селигер, ул. Озерная, д. 1', 'Осташков', 'Россия', 57.1481, 33.1039, gen_random_uuid()),
-('Альпийская Вилла', 'Шале в альпийском стиле с сауной и каминным залом.', 'https://cdn.worldota.net/t/1200x616/extranet/2c/f1/2cf13650103ed67ba82ebbbf4953ba30ceac6b70.JPEG', 4, 'ул. Горная, д. 5', 'Красная Поляна', 'Россия', 43.6800, 40.2050, gen_random_uuid());
-
+('Уютный дворик', 'Семейный гостевой дом с садом и зоной для барбекю.', 'https://cdn.worldota.net/t/1200x616/extranet/b4/5e/b45efcf3cfcb1c6ef47cae6c3427a97e18a39d5c.jpeg', 4, 'ул. Виноградная, д. 25', 'Суздаль', 'Россия', 56.4168, 40.4499, 'b45efcf3-cfcb-1c6e-f47c-ae6c3427a97e'),
+('Дом у озера', 'Гостевой дом на берегу живописного озера с возможностью рыбалки и проката лодок.', 'https://cdn.worldota.net/t/1200x616/extranet/7c/16/7c16d355fc7c18098445cb227620b1ff29ac1d37.jpeg', 4, 'д. Селигер, ул. Озерная, д. 1', 'Осташков', 'Россия', 57.1481, 33.1039, '7c16d355-fc18-0984-45cb-227620b1ff29'),
+('Альпийская Вилла', 'Шале в альпийском стиле с сауной и каминным залом.', 'https://cdn.worldota.net/t/1200x616/extranet/2c/f1/2cf13650103ed67ba82ebbbf4953ba30ceac6b70.JPEG', 4, 'ул. Горная, д. 5', 'Красная Поляна', 'Россия', 43.6800, 40.2050, '2cf13650-103e-d67b-a82e-bfd4953ba30c');
 
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ checklist_sections (СЕКЦИИ ЧЕК-ЛИСТОВ) ===========
 
@@ -241,8 +258,11 @@ VALUES (
     '{"reservation":{"ota_id":"f6b1c8f4-23ab-4c32-87a1-7810e7a3e9b1","booking_number":"TG-20250927-AB1234","status":"reserved","listing":{"id":"b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0","title":"Гранд Отель \"Центральный\"","description":"Роскошный отель в самом сердце города с видом на главную площадь.","main_picture":"https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg","listing_type":{"id":1,"slug":"hotel","name":"Отель"},"address":"ул. Тверская, д. 1","city":"Москва","country":"Россия","latitude":55.7558,"longitude":37.6176},"dates":{"checkin":"2025-10-05T15:00:00Z","checkout":"2025-10-10T12:00:00Z"},"guests":{"adults":2,"children":1},"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}},"source":"Ostrovok.com","received_at":"2025-09-27T00:12:00Z"}'::jsonb
 );
 
+
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ assignments (ПРЕДЛОЖЕНИЕ НА ОСНОВЕ БРОНИРОВАНИЯ ОТ ОТА) ===========
 
+
+-- Предложение 1
 INSERT INTO assignments (
     ota_sg_reservation_id,
     pricing,
@@ -266,4 +286,147 @@ SELECT
     (SELECT id FROM assignment_statuses WHERE slug = 'offered') -- или задай конкретный статус
 FROM ota_sg_reservations r
 WHERE r.booking_number = 'TG-20250927-AB1234'
+ON CONFLICT (ota_sg_reservation_id) DO NOTHING;
+
+
+-- ============================ ============================ ============================ ============================
+
+
+-- Бронирование 1
+INSERT INTO ota_sg_reservations (
+    created_at, ota_id, booking_number, listing_id, checkin_date, checkout_date,
+    pricing, status_id, source_msg
+) VALUES (
+    NOW(),
+    'f7b1c8f4-23ab-4c32-87a1-7810e7a3e9b1',
+    'TG-20251001-A001',
+    (SELECT id FROM listings WHERE code = 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'),
+    '2025-10-05T15:00:00Z',
+    '2025-10-10T12:00:00Z',
+    '{"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}}'::jsonb,
+    (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
+    '{
+      "reservation": {
+        "ota_id":"f7b1c8f4-23ab-4c32-87a1-7810e7a3e9b1",
+        "booking_number":"TG-20251001-A001",
+        "status":"reserved",
+        "listing":{"code":"b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0"},
+        "dates":{"checkin":"2025-10-05T15:00:00Z","checkout":"2025-10-10T12:00:00Z"},
+        "guests":{"adults":2,"children":1},
+        "pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}
+      },
+      "source":"Ostrovok.com",
+      "received_at":"2025-10-01T12:00:00Z"
+    }'::jsonb
+);
+
+-- Бронирование 2
+INSERT INTO ota_sg_reservations (
+    created_at, ota_id, booking_number, listing_id, checkin_date, checkout_date,
+    pricing, status_id, source_msg
+) VALUES (
+    NOW(),
+    'a1b2c3d4-5678-9101-1121-314151617181',
+    'TG-20251001-A002',
+    (SELECT id FROM listings WHERE code = 'da5811d2-36e4-4d19-9b23-1234567890ab'),
+    '2025-10-08T14:00:00Z',
+    '2025-10-12T11:00:00Z',
+    '{"pricing":{"currency":"RUB","total":18000,"breakdown":{"per_night":4500,"nights":4}}}'::jsonb,
+    (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
+    '{
+      "reservation": {
+        "ota_id":"a1b2c3d4-5678-9101-1121-314151617181",
+        "booking_number":"TG-20251001-A002",
+        "status":"reserved",
+        "listing":{"code":"da5811d2-36e4-4d19-9b23-1234567890ab"},
+        "dates":{"checkin":"2025-10-08T14:00:00Z","checkout":"2025-10-12T11:00:00Z"},
+        "guests":{"adults":1,"children":0},
+        "pricing":{"currency":"RUB","total":18000,"breakdown":{"per_night":4500,"nights":4}}
+      },
+      "source":"Booking.com",
+      "received_at":"2025-10-01T13:00:00Z"
+    }'::jsonb
+);
+
+-- Бронирование 3
+INSERT INTO ota_sg_reservations (
+    created_at, ota_id, booking_number, listing_id, checkin_date, checkout_date,
+    pricing, status_id, source_msg
+) VALUES (
+    NOW(),
+    'f9e8d7c6-b5a4-3210-9f8e-7d6c5b4a3e2f',
+    'TG-20251001-A003',
+    (SELECT id FROM listings WHERE code = '1fe9eba4-d884-22e0-891f-15920d90be7e'),
+    '2025-10-03T16:00:00Z',
+    '2025-10-07T11:00:00Z',
+    '{"pricing":{"currency":"RUB","total":22000,"breakdown":{"per_night":5500,"nights":4}}}'::jsonb,
+    (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
+    '{
+      "reservation": {
+        "ota_id":"f9e8d7c6-b5a4-3210-9f8e-7d6c5b4a3e2f",
+        "booking_number":"TG-20251001-A003",
+        "status":"reserved",
+        "listing":{"code":"1fe9eba4-d884-22e0-891f-15920d90be7e"},
+        "dates":{"checkin":"2025-10-03T16:00:00Z","checkout":"2025-10-07T11:00:00Z"},
+        "guests":{"adults":3,"children":0},
+        "pricing":{"currency":"RUB","total":22000,"breakdown":{"per_night":5500,"nights":4}}
+      },
+      "source":"Airbnb.com",
+      "received_at":"2025-10-01T14:00:00Z"
+    }'::jsonb
+);
+
+-- Бронирование 4
+INSERT INTO ota_sg_reservations (
+    created_at, ota_id, booking_number, listing_id, checkin_date, checkout_date,
+    pricing, status_id, source_msg
+) VALUES (
+    NOW(),
+    '123e4567-e89b-12d3-a456-426614174000',
+    'TG-20251001-A004',
+    (SELECT id FROM listings WHERE code = 'c681b19c-8d17-548d-22f3-80e7266ecc36'),
+    '2025-10-10T15:00:00Z',
+    '2025-10-15T12:00:00Z',
+    '{"pricing":{"currency":"RUB","total":27000,"breakdown":{"per_night":5400,"nights":5}}}'::jsonb,
+    (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
+    '{
+      "reservation": {
+        "ota_id":"123e4567-e89b-12d3-a456-426614174000",
+        "booking_number":"TG-20251001-A004",
+        "status":"reserved",
+        "listing":{"code":"c681b19c-8d17-548d-22f3-80e7266ecc36"},
+        "dates":{"checkin":"2025-10-10T15:00:00Z","checkout":"2025-10-15T12:00:00Z"},
+        "guests":{"adults":2,"children":2},
+        "pricing":{"currency":"RUB","total":27000,"breakdown":{"per_night":5400,"nights":5}}
+      },
+      "source":"Expedia.com",
+      "received_at":"2025-10-01T15:00:00Z"
+    }'::jsonb
+);
+
+-- =========== СОЗДАНИЕ ПРЕДЛОЖЕНИЙ НА ОСНОВЕ БРОНИРОВАНИЙ ===========
+
+INSERT INTO assignments (
+    ota_sg_reservation_id,
+    pricing,
+    guests,
+    checkin_date,
+    checkout_date,
+    listing_id,
+    purpose,
+    expires_at,
+    status_id
+)
+SELECT
+    r.id AS ota_sg_reservation_id,
+    r.pricing,
+    r.source_msg -> 'reservation' -> 'guests' AS guests,
+    (r.source_msg -> 'reservation' -> 'dates' ->> 'checkin')::timestamp AS checkin_date,
+    (r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp AS checkout_date,
+    r.listing_id,
+    'reservation' AS purpose,
+    ((r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp + interval '1 day') AS expires_at,
+    (SELECT id FROM assignment_statuses WHERE slug = 'offered')
+FROM ota_sg_reservations r
+WHERE r.booking_number IN ('TG-20251001-A001','TG-20251001-A002','TG-20251001-A003','TG-20251001-A004')
 ON CONFLICT (ota_sg_reservation_id) DO NOTHING;
