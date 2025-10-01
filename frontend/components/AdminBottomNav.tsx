@@ -8,7 +8,7 @@ import {
   refreshListings,
   refreshAssignments,
   refreshReports
-} from '@/utils/eventBus';
+} from '@/lib/eventBus';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const navItems = [
