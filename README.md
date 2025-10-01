@@ -31,7 +31,7 @@ cd ..
 make build
 make up 
 
-# открыть http://localhost:3000 - фронтенд
+# открыть http://localhost:8080 - фронтенд
 # открыть http://localhost:8000 - бэкенд
 # открыть http://localhost:8000/swagger/index.html - swagger-документация API
 
@@ -87,7 +87,7 @@ make clean
 
 ## Маршруты/доступ
 
-- `http://localhost:3000` - UI(фронтенд - единая точка входа в приложение ТАйного гостя и в админку)
+- `http://localhost:8080` - UI(фронтенд - единая точка входа в приложение ТАйного гостя и в админку)
 - `http://localhost:8000` - API(бэкенд)
 - `http://localhost:8000/swagger/index.html` - swagger-документация API(бэкенд). Так же см. - [api_endpoints_description.txt](backend/docs/api_endpoints_description.txt)
 

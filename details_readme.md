@@ -116,7 +116,7 @@ OTA-сервисы (Островок, Booking, Airbnb и др.) передают
 
 * Краткое описание API: [api_endpoints_description.txt](backend/docs/api_endpoints_description.txt)
 * Каталог swagger: [swagger](backend/api/swagger/)
-* При запущенном бэкенде: _http://[address]:[port]/swagger/index.html_ (например: http://localhost:8080/swagger/index.html)
+* При запущенном бэкенде: _http://[address]:[port]/swagger/index.html_ (например: http://localhost:8000/swagger/index.html)
 
 ## Пример файлов с бронированиями от OTA
 
@@ -151,7 +151,7 @@ make up
 ```
 
 Если сборка и запуск приложений в контейнерах прошли успешно, то:
-* фронтенд будет доступен из браузера по адресу - `http://localhost:3000`
+* фронтенд будет доступен из браузера по адресу - `http://localhost:8080`
 * бэкенд будет доступен по адресу - `http://localhost:8000`
 * swagger докуументация будет доступна по адресу - `http://localhost:8000/swagger/index.html`
 
