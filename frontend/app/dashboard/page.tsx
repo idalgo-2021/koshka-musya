@@ -207,8 +207,8 @@ function DashboardContent() {
       if (report) {
         console.log('Navigating to report:', report.id);
         
-        // Проверяем статус отчета
-        if (report.status?.slug === 'draft') {
+        // Проверяем статус отчета (generating и draft считаем рабочими статусами)
+        if (report.status?.slug === 'draft' || report.status?.slug === 'generating') {
           // Для новых отчетов (без checklist_schema) используем start страницу
           if (!report.checklist_schema || Object.keys(report.checklist_schema).length === 0) {
             console.log('New report detected, using start page');
@@ -343,7 +343,15 @@ function DashboardContent() {
         setAcceptedAssignment(null);
         setShowInstructions(false);
         setFromReportCard(false);
-        router.push(`/reports/${existingReport.id}/start`);
+        
+        // Проверяем, есть ли checklist_schema для определения правильного маршрута
+        if (!existingReport.checklist_schema || Object.keys(existingReport.checklist_schema).length === 0) {
+          console.log('Existing report without schema, using start page');
+          router.push(`/reports/${existingReport.id}/start`);
+        } else {
+          console.log('Existing report with schema, using main page');
+          router.push(`/reports/${existingReport.id}`);
+        }
         return;
       }
 
@@ -358,9 +366,10 @@ function DashboardContent() {
 
       toast.success("Задание принято! Переходим к заполнению отчета...");
 
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
+      // Сбрасываем состояние перед переходом
+      setAcceptedAssignment(null);
+      setShowInstructions(false);
+      setFromReportCard(false);
 
       // После принятия задания, ждем немного и ищем отчет
       setTimeout(async () => {
@@ -372,9 +381,7 @@ function DashboardContent() {
 
           if (report) {
             console.log("Report found, redirecting to:", report.id);
-            // Сбрасываем состояние перед переходом
-            setAcceptedAssignment(null);
-            setShowInstructions(false);
+            // Для нового отчета всегда используем start страницу (карточка "Начать заполнение")
             router.push(`/reports/${report.id}/start`);
           } else {
             console.log("Report not found, retrying...");
@@ -387,9 +394,7 @@ function DashboardContent() {
 
                 if (reportRetry) {
                   console.log("Report found on retry, redirecting to:", reportRetry.id);
-                  // Сбрасываем состояние перед переходом
-                  setAcceptedAssignment(null);
-                  setShowInstructions(false);
+                  // Для нового отчета всегда используем start страницу (карточка "Начать заполнение")
                   router.push(`/reports/${reportRetry.id}/start`);
                 } else {
                   console.log("Report still not found after retry");

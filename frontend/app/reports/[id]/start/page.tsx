@@ -20,6 +20,13 @@ export default function ReportStartPage() {
   const [report, setReport] = React.useState<Report | null>(null);
   const [loading, setLoading] = React.useState(true);
 
+  // Убираем автоматический редирект - start страница должна показываться даже с пустой схемой
+  // React.useEffect(() => {
+  //   if (report && (!report.checklist_schema || !report.checklist_schema.sections || report.checklist_schema.sections.length === 0)) {
+  //     router.replace(`/reports/${reportId}`);
+  //   }
+  // }, [report, router, reportId]);
+
   React.useEffect(() => {
     let mounted = true;
     (async () => {
@@ -89,6 +96,18 @@ export default function ReportStartPage() {
       </div>
     );
   }
+
+  // Убираем проверку на пустую схему - показываем карточку "Начать заполнение" всегда
+  // if (!report.checklist_schema || !report.checklist_schema.sections || report.checklist_schema.sections.length === 0) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center bg-accentgreen">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accenttext mx-auto mb-4"></div>
+  //         <p className="text-accenttext">Переход к отчету...</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const handleStartFilling = () => {
     router.push(`/reports/${reportId}`);

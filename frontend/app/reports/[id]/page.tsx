@@ -231,11 +231,11 @@ export default function ReportPage() {
             submitted_at: reportInfo?.submitted_at
           });
           
-          // Проверяем, может ли отчет быть загружен
-          if (reportInfo?.status?.slug === 'draft') {
-            console.log("Report is in draft status - should be loadable");
+          // Проверяем, может ли отчет быть загружен (generating и draft считаем рабочими статусами)
+          if (reportInfo?.status?.slug === 'draft' || reportInfo?.status?.slug === 'generating') {
+            console.log("Report is in working status (draft/generating) - should be loadable");
           } else {
-            console.log("Report is NOT in draft status - this might be the issue");
+            console.log("Report is NOT in working status - this might be the issue");
             console.log("Current status:", reportInfo?.status?.slug);
           }
         } else {
@@ -263,7 +263,7 @@ export default function ReportPage() {
       setError(null);
 
       // Загружаем существующие данные чек-листа
-      if (r.checklist_schema && Object.keys(r.checklist_schema).length > 0) {
+      if (r.checklist_schema && r.checklist_schema.sections && r.checklist_schema.sections.length > 0) {
         setChecklistSchema(r.checklist_schema);
 
         // Восстанавливаем состояние из схемы
@@ -303,13 +303,55 @@ export default function ReportPage() {
         setComments(restoredComments);
         setItemMedia(restoredMedia);
       } else {
-        // Если схема еще не сгенерирована, ждем и перезагружаем
-        console.log('Checklist schema not ready, waiting...');
+        // Если схема еще не сгенерирована или пустая, ждем и перезагружаем
+        console.log('Checklist schema not ready or empty, waiting...');
+        console.log('Current checklist schema:', r.checklist_schema);
+        console.log('Schema sections count:', r.checklist_schema?.sections?.length || 0);
         setTimeout(() => {
           // Перезагружаем отчет через 2 секунды
           ReportsApi.getMyReportById(reportId).then((updatedReport) => {
-            if (updatedReport.checklist_schema && Object.keys(updatedReport.checklist_schema).length > 0) {
+            if (updatedReport.checklist_schema && updatedReport.checklist_schema.sections && updatedReport.checklist_schema.sections.length > 0) {
+              console.log('Updated report with schema:', updatedReport);
+              console.log('Schema sections count:', updatedReport.checklist_schema.sections?.length);
+              
+              // Обновляем весь отчет, а не только схему
+              setReport(updatedReport);
               setChecklistSchema(updatedReport.checklist_schema);
+              
+              // Восстанавливаем состояние из обновленной схемы
+              const restoredChecks: Record<string, boolean | undefined> = {};
+              const restoredRatings: Record<string, number> = {};
+              const restoredComments: Record<string, string> = {};
+              const restoredMedia: Record<string, Array<{ name: string; url: string; media_type: string }>> = {};
+
+              updatedReport.checklist_schema.sections.forEach((section: any) => {
+                section.items?.forEach((item: any) => {
+                  const key = `item_${item.id}`;
+                  if (item.answer?.result) {
+                    if (item.answer_types.slug === 'boolean') {
+                      const ok = item.answer.result === 'true';
+                      restoredComments[key] = !ok ? (item.answer.comment || '') : '';
+                      restoredChecks[key] = ok;
+                    } else if (item.answer_types.slug.startsWith('rating_')) {
+                      restoredRatings[key] = parseInt(item.answer.result);
+                    } else if (item.answer_types.slug === 'text') {
+                      restoredComments[key] = item.answer.result;
+                    }
+                  }
+                  if (item.answer?.media && item.answer.media.length > 0) {
+                    restoredMedia[key] = item.answer.media.map((m: any) => ({
+                      name: `media_${m.id}`,
+                      url: m.url,
+                      media_type: m.media_type
+                    }));
+                  }
+                });
+              });
+
+              setChecks(restoredChecks);
+              setRatings(restoredRatings);
+              setComments(restoredComments);
+              setItemMedia(restoredMedia);
             }
           }).catch((err) => {
             console.error('Error reloading report:', err);
@@ -336,7 +378,7 @@ export default function ReportPage() {
           const myReports = await ReportsApi.getMyReports(1, 50);
           const reportInfo = myReports.reports.find(r => r.id === reportId);
           if (reportInfo) {
-            if (reportInfo.status?.slug !== 'draft') {
+            if (reportInfo.status?.slug !== 'draft' && reportInfo.status?.slug !== 'generating') {
               const statusName = reportInfo.status?.name || reportInfo.status?.slug || 'неизвестный';
               setError(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
               toast.error(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
