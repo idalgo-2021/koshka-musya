@@ -42,12 +42,12 @@ export default function Providers({children}: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProider>
+      <ModalProvider>
         <Suspense>
           {children}
         </Suspense>
         <ModalRenderer />
-      </AuthProider>
+      </ModalProvider>
       {/*<ReactQueryDevtools />*/}
     </QueryClientProvider>
   )
