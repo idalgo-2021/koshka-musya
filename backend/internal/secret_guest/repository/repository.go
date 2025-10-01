@@ -672,7 +672,7 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 
 	if len(filter.City) > 0 {
 		query += fmt.Sprintf(" AND l.city ILIKE $%d ", paramCount)
-		args = append(args, filter.City)
+		args = append(args, "%" + filter.City + "%")
 		paramCount++
 	}
 	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
