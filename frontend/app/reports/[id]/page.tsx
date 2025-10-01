@@ -337,15 +337,23 @@ export default function ReportPage() {
           const reportInfo = myReports.reports.find(r => r.id === reportId);
           if (reportInfo) {
             if (reportInfo.status?.slug !== 'draft') {
-              setError(`Отчет в статусе "${reportInfo.status?.name || reportInfo.status?.slug}". Загрузка недоступна.`);
-              toast.error(`Отчет в статусе "${reportInfo.status?.name || reportInfo.status?.slug}". Загрузка недоступна.`);
+              const statusName = reportInfo.status?.name || reportInfo.status?.slug || 'неизвестный';
+              setError(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
+              toast.error(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
+              // Перенаправляем на дашборд через 3 секунды
+              setTimeout(() => {
+                router.push('/dashboard');
+              }, 3000);
              } else {
-               setError('Ошибка базы данных при загрузке отчета. Обратитесь к администратору.');
-               toast.error('Ошибка базы данных. Обратитесь к администратору.');
+               setError('Ошибка сервера при загрузке отчета. Попробуйте позже.');
+               toast.error('Ошибка сервера при загрузке отчета. Попробуйте позже.');
              }
            } else {
-             setError('Ошибка базы данных при загрузке отчета. Обратитесь к администратору.');
-             toast.error('Ошибка базы данных. Обратитесь к администратору.');
+             setError('Отчет не найден в вашем списке отчетов.');
+             toast.error('Отчет не найден в вашем списке отчетов.');
+             setTimeout(() => {
+               router.push('/dashboard');
+             }, 3000);
            }
          } catch {
            setError('Ошибка сервера при загрузке отчета');
@@ -564,7 +572,11 @@ export default function ReportPage() {
           />
 
         {/* Error State */}
-          <ErrorState error={error} onRetry={handleRetry} />
+          <ErrorState 
+            error={error} 
+            onRetry={handleRetry} 
+            onBackToDashboard={() => router.push('/dashboard')}
+          />
 
         {/* Checklist */}
           <ChecklistContainer

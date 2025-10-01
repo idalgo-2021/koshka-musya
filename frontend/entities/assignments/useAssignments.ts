@@ -9,9 +9,34 @@ export function useAssignments() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [retryCount, setRetryCount] = React.useState(0);
-  const [declinedAssignments, setDeclinedAssignments] = React.useState<Set<string>>(new Set());
+  
+  // Загружаем отклоненные задания из localStorage при инициализации
+  const [declinedAssignments, setDeclinedAssignments] = React.useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('declinedAssignments');
+        return stored ? new Set(JSON.parse(stored)) : new Set();
+      } catch (error) {
+        console.error('Error loading declined assignments from localStorage:', error);
+        return new Set();
+      }
+    }
+    return new Set();
+  });
   
   const { handleError, handleSilentError } = useErrorHandler();
+
+  // Функция для сохранения отклоненных заданий в localStorage
+  const saveDeclinedAssignments = React.useCallback((declinedSet: Set<string>) => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('declinedAssignments', JSON.stringify([...declinedSet]));
+        console.log('Saved declined assignments to localStorage:', [...declinedSet]);
+      } catch (error) {
+        console.error('Error saving declined assignments to localStorage:', error);
+      }
+    }
+  }, []);
 
   const fetchAssignments = React.useCallback(async (page = 1, limit = 20, retry = false) => {
     if (!retry) {
@@ -32,8 +57,15 @@ export function useAssignments() {
       console.log("Available assignments:", offeredResponse.assignments);
       console.log("Available count:", offeredResponse.assignments.length);
       
-      // Логируем детали каждого предложенного задания
-      offeredResponse.assignments.forEach((assignment, index) => {
+      // Фильтруем отклоненные задания из доступных
+      const filteredOfferedAssignments = offeredResponse.assignments.filter(assignment => 
+        !declinedAssignments.has(assignment.id)
+      );
+      console.log("Filtered available assignments:", filteredOfferedAssignments);
+      console.log("Filtered available count:", filteredOfferedAssignments.length);
+      
+      // Логируем детали каждого предложенного задания (только отфильтрованных)
+      filteredOfferedAssignments.forEach((assignment, index) => {
         console.log(`Offered assignment ${index}:`, {
           id: assignment.id,
           title: assignment.listing.title,
@@ -129,8 +161,8 @@ export function useAssignments() {
         // Игнорируем ошибку для отчетов
       }
       
-      // Объединяем все задания: доступные + мои + принятые (из отчетов)
-      const allAssignments = [...offeredResponse.assignments, ...myAssignments, ...acceptedAssignments];
+      // Объединяем все задания: доступные (отфильтрованные) + мои + принятые (из отчетов)
+      const allAssignments = [...filteredOfferedAssignments, ...myAssignments, ...acceptedAssignments];
       console.log("=== COMBINED ASSIGNMENTS ===");
       console.log("All assignments:", allAssignments);
       console.log("Total count:", allAssignments.length);
@@ -234,7 +266,9 @@ export function useAssignments() {
     if (isUnassigned) {
       console.log("Assignment is unassigned, hiding locally without API call");
       // Для незанятых заданий просто скрываем их локально
-      setDeclinedAssignments(prev => new Set([...prev, id]));
+      const newDeclinedSet = new Set([...declinedAssignments, id]);
+      setDeclinedAssignments(newDeclinedSet);
+      saveDeclinedAssignments(newDeclinedSet);
       console.log("Added assignment to declined list:", id);
       return;
     }
@@ -245,14 +279,13 @@ export function useAssignments() {
       console.log("AssignmentsApi.declineAssignment completed successfully");
       
       // Добавляем задание в список отклоненных для локального состояния
-      setDeclinedAssignments(prev => new Set([...prev, id]));
+      const newDeclinedSet = new Set([...declinedAssignments, id]);
+      setDeclinedAssignments(newDeclinedSet);
+      saveDeclinedAssignments(newDeclinedSet);
       console.log("Added assignment to declined list:", id);
       
-      // Обновляем список заданий после успешного отклонения
-      console.log("Fetching updated assignments...");
-      await fetchAssignments();
-      console.log("fetchAssignments completed after declineAssignment");
-      console.log("Assignment status should now be 'declined' (5) in DB");
+      // Не нужно вызывать fetchAssignments() - задание уже скрыто локально
+      console.log("Assignment hidden locally, no need to refetch");
     } catch (err) {
       console.log("Error in declineAssignment:", err);
       console.log("Error type:", typeof err);
@@ -270,12 +303,25 @@ export function useAssignments() {
     }
     
     console.log("=== END DECLINE ASSIGNMENT ===");
-  }, [fetchAssignments, handleError, assignments]);
+  }, [handleError, assignments, declinedAssignments, saveDeclinedAssignments]);
 
   const retry = React.useCallback(() => {
     setRetryCount(0);
     fetchAssignments();
   }, [fetchAssignments]);
+
+  // Функция для очистки отклоненных заданий (например, при выходе из системы)
+  const clearDeclinedAssignments = React.useCallback(() => {
+    setDeclinedAssignments(new Set());
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('declinedAssignments');
+        console.log('Cleared declined assignments from localStorage');
+      } catch (error) {
+        console.error('Error clearing declined assignments from localStorage:', error);
+      }
+    }
+  }, []);
 
 
   React.useEffect(() => {
@@ -291,5 +337,6 @@ export function useAssignments() {
     acceptAssignment,
     declineAssignment,
     retry,
+    clearDeclinedAssignments,
   };
 }

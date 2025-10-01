@@ -6,9 +6,10 @@ interface AssignmentProcessProps {
   onContinue?: () => void;
   onBack?: () => void;
   onBackToReport?: () => void;
+  isStartCard?: boolean; // Флаг для отображения как "Начать заполнение"
 }
 
-export default function AssignmentProcess({ hotelName, onContinue, onBack, onBackToReport }: AssignmentProcessProps) {
+export default function AssignmentProcess({ hotelName, onContinue, onBack, onBackToReport, isStartCard = false }: AssignmentProcessProps) {
   const steps = [
     {
       number: "1",
@@ -101,7 +102,7 @@ export default function AssignmentProcess({ hotelName, onContinue, onBack, onBac
               onClick={onContinue}
               className="flex-1 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              Продолжить
+              {isStartCard ? 'Начать заполнение' : 'Продолжить'}
             </button>
           </div>
         ) : onContinue ? (
@@ -109,7 +110,7 @@ export default function AssignmentProcess({ hotelName, onContinue, onBack, onBac
             onClick={onContinue}
             className="w-full h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
-            Продолжить
+            {isStartCard ? 'Начать заполнение' : 'Продолжить'}
           </button>
         ) : onBack ? (
           <button

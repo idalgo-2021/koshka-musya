@@ -21,6 +21,18 @@ import MainHeading from "@/components/MainHeading";
 
 import { calculateReportProgress } from "@/lib/report-progress";
 
+// Функция для проверки, можно ли принять задание (в течение 24 часов до заселения)
+const canAcceptAssignment = (assignment: any): boolean => {
+  if (!assignment.expires_at) return true;
+  
+  const expiresAt = new Date(assignment.expires_at);
+  const now = new Date();
+  const timeDiff = expiresAt.getTime() - now.getTime();
+  const hoursDiff = timeDiff / (1000 * 60 * 60);
+  
+  return hoursDiff <= 24 && hoursDiff > 0;
+};
+
 interface AppError {
   message?: string;
   status?: number;
@@ -94,10 +106,12 @@ function DashboardContent() {
         localStorage.removeItem('faqFromContinue');
       }
 
-      // Убираем параметры из URL
-      router.replace('/dashboard');
+      // Убираем параметры из URL только если мы не в процессе показа FAQ
+      if (!showInstructions) {
+        router.replace('/dashboard');
+      }
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, showInstructions]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -170,12 +184,12 @@ function DashboardContent() {
     console.log("Current fromReportCard:", fromReportCard);
 
     if (fromContinue === 'true') {
-      // Возвращаемся к карточке "Продолжить заполнение"
-      console.log("Returning to Continue Report Card");
+      // Возвращаемся к карточке "Продолжить заполнение" или "Начать заполнение"
+      console.log("Returning to Report Card");
       localStorage.removeItem('faqFromContinue');
       setShowInstructions(false); // Сбрасываем показ FAQ
       setFromReportCard(false); // Сбрасываем флаг
-      router.push('/dashboard');
+      // Не делаем router.push, просто скрываем FAQ - карточка уже отображается
     } else if (reportId) {
       // Возвращаемся к карточке "Начать заполнение"
       console.log("Returning to Start Report Card");
@@ -191,13 +205,37 @@ function DashboardContent() {
       const report = my.reports.find(r => r.assignment_id === assignmentId);
 
       if (report) {
-        router.push(`/reports/${report.id}`);
+        console.log('Navigating to report:', report.id);
+        
+        // Проверяем статус отчета
+        if (report.status?.slug === 'draft') {
+          // Для новых отчетов (без checklist_schema) используем start страницу
+          if (!report.checklist_schema || Object.keys(report.checklist_schema).length === 0) {
+            console.log('New report detected, using start page');
+            router.push(`/reports/${report.id}/start`);
+          } else {
+            console.log('Existing report detected, using main page');
+            router.push(`/reports/${report.id}`);
+          }
+        } else {
+          const statusName = report.status?.name || report.status?.slug || 'неизвестный';
+          toast.error(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
+        }
       } else {
+        console.log('Report not found for assignment:', assignmentId);
         toast.error('Отчет не найден');
       }
     } catch (error) {
       console.error('Error finding report:', error);
-      toast.error('Ошибка при поиске отчета');
+      console.error('Error details:', error);
+      
+      // Показываем более детальную ошибку
+      const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+      if (errorMessage.includes('500') || errorMessage.includes('Internal server error')) {
+        toast.error('Ошибка сервера при загрузке отчета. Попробуйте позже.');
+      } else {
+        toast.error(`Ошибка при поиске отчета: ${errorMessage}`);
+      }
     }
   };
 
@@ -238,6 +276,14 @@ function DashboardContent() {
   };
 
   const handleAcceptAssignment = async (assignmentId: string) => {
+    const current = displayAssignments.find(a => a.id === assignmentId);
+    
+    // Проверяем, можно ли принять задание
+    if (current && !canAcceptAssignment(current)) {
+      toast.error('Задание можно принять только в течение 24 часов до заселения');
+      return;
+    }
+    
     // Не принимаем задание сразу, только показываем FAQ
     setAcceptedAssignment(assignmentId);
     setShowInstructions(true);
@@ -247,7 +293,6 @@ function DashboardContent() {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    const current = displayAssignments.find(a => a.id === assignmentId);
     if (current?.listing?.title) {
       setStoredHotelName(current.listing.title);
     }
@@ -392,9 +437,20 @@ function DashboardContent() {
         }
       }
 
-      // Не показываем ошибку для 409 - это нормальное поведение
-      if ((error as AppError)?.status !== 409) {
-        toast.error(`Ошибка при принятии задания: ${(error as AppError)?.message || 'Неизвестная ошибка'}`);
+      // Обрабатываем разные типы ошибок
+      const errorMessage = (error as AppError)?.message || 'Неизвестная ошибка';
+      
+      if ((error as AppError)?.status === 409) {
+        // Специальная обработка для ошибки времени
+        if (errorMessage.includes('24 hours before check-in')) {
+          toast.error('Задание можно принять только в течение 24 часов до заселения');
+        } else if (errorMessage.includes('already has') || errorMessage.includes('duplicate')) {
+          toast.error('Задание уже принято другим пользователем');
+        } else {
+          toast.error('Задание недоступно для принятия');
+        }
+      } else {
+        toast.error(`Ошибка при принятии задания: ${errorMessage}`);
       }
 
       setAcceptedAssignment(null);
@@ -433,6 +489,7 @@ function DashboardContent() {
                 storedHotelName ||
                 "отель"
               }
+              isStartCard={false}
               onContinue={async () => {
                 if (!acceptedAssignment) return;
                 if (startLoading) return;
@@ -452,6 +509,7 @@ function DashboardContent() {
             <AssignmentProcess
               assignmentId={acceptedAssignment || ''}
               hotelName={displayAssignments[0]?.listing.title || storedHotelName || 'отеля'}
+              isStartCard={false}
               onContinue={acceptedAssignment ? async () => {
                 if (startLoading) return;
                 setStartLoading(true);
@@ -460,12 +518,12 @@ function DashboardContent() {
                 } finally {
                   setStartLoading(false);
                 }
-              } : undefined}
+              } : fromReportCard ? undefined : undefined}
               onBack={fromReportCard ? undefined : () => {
                 setShowInstructions(false);
                 setFromReportCard(false); // Сбрасываем флаг при возврате к предложениям
               }}
-              onBackToReport={fromReportCard && reportId ? handleBackToReport : undefined}
+              onBackToReport={fromReportCard ? handleBackToReport : undefined}
             />
           ) : (
             <div className="max-w-md mx-auto px-6 py-8">
@@ -539,14 +597,29 @@ function DashboardContent() {
                     const report = reports?.find(r => r.assignment_id === assignment.id);
                     // Рассчитываем прогресс заполнения отчета
                     const progress = calculateReportProgress(report?.checklist_schema);
+                    // Определяем, является ли это новым заданием
+                    // "Начать заполнение" - если отчет новый (нет checklist_schema или прогресс 0%)
+                    // "Продолжить заполнение" - если пользователь уже начал заполнять
+                    const isStartCard = !report || !report.checklist_schema || progress === 0;
                     return (
                       <ContinueReportCard
                         key={assignment.id}
                         assignment={assignment}
                         reportId={report?.id}
                         progress={progress}
+                        isStartCard={isStartCard}
                         onContinue={() => handleContinueReport(assignment.id)}
                         onSubmit={() => handleSubmitReport(assignment.id)}
+                        onShowFAQ={() => {
+                          // Показываем FAQ без перезагрузки страницы
+                          setShowInstructions(true);
+                          setAcceptedAssignment(null);
+                          setStoredHotelName(null);
+                          setFromReportCard(true); // Отмечаем, что пришли с карточки отчета
+                          setReportId(report?.id || null); // Сохраняем ID отчета
+                          // Сохраняем информацию о том, что пришли с карточки
+                          localStorage.setItem('faqFromContinue', 'true');
+                        }}
                       />
                     );
                   })}

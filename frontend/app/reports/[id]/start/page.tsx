@@ -27,9 +27,35 @@ export default function ReportStartPage() {
         const r = await ReportsApi.getMyReportById(reportId);
         if (!mounted) return;
         setReport(r);
-      } catch {
-        toast.error('Не удалось загрузить отчет');
-        router.push('/dashboard');
+      } catch (error) {
+        console.error('Error loading report in start page:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+        
+        if (errorMessage.includes('500') || errorMessage.includes('Internal server error')) {
+          console.log('Trying alternative method - loading from reports list...');
+          try {
+            // Пробуем загрузить отчет из списка отчетов
+            const myReports = await ReportsApi.getMyReports(1, 50);
+            const reportFromList = myReports.reports.find(r => r.id === reportId);
+            
+            if (reportFromList && mounted) {
+              console.log('Found report in list, using it');
+              setReport(reportFromList);
+              return;
+            }
+          } catch (listError) {
+            console.error('Failed to load from reports list:', listError);
+          }
+          
+          toast.error('Ошибка сервера при загрузке отчета. Попробуйте позже.');
+        } else {
+          toast.error('Не удалось загрузить отчет');
+        }
+        
+        // Перенаправляем на дашборд через 2 секунды
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
       } finally {
         if (mounted) setLoading(false);
       }

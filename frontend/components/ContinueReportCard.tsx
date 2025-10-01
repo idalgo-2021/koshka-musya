@@ -12,9 +12,10 @@ interface ContinueReportCardProps {
   reportId?: string;
   progress?: number;
   isStartCard?: boolean; // Флаг для отображения как "Начать заполнение"
+  onShowFAQ?: () => void; // Функция для показа FAQ
 }
 
-export default function ContinueReportCard({ assignment, onContinue, onSubmit, reportId, progress = 0, isStartCard = false }: ContinueReportCardProps) {
+export default function ContinueReportCard({ assignment, onContinue, onSubmit, reportId, progress = 0, isStartCard = false, onShowFAQ }: ContinueReportCardProps) {
   // Логируем данные задания для отладки
   console.log("ContinueReportCard - assignment data:", {
     id: assignment.id,
@@ -175,10 +176,15 @@ export default function ContinueReportCard({ assignment, onContinue, onSubmit, r
             <div className="text-center">
               <button
                 onClick={() => {
-                  const url = reportId
-                    ? `/dashboard?showFAQ=true&reportId=${reportId}&fromContinue=true`
-                    : '/dashboard?showFAQ=true&fromContinue=true';
-                  window.location.href = url;
+                  if (onShowFAQ) {
+                    onShowFAQ();
+                  } else {
+                    // Fallback для обратной совместимости
+                    const url = reportId
+                      ? `/dashboard?showFAQ=true&reportId=${reportId}&fromContinue=true`
+                      : '/dashboard?showFAQ=true&fromContinue=true';
+                    window.location.href = url;
+                  }
                 }}
                 className="text-sm text-gray-500 hover:text-gray-700 underline transition-colors duration-200"
               >
