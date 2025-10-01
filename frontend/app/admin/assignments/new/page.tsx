@@ -11,6 +11,7 @@ import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query'
 import {Input} from '@/components/ui/input'
 import {Button} from '@/components/ui/button'
 import {Label} from "@/components/ui/label";
+import Select from '@/components/ui/select'
 
 import {AssignmentsApi} from '@/entities/assignments/api'
 import { StepBackIcon } from 'lucide-react';
@@ -86,15 +87,18 @@ export default function NewAssignmentPage() {
             <p className="text-green-600 text-sm">Предложение создано</p>
           )}
           <FormFieldValue title={'Объект'} error={errors.listing_id}>
-            <select
-              {...form.register('listing_id')}
-              className="border-input h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-            >
-              <option value="">Выберите объект</option>
-              {listings.map(l => (
-                <option key={l.id} value={l.id}>{l.title}</option>
-              ))}
-            </select>
+            <Select
+              value={form.watch('listing_id')}
+              onChange={(value) => form.setValue('listing_id', value ? String(value) : '')}
+              placeholder="Выберите объект"
+              options={[
+                { value: '', label: 'Выберите объект' },
+                ...listings.map(l => ({
+                  value: l.id.toString(),
+                  label: l.title || `Listing ${l.id}`
+                }))
+              ]}
+            />
           </FormFieldValue>
 
           <FormFieldValue title={'Истекает'} error={errors.expires_at}>

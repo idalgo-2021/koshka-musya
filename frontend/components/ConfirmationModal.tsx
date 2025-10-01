@@ -11,7 +11,7 @@ export interface ConfirmationModalProps {
   type?: 'warning' | 'info' | 'success' | 'danger'
   confirmText?: string
   cancelText?: string
-  onConfirm: () => boolean
+  onConfirm: () => boolean|void
   onCancel: () => void
   isLoading?: boolean
 }

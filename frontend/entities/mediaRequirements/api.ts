@@ -12,7 +12,7 @@ export type MediaRequirementsResponse = {
 
 export const MediaRequirementsApi = {
   async list(): Promise<MediaRequirementsResponse> {
-    return api.get<MediaRequirementsResponse>('/media_requirements', true)
+    return api.get<MediaRequirementsResponse>('/staff/media_requirements', true)
   },
 }
 

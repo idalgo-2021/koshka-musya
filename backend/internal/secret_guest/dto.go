@@ -158,6 +158,7 @@ type GetFreeAssignmentsRequestDTO struct {
 	Page           int
 	Limit          int
 	ListingTypeIDs []int
+	City           string
 }
 
 type GetAllAssignmentsRequestDTO struct {

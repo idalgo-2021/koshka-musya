@@ -190,6 +190,7 @@ export function useAssignments() {
       const appError = handleSilentError(err, 'fetchAssignments');
       setError(appError.message);
 
+      // alert(err);
       // Автоматический retry для сетевых ошибок
       if (appError.status === 0 || (appError.status && appError.status >= 500)) {
         setRetryCount(prev => {

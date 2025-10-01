@@ -1,3 +1,5 @@
+import { SgReservationPricing, SGReservationGuests} from "@/entities/sgReservations/types";
+
 export type Assignment = {
   id: string;
   code: string;
@@ -51,6 +53,8 @@ export type Assignment = {
     slug: string;
     name: string;
   };
+  guests?: SGReservationGuests;
+  pricing?: SgReservationPricing;
   created_at: string;
   taked_at?: string;
   accepted_at?: string;

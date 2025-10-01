@@ -168,29 +168,6 @@ function DashboardContent() {
     loadReports();
   }, [isAuthenticated, user?.id]);
 
-  // Подгрузка деталей локации
-  useEffect(() => {
-    if (!assignments || assignments.length === 0) return;
-
-    const ids = assignments.map(a => a.listing.id);
-    const idsToLoad = ids.filter(id => !hotelDetails[id] && !hotelLoading[id]);
-
-    if (idsToLoad.length === 0) return;
-
-    idsToLoad.forEach(async (id) => {
-      setHotelLoading(prev => ({ ...prev, [id]: true }));
-      try {
-        const d = await AssignmentsApi.getHotelDetails(id);
-        setHotelDetails(prev => ({ ...prev, [id]: d }));
-      } catch (error) {
-        console.error('Failed to load hotel details:', error);
-      } finally {
-        setHotelLoading(prev => ({ ...prev, [id]: false }));
-      }
-    });
-  }, [assignments, hotelDetails, hotelLoading]);
-
-
   const handleLogout = () => {
     logout();
     toast.success("Вы вышли из системы");
@@ -314,10 +291,10 @@ function DashboardContent() {
 
     // Проверяем, взято ли задание текущим пользователем
     const isAssignedToCurrentUser = current?.reporter?.id &&
-                                   current.reporter.id !== null &&
-                                   current.reporter.id !== undefined &&
-                                   current.reporter.id !== '00000000-0000-0000-0000-000000000000' &&
-                                   current.reporter.id === user?.id;
+      current.reporter.id !== null &&
+      current.reporter.id !== undefined &&
+      current.reporter.id !== '00000000-0000-0000-0000-000000000000' &&
+      current.reporter.id === user?.id;
 
     console.log("Is assigned to current user:", isAssignedToCurrentUser);
 
@@ -550,227 +527,227 @@ function DashboardContent() {
   }
 
   return (
-      <div className="min-h-screen bg-accentgreen">
-        {/* Header */}
-        <DashboardHeader username={user?.username} onLogout={handleLogout} />
+    <div className="min-h-screen bg-accentgreen">
+      {/* Header */}
+      <DashboardHeader username={user?.username} onLogout={handleLogout} />
 
-        {/* Main Content - Hotel Check Proposal */}
-        <main className="min-h-screen">
-          {reportSearchLoading ? (
-            <div className="min-h-screen flex items-center justify-center bg-accentgreen">
-              <div className="text-center max-w-md mx-auto px-6">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-accenttext border-t-transparent mx-auto mb-6"></div>
-                <h2 className="text-xl font-bold text-accenttext mb-3">Создаем отчет...</h2>
-                <p className="text-accenttext/70 text-sm leading-relaxed">
-                  Пожалуйста, подождите. Мы создаем отчет для вашего задания и подготавливаем все необходимое для заполнения.
-                </p>
-                <div className="mt-6 bg-white/20 rounded-2xl p-4">
-                  <div className="flex items-center justify-center space-x-2 text-accenttext/80">
-                    <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                  </div>
+      {/* Main Content - Hotel Check Proposal */}
+      <main className="min-h-screen">
+        {reportSearchLoading ? (
+          <div className="min-h-screen flex items-center justify-center bg-accentgreen">
+            <div className="text-center max-w-md mx-auto px-6">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-accenttext border-t-transparent mx-auto mb-6"></div>
+              <h2 className="text-xl font-bold text-accenttext mb-3">Создаем отчет...</h2>
+              <p className="text-accenttext/70 text-sm leading-relaxed">
+                Пожалуйста, подождите. Мы создаем отчет для вашего задания и подготавливаем все необходимое для заполнения.
+              </p>
+              <div className="mt-6 bg-white/20 rounded-2xl p-4">
+                <div className="flex items-center justify-center space-x-2 text-accenttext/80">
+                  <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-accenttext rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                 </div>
               </div>
             </div>
-          ) : acceptedAssignment ? (
-            <AssignmentProcess
-              assignmentId={acceptedAssignment}
-              hotelName={
-                displayAssignments.find(a => a.id === acceptedAssignment)?.listing.title ||
-                storedHotelName ||
-                "отель"
+          </div>
+        ) : acceptedAssignment ? (
+          <AssignmentProcess
+            assignmentId={acceptedAssignment}
+            hotelName={
+              displayAssignments.find(a => a.id === acceptedAssignment)?.listing.title ||
+              storedHotelName ||
+              "отель"
+            }
+            onContinue={async () => {
+              if (!acceptedAssignment) return;
+              if (startLoading) return;
+              setStartLoading(true);
+              try {
+                // Сразу переходим к созданию отчета, минуя промежуточные страницы
+                await handleConfirmAcceptance(acceptedAssignment);
+              } finally {
+                setStartLoading(false);
               }
-              onContinue={async () => {
-                if (!acceptedAssignment) return;
-                if (startLoading) return;
-                setStartLoading(true);
-                try {
-                  // Сразу переходим к созданию отчета, минуя промежуточные страницы
-                  await handleConfirmAcceptance(acceptedAssignment);
-                } finally {
-                  setStartLoading(false);
-                }
-              }}
-              onBack={fromReportCard ? undefined : () => {
-                setAcceptedAssignment(null);
-                setShowInstructions(false);
-              }}
-            />
-          ) : showInstructions ? (
-            <AssignmentProcess
-              assignmentId={acceptedAssignment || ''}
-              hotelName={displayAssignments[0]?.listing.title || storedHotelName || 'отеля'}
-              onContinue={acceptedAssignment ? async () => {
-                if (startLoading) return;
-                setStartLoading(true);
-                try {
-                  // Переходим к отчету без изменения статуса задания
-                  router.push(`/reports?assignment=${acceptedAssignment}`);
-                } finally {
-                  setStartLoading(false);
-                }
-              } : fromReportCard ? undefined : undefined}
-              onBack={fromReportCard ? undefined : () => {
-                setShowInstructions(false);
-                setFromReportCard(false); // Сбрасываем флаг при возврате к предложениям
-              }}
-              onBackToReport={fromReportCard ? handleBackToReport : undefined}
-            />
-          ) : (
-            <div className="max-w-md mx-auto px-6 py-8">
-              {/* Main Heading */}
-              <MainHeading />
+            }}
+            onBack={fromReportCard ? undefined : () => {
+              setAcceptedAssignment(null);
+              setShowInstructions(false);
+            }}
+          />
+        ) : showInstructions ? (
+          <AssignmentProcess
+            assignmentId={acceptedAssignment || ''}
+            hotelName={displayAssignments[0]?.listing.title || storedHotelName || 'отеля'}
+            onContinue={acceptedAssignment ? async () => {
+              if (startLoading) return;
+              setStartLoading(true);
+              try {
+                // Переходим к отчету без изменения статуса задания
+                router.push(`/reports?assignment=${acceptedAssignment}`);
+              } finally {
+                setStartLoading(false);
+              }
+            } : fromReportCard ? undefined : undefined}
+            onBack={fromReportCard ? undefined : () => {
+              setShowInstructions(false);
+              setFromReportCard(false); // Сбрасываем флаг при возврате к предложениям
+            }}
+            onBackToReport={fromReportCard ? handleBackToReport : undefined}
+          />
+        ) : (
+          <div className="max-w-md mx-auto px-6 py-8">
+            {/* Main Heading */}
+            <MainHeading />
 
-              {/* Error State */}
-              {assignmentsError && !assignmentsLoading && (
-                <Card className="mb-6 bg-red-50 border-red-200">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-red-800 mb-2">
-                      Ошибка загрузки заданий
-                    </h3>
-                    <p className="text-red-600 mb-4">{assignmentsError}</p>
-                    <Button
-                      onClick={retry}
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      Попробовать снова
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
+            {/* Error State */}
+            {assignmentsError && !assignmentsLoading && (
+              <Card className="mb-6 bg-red-50 border-red-200">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-red-800 mb-2">
+                    Ошибка загрузки заданий
+                  </h3>
+                  <p className="text-red-600 mb-4">{assignmentsError}</p>
+                  <Button
+                    onClick={retry}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Попробовать снова
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
 
-              {/* Assignments from DB */}
-              {!assignmentsLoading && displayAssignments.length >= 0 && (
-                <AssignmentCarousel
-                  assignments={displayAssignments}
-                  currentIndex={currentAssignmentIndex}
-                  onIndexChange={setCurrentAssignmentIndex}
-                  onAccept={handleAcceptAssignment}
-                  onDecline={handleDeclineAssignment}
-                  onTake={handleTakeAssignment}
-                  onStartReport={(assignmentId) => {
-                    // Логика для перехода к отчету
-                    router.push(`/reports?assignment=${assignmentId}`);
-                  }}
-                  hotelDetails={hotelDetails}
-                  hotelLoading={hotelLoading}
-                  currentUserId={user?.id}
-                  hasActiveAssignments={hasActiveAssignments}
-                  selectedListingType={selectedListingType}
-                  onListingTypeChange={handleListingTypeChange}
-                />
-              )}
+            {/* Assignments from DB */}
+            {!assignmentsLoading && displayAssignments.length >= 0 && (
+              <AssignmentCarousel
+                assignments={displayAssignments}
+                currentIndex={currentAssignmentIndex}
+                onIndexChange={setCurrentAssignmentIndex}
+                onAccept={handleAcceptAssignment}
+                onDecline={handleDeclineAssignment}
+                onTake={handleTakeAssignment}
+                onStartReport={(assignmentId) => {
+                  // Логика для перехода к отчету
+                  router.push(`/reports?assignment=${assignmentId}`);
+                }}
+                hotelDetails={hotelDetails}
+                hotelLoading={hotelLoading}
+                currentUserId={user?.id}
+                hasActiveAssignments={hasActiveAssignments}
+                selectedListingType={selectedListingType}
+                onListingTypeChange={handleListingTypeChange}
+              />
+            )}
 
-              {/*{displayAssignments.length === 0 && (*/}
-              {/*  <p>empty state</p>*/}
-              {/*)}*/}
+            {/*{displayAssignments.length === 0 && (*/}
+            {/*  <p>empty state</p>*/}
+            {/*)}*/}
 
-              {/* Loading State */}
-              {assignmentsLoading && (
-                <div className="space-y-6">
-                  <AssignmentSkeleton />
-                  <AssignmentSkeleton />
-                </div>
-              )}
+            {/* Loading State */}
+            {assignmentsLoading && (
+              <div className="space-y-6">
+                <AssignmentSkeleton />
+                <AssignmentSkeleton />
+              </div>
+            )}
 
-              {/* Accepted Assignments - Continue Reports */}
-              {(() => {
-                const shouldShow = !assignmentsLoading && acceptedAssignments.length > 0 && displayAssignments.length === 0 && !showInstructions && !acceptedAssignment;
-                console.log("=== CONTINUE CARD CONDITIONS ===");
-                console.log("assignmentsLoading:", assignmentsLoading);
-                console.log("acceptedAssignments.length:", acceptedAssignments.length);
-                console.log("displayAssignments.length:", displayAssignments.length);
-                console.log("showInstructions:", showInstructions);
-                console.log("acceptedAssignment:", acceptedAssignment);
-                console.log("shouldShow:", shouldShow);
-                console.log("=== END CONTINUE CARD CONDITIONS ===");
-                return shouldShow;
-              })() && (
-                <div className="space-y-4">
-                  {acceptedAssignments.map((assignment) => {
-                    // Находим соответствующий отчет для этого задания
-                    const report = reports?.find(r => r.assignment_id === assignment.id);
-                    // Рассчитываем прогресс заполнения отчета
-                    const progress = calculateReportProgress(report?.checklist_schema);
-                    // Определяем, является ли это новым заданием
-                    // "Начать заполнение" - только если отчета вообще нет
-                    // "Продолжить заполнение" - если отчет существует (даже с прогрессом 0%)
-                    const isStartCard = !report;
-                    return (
-                      <ContinueReportCard
-                        key={assignment.id}
-                        assignment={assignment}
-                        report={report}
-                        reportId={report?.id}
-                        progress={progress}
-                        isStartCard={isStartCard}
-                        onContinue={() => handleContinueReport(assignment.id)}
-                        onSubmit={() => handleSubmitReport(assignment.id)}
-                        onShowFAQ={() => {
-                          // Показываем FAQ без перезагрузки страницы
-                          setShowInstructions(true);
-                          setAcceptedAssignment(null);
-                          setStoredHotelName(null);
-                          setFromReportCard(true); // Отмечаем, что пришли с карточки отчета
-                          setReportId(report?.id || null); // Сохраняем ID отчета
-                          // Сохраняем информацию о том, что пришли с карточки
-                          localStorage.setItem('faqFromContinue', 'true');
-                        }}
-                      />
-                    );
-                  })}
-                </div>
-              )}
+            {/* Accepted Assignments - Continue Reports */}
+            {(() => {
+              const shouldShow = !assignmentsLoading && acceptedAssignments.length > 0 && displayAssignments.length === 0 && !showInstructions && !acceptedAssignment;
+              console.log("=== CONTINUE CARD CONDITIONS ===");
+              console.log("assignmentsLoading:", assignmentsLoading);
+              console.log("acceptedAssignments.length:", acceptedAssignments.length);
+              console.log("displayAssignments.length:", displayAssignments.length);
+              console.log("showInstructions:", showInstructions);
+              console.log("acceptedAssignment:", acceptedAssignment);
+              console.log("shouldShow:", shouldShow);
+              console.log("=== END CONTINUE CARD CONDITIONS ===");
+              return shouldShow;
+            })() && (
+              <div className="space-y-4">
+                {acceptedAssignments.map((assignment) => {
+                  // Находим соответствующий отчет для этого задания
+                  const report = reports?.find(r => r.assignment_id === assignment.id);
+                  // Рассчитываем прогресс заполнения отчета
+                  const progress = calculateReportProgress(report?.checklist_schema);
+                  // Определяем, является ли это новым заданием
+                  // "Начать заполнение" - только если отчета вообще нет
+                  // "Продолжить заполнение" - если отчет существует (даже с прогрессом 0%)
+                  const isStartCard = !report;
+                  return (
+                    <ContinueReportCard
+                      key={assignment.id}
+                      assignment={assignment}
+                      report={report}
+                      reportId={report?.id}
+                      progress={progress}
+                      isStartCard={isStartCard}
+                      onContinue={() => handleContinueReport(assignment.id)}
+                      onSubmit={() => handleSubmitReport(assignment.id)}
+                      onShowFAQ={() => {
+                        // Показываем FAQ без перезагрузки страницы
+                        setShowInstructions(true);
+                        setAcceptedAssignment(null);
+                        setStoredHotelName(null);
+                        setFromReportCard(true); // Отмечаем, что пришли с карточки отчета
+                        setReportId(report?.id || null); // Сохраняем ID отчета
+                        // Сохраняем информацию о том, что пришли с карточки
+                        localStorage.setItem('faqFromContinue', 'true');
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            )}
 
-              {/* Taken Assignments (pending) */}
-              {takenAssignments.length > 0 && (
-                <div className="space-y-4">
-                  {takenAssignments.map((assignment) => (
-                    <div key={assignment.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-800 mb-2">{assignment.listing.title}</h3>
-                          <p className="text-gray-600 text-sm mb-2">{assignment.listing.address}</p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
-                            <span>📅 {assignment.checkin_date && assignment.checkout_date ? `${new Date(assignment.checkin_date).toLocaleDateString('ru-RU')} - ${new Date(assignment.checkout_date).toLocaleDateString('ru-RU')}` : 'Даты не указаны'}</span>
-                            <span>🏨 {assignment.listing.listing_type?.name || 'Тип не указан'}</span>
-                          </div>
+            {/* Taken Assignments (pending) */}
+            {takenAssignments.length > 0 && (
+              <div className="space-y-4">
+                {takenAssignments.map((assignment) => (
+                  <div key={assignment.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{assignment.listing.title}</h3>
+                        <p className="text-gray-600 text-sm mb-2">{assignment.listing.address}</p>
+                        <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <span>📅 {assignment.checkin_date && assignment.checkout_date ? `${new Date(assignment.checkin_date).toLocaleDateString('ru-RU')} - ${new Date(assignment.checkout_date).toLocaleDateString('ru-RU')}` : 'Даты не указаны'}</span>
+                          <span>🏨 {assignment.listing.listing_type?.name || 'Тип не указан'}</span>
                         </div>
-                        <div className="ml-4">
+                      </div>
+                      <div className="ml-4">
                           <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
                             Взято
                           </span>
-                        </div>
-                      </div>
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                        <p className="text-yellow-800 text-sm">
-                          <strong>Задание взято!</strong> Принять его можно будет за 24 часа до заселения.
-                        </p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                      <p className="text-yellow-800 text-sm">
+                        <strong>Задание взято!</strong> Принять его можно будет за 24 часа до заселения.
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
-              {/*{displayAssignments.length === 0 }*/}
-              {/* No Tasks Message */}
-              {!assignmentsLoading && displayAssignments.length === 0&&  acceptedAssignments.length === 0 && takenAssignments.length === 0 && !showInstructions && !acceptedAssignment && !storedHotelName && (
-                <NoAssignmentsCard
-                  title={displayAssignments.length === 0 ? 'Не найдены предложения' : undefined}
-                  descr={displayAssignments.length === 0 ? 'Попробуйте другой тип объекта' : undefined}
-                />
-              )}
-            </div>
-          )}
-        </main>
-      </div>
-    );
+            {/*{displayAssignments.length === 0 }*/}
+            {/* No Tasks Message */}
+            {!assignmentsLoading && displayAssignments.length === 0&&  acceptedAssignments.length === 0 && takenAssignments.length === 0 && !showInstructions && !acceptedAssignment && !storedHotelName && (
+              <NoAssignmentsCard
+                title={displayAssignments.length === 0 ? 'Не найдены предложения' : undefined}
+                descr={displayAssignments.length === 0 ? 'Попробуйте другой тип объекта' : undefined}
+              />
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
 
 export default function Dashboard() {

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react'
+import {isServer} from "@/lib/browser";
 
 type EventTarget = Document | Window | HTMLElement
 
@@ -42,7 +43,7 @@ export function useEventListener(
 ): void {
   const {
     enabled = true,
-    target = document,
+    target = isServer ? undefined : document,
     capture = false,
     passive = false,
     once = false

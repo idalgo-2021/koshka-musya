@@ -79,45 +79,49 @@ export type SectionFilters = {
 export const ChecklistApi = {
   // Sections
   async getSectionsFull(filters?: SectionFilters): Promise<ChecklistSectionsResponse> {
-    let url = '/checklist_sections'
-    
+    let url = '/staff/checklist_sections'
+
     if (filters) {
       const params = new URLSearchParams()
-      
+
       if (filters.id?.length) {
         filters.id.forEach(id => params.append('id', id.toString()))
       }
-      
+
       if (filters.slug?.length) {
         filters.slug.forEach(slug => params.append('slug', slug))
       }
-      
+
       if (filters.listing_type_id?.length) {
         filters.listing_type_id.forEach(id => params.append('listing_type_id', id.toString()))
       }
-      
+
       if (filters.listing_type_slug?.length) {
         filters.listing_type_slug.forEach(slug => params.append('listing_type_slug', slug))
       }
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`
       }
     }
-    
+
     return api.get<ChecklistSectionsResponse>(url, true)
   },
 
+  async getSectionById(id: number): Promise<ChecklistSection> {
+    return api.get<ChecklistSection>(`/staff/checklist_sections/${id}`, true)
+  },
+
   async createSection(data: Partial<ChecklistSection>): Promise<ChecklistSection> {
-    return api.post<ChecklistSection>('/checklist_sections', data, true)
+    return api.post<ChecklistSection>('/staff/checklist_sections', data, true)
   },
 
   async updateSection(id: number, data: Partial<ChecklistSection>): Promise<ChecklistSection> {
-    return api.patch<ChecklistSection>(`/checklist_sections/${id}`, data, true)
+    return api.patch<ChecklistSection>(`/staff/checklist_sections/${id}`, data, true)
   },
 
   async deleteSection(id: number): Promise<{ success?: boolean }> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/checklist_sections/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/staff/checklist_sections/${id}`, {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',
@@ -136,23 +140,23 @@ export const ChecklistApi = {
 
   // Items
   async getItemsFull(): Promise<ChecklistItemsResponse> {
-    return api.get<ChecklistItemsResponse>('/checklist_items', true)
+    return api.get<ChecklistItemsResponse>('/staff/checklist_items', true)
   },
 
   async getItemById(id: number): Promise<ChecklistItem> {
-    return api.get<ChecklistItem>(`/checklist_items/${id}`, true)
+    return api.get<ChecklistItem>(`/staff/checklist_items/${id}`, true)
   },
 
   async createItem(data: CreateItemRequest): Promise<ChecklistItem> {
-    return api.post<ChecklistItem>('/checklist_items', data, true)
+    return api.post<ChecklistItem>('/staff/checklist_items', data, true)
   },
 
   async updateItem(id: number, data: UpdateItemRequest): Promise<ChecklistItem> {
-    return api.patch<ChecklistItem>(`/checklist_items/${id}`, data, true)
+    return api.patch<ChecklistItem>(`/staff/checklist_items/${id}`, data, true)
   },
 
   async deleteItem(id: number): Promise<{ success?: boolean }> {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/checklist_items/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/staff/checklist_items/${id}`, {
       method: 'DELETE',
       headers: {
         Accept: 'application/json',

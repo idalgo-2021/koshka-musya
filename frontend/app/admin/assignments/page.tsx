@@ -7,29 +7,43 @@ import type { Assignment } from '@/entities/assignments/types'
 import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import {Button} from "@/components/ui/button";
-import { ToggleButton, useToggleWithStorage } from '@/components/ToggleButton'
+import Select from '@/components/ui/select'
+import SelectRowMulti from '@/components/ui/select-row-multi'
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import AssignmentCard, { getStatusBadgeClasses } from '@/components/AssignmentCard'
-import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Plus} from 'lucide-react'
-import {useAuth, USER_ROLE} from "@/entities/auth/useAuth";
+import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Loader} from 'lucide-react'
 import {assignmentStatusOptions} from "@/entities/assignments/const";
+import { ListingsApi } from '@/entities/listings/api'
 
 export default function AssignmentsStaffPage() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(50)
   const [reporterId, setReporterId] = React.useState('')
   const [statusIds, setStatusIds] = React.useState<string>('')
-  const [isShow, setIsShow] = useToggleWithStorage(false, 'assignments-view-mode') // false = card view, true = table view
-  const { user } = useAuth();
+  const [listingTypesIds, setListingTypesIds] = React.useState<(string | number)[]>([])
+  const [isShow, setIsShow] = useResponsiveToggle(false, 'assignments-view-mode') // false = card view, true = table view
+
+  // Fetch listing types for filter
+  const { data: listingTypesData } = useQuery({
+    queryKey: ['listing_types'],
+    queryFn: () => ListingsApi.getListingTypes(),
+  })
 
   const { data, isLoading, isError, isFetching } = useQuery({
-    queryKey: ['assignments_staff', page, limit, reporterId, statusIds],
+    queryKey: ['assignments_staff', page, limit, reporterId, statusIds, listingTypesIds],
     queryFn: async () => {
       const statusId = statusIds ? Number(statusIds) : undefined
+      // Filter out 'all' and convert to numbers, or use undefined if 'all' is selected or no types selected
+      const listingTypesIdsNumbers = listingTypesIds.length > 0 && !listingTypesIds.includes('all')
+        ? listingTypesIds.filter(id => id !== 'all').map(id => Number(id))
+        : undefined
       return AssignmentsApi.getAllAssignmentsStaff({
         page,
         limit,
         reporter_id: reporterId || undefined,
-        status_id: statusId ? [statusId] : undefined
+        status_id: statusId ? [statusId] : undefined,
+        listing_types_ids: listingTypesIdsNumbers
       })
     },
   })
@@ -46,14 +60,14 @@ export default function AssignmentsStaffPage() {
         <h1 className="text-md md:text-2xl font-semibold">Предложения на оценку</h1>
         <div className="flex items-center gap-3">
           <ToggleButton checked={isShow} onToggle={setIsShow} />
-          {user?.role === USER_ROLE.Admin  && (
-            <Button asChild>
-              <Link href="/admin/assignments/new">
-                <Plus className="w-4 h-4 mr-2" />
-                 Предложение
-              </Link>
-            </Button>
-          )}
+          {/*{user?.role === USER_ROLE.Admin  && (*/}
+          {/*  <Button asChild>*/}
+          {/*    <Link href="/admin/assignments/new">*/}
+          {/*      <Plus className="w-4 h-4 mr-2" />*/}
+          {/*       Предложение*/}
+          {/*    </Link>*/}
+          {/*  </Button>*/}
+          {/*)}*/}
         </div>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -63,23 +77,44 @@ export default function AssignmentsStaffPage() {
         </div>
         <div className="space-y-1">
           <div className="text-sm text-muted-foreground">Статус</div>
-          <select
+          <Select
             value={statusIds}
-            onChange={(e) => setStatusIds(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="">Все</option>
-            {assignmentStatusOptions.map((status) => (
-              <option key={status.id} value={status.id.toString()}>
-                {status.name}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setStatusIds(value ? String(value) : '')}
+            placeholder="Все"
+            options={[
+              { value: '', label: 'Все' },
+              ...assignmentStatusOptions.map((status) => ({
+                value: status.id.toString(),
+                label: status.name
+              }))
+            ]}
+          />
         </div>
       </div>
 
+      <div className="space-y-1">
+        {/* <div className="text-sm text-muted-foreground">Типы объектов</div> */}
+        <SelectRowMulti
+          value={listingTypesIds}
+          onChange={setListingTypesIds}
+          options={[
+            { value: 'all', label: 'Все' },
+            ...(listingTypesData?.listing_types?.map((type) => ({
+              value: type.id,
+              label: type.name
+            })) || [])
+          ]}
+          placeholder="Выберите типы объектов"
+        />
+      </div>
+
       {isLoading || isFetching ? (
-        <div>Loading...</div>
+        <div className="flex items-center justify-center py-8">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader className="w-4 h-4 animate-spin"/>
+            <span>Loading...</span>
+          </div>
+        </div>
       ) : isError ? (
         <div className="text-destructive">Failed to load</div>
       ) : (

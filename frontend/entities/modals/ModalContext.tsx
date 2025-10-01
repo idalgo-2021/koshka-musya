@@ -7,15 +7,23 @@ import * as React from "react"
 import ChecklistItemForm from '@/components/ChecklistItemForm';
 import ListingTypeForm from '@/components/ListingTypeForm';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import ReorderSectionsModal from '@/components/ReorderSectionsModal';
+import ResetPasswordModal from '@/components/ResetPasswordModal';
 import { useKeyboardHooks } from '@/hooks/useKeyboardHooks';
+import { type ChecklistSection } from '@/entities/checklist/api';
+import ChecklistSectionForm from "@/components/ChecklistSectionForm";
 
 // Define modal types
 export type ModalType =
   | "checklist-item-create"
   | "checklist-item-edit"
+  | "checklist-section-create"
+  | "checklist-section-edit"
   | "listing-type-create"
   | "listing-type-edit"
   | "confirmation"
+  | "reorder-sections"
+  | "reset-password"
   | null
 
 export interface ChecklistItemCreatePayload {
@@ -25,6 +33,14 @@ export interface ChecklistItemCreatePayload {
 export interface ChecklistItemEditPayload {
   itemId: number
   sectionId?: number
+}
+
+export interface ChecklistSectionCreatePayload {
+  // No initial data needed for create
+}
+
+export interface ChecklistSectionEditPayload {
+  sectionId: number
 }
 
 export interface ListingTypeCreatePayload {
@@ -47,12 +63,32 @@ export interface ConfirmationPayload {
   isLoading?: boolean
 }
 
+export interface ReorderSectionsPayload {
+  sections: ChecklistSection[]
+  onSave: (sections: ChecklistSection[]) => void
+  onCancel: () => void
+  isLoading?: boolean
+  getListingTypeName: (id: number) => string | null
+}
+
+export interface ResetPasswordPayload {
+  userId: string
+  username: string
+  onSuccess: () => void
+  onCancel: () => void
+  isLoading?: boolean
+}
+
 export type ModalPayload =
   | ChecklistItemCreatePayload
   | ChecklistItemEditPayload
+  | ChecklistSectionCreatePayload
+  | ChecklistSectionEditPayload
   | ListingTypeCreatePayload
   | ListingTypeEditPayload
   | ConfirmationPayload
+  | ReorderSectionsPayload
+  | ResetPasswordPayload
   | null
 
 export interface ModalState {
@@ -147,6 +183,54 @@ export function useConfirmation() {
   return { confirm, closeModal }
 }
 
+export function useReorderSections() {
+  const { openModal, closeModal } = useModal()
+
+  const openReorderModal = React.useCallback((
+    sections: ChecklistSection[],
+    onSave: (sections: ChecklistSection[]) => void,
+    onCancel: () => void,
+    options?: {
+      isLoading?: boolean
+      getListingTypeName: (id: number) => string | null
+    }
+  ) => {
+    openModal('reorder-sections', {
+      sections,
+      onSave,
+      onCancel,
+      isLoading: options?.isLoading || false,
+      getListingTypeName: options?.getListingTypeName || (() => null)
+    })
+  }, [openModal])
+
+  return { openReorderModal, closeModal }
+}
+
+export function useResetPassword() {
+  const { openModal, closeModal } = useModal()
+
+  const openResetPasswordModal = React.useCallback((
+    userId: string,
+    username: string,
+    onSuccess: () => void,
+    onCancel: () => void,
+    options?: {
+      isLoading?: boolean
+    }
+  ) => {
+    openModal('reset-password', {
+      userId,
+      username,
+      onSuccess,
+      onCancel,
+      isLoading: options?.isLoading || false
+    })
+  }, [openModal])
+
+  return { openResetPasswordModal, closeModal }
+}
+
 export function ModalContent({
   type,
   payload,
@@ -177,6 +261,26 @@ export function ModalContent({
           sectionId={editPayload?.sectionId}
           onSuccess={onSuccess}
           onCancel={onCancel}
+        />
+      )
+
+    case "checklist-section-create":
+      const sectionCreatePayload = payload as ChecklistSectionEditPayload
+       return (
+        <ChecklistSectionForm
+          sectionId={sectionCreatePayload?.sectionId}
+          onCancel={onCancel || (() => {})}
+          onSuccess={onCancel || (() => {})}
+        />
+      )
+
+    case "checklist-section-edit":
+      const sectionEditPayload = payload as ChecklistSectionEditPayload
+      return (
+        <ChecklistSectionForm
+          sectionId={sectionEditPayload?.sectionId}
+          onCancel={onCancel || (() => {})}
+          onSuccess={onCancel || (() => {})}
         />
       )
 
@@ -214,6 +318,30 @@ export function ModalContent({
           onConfirm={confirmationPayload?.onConfirm || (() => {})}
           onCancel={onCancel || (() => {})}
           isLoading={confirmationPayload?.isLoading}
+        />
+      )
+
+    case "reorder-sections":
+      const reorderPayload = payload as ReorderSectionsPayload
+      return (
+        <ReorderSectionsModal
+          sections={reorderPayload?.sections || []}
+          onSave={reorderPayload?.onSave || (() => {})}
+          onCancel={onCancel || (() => {})}
+          isLoading={reorderPayload?.isLoading}
+          getListingTypeName={reorderPayload?.getListingTypeName || (() => null)}
+        />
+      )
+
+    case "reset-password":
+      const resetPasswordPayload = payload as ResetPasswordPayload
+      return (
+        <ResetPasswordModal
+          userId={resetPasswordPayload?.userId || ''}
+          username={resetPasswordPayload?.username || ''}
+          onSuccess={resetPasswordPayload?.onSuccess || (() => {})}
+          onCancel={onCancel || (() => {})}
+          isLoading={resetPasswordPayload?.isLoading}
         />
       )
 

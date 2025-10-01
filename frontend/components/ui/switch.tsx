@@ -69,8 +69,7 @@ export function Switch({
       {/* Switch thumb */}
       <span
         className={cn(
-          "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out",
-          checked ? "translate-x-5" : "translate-x-0"
+          "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-lg",
         )}
       />
     </button>

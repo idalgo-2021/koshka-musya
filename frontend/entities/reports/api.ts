@@ -16,7 +16,7 @@ export const ReportsApi = {
       params.append('status_id', status_id.toString());
     }
 
-    return api.get<MyReportsResponse>(`/reports?${params.toString()}`, true);
+    return api.get<MyReportsResponse>(`/staff/reports?${params.toString()}`, true);
   },
 
   async getMyReportById(id: string): Promise<Report> {
@@ -47,6 +47,6 @@ export const ReportsApi = {
 
   // Staff: get report by ID
   async getById(id: string): Promise<Report> {
-    return api.get<Report>(`/reports/${id}`, true);
+    return api.get<Report>(`/staff/reports/${id}`, true);
   },
 };

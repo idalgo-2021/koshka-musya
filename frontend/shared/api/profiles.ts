@@ -50,7 +50,7 @@ class ProfilesApi {
     // мы просто сохраняем фильтры в localStorage
     // В реальном приложении здесь был бы вызов API для обновления additional_info
     localStorage.setItem('userFilters', JSON.stringify(filters));
-    
+
     // Имитируем успешное сохранение
     return Promise.resolve();
   }
@@ -69,7 +69,6 @@ class ProfilesApi {
         return profile.additional_info?.filters || null;
       } catch {
         // Если профиль не найден, возвращаем null
-        console.log('Profile not found, using default filters');
         return null;
       }
     } catch (error) {

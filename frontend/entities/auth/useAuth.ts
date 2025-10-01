@@ -2,6 +2,8 @@ import * as React from 'react';
 import { AuthApi } from './api';
 import { tokenStorage, type TokenInput } from './types';
 import { jwtDecode } from "jwt-decode";
+import { SessionContextType } from '@/entities/auth/SessionContext';
+import { SessionActionContextType } from '@/entities/auth/SessionActionContext';
 
 export const USER_ROLE = {
   Admin: 1,
@@ -63,36 +65,72 @@ export function useAuth() {
 
   React.useEffect(() => { void validate(); }, [validate]);
 
+  const onLogin = React.useCallback(async (input: TokenInput) => {
+    setLoading(true);
+    try {
+      await AuthApi.token(input);
+      const me = await AuthApi.validate();
+      const role = getUserRole();
+      setUser({ id: me.user_id, username: me.username, role, });
+      setIsAuthenticated(true);
+      setTimeout(() => {
+        window.location.href = (role === USER_ROLE.User) ? '/dashboard' : '/admin';
+      }, 100);
+    } catch (error) {
+      tokenStorage.clear();
+      setUser(null);
+      setIsAuthenticated(false);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const logout = React.useCallback(() => {
+    AuthApi.logout();
+    setUser(null);
+    setIsAuthenticated(false);
+    window.location.href = '/'
+  }, []);
   return {
     user,
     loading,
     isAuthenticated,
-    login: async (input: TokenInput) => {
-      setLoading(true);
-      try {
-        await AuthApi.token(input);
-        const me = await AuthApi.validate();
-        const role = getUserRole();
-        setUser({ id: me.user_id, username: me.username, role, });
-        setIsAuthenticated(true);
-        setTimeout(() => {
-          window.location.href =(role !== USER_ROLE.Admin) ? '/dashboard' : '/admin/listings';
-        }, 100);
-      } catch (error) {
-        tokenStorage.clear();
-        setUser(null);
-        setIsAuthenticated(false);
-        throw error;
-      } finally {
-        setLoading(false);
-      }
-    },
+    login: onLogin,
     register: AuthApi.register,
-    logout: () => {
-      AuthApi.logout();
-      setUser(null);
-      setIsAuthenticated(false);
-    },
+    logout,
     validate,
   };
 }
+
+export function useSessionContextValue(auth: ReturnType<typeof useAuth>): SessionContextType {
+
+  return {
+    user: auth.user,
+    isAuthenticated: auth.isAuthenticated,
+    isLoading: auth.loading,
+  };
+}
+
+// Create session action context value from useAuth (actions only)
+export function useSessionActionContextValue(auth: ReturnType<typeof useAuth>): SessionActionContextType {
+  return {
+    login: auth.login,
+    logout: auth.logout,
+    validate: auth.validate,
+    register: auth.register,
+  };
+}
+//
+// // Higher-order component to provide session context
+// export function withSessionProvider<T extends object>(Component: React.ComponentType<T>) {
+//   return function SessionWrappedComponent(props: T) {
+//     const sessionValue = useSessionContextValue();
+//
+//     return (
+//       <SessionProvider value={sessionValue}>
+//         <Component {...props} />
+//       </SessionProvider>
+//     );
+//   };
+// }

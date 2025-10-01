@@ -281,7 +281,7 @@ SELECT
     (r.source_msg -> 'reservation' -> 'dates' ->> 'checkin')::timestamp AS checkin_date,
     (r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp AS checkout_date,
     r.listing_id,
-    'reservation' AS purpose, -- можно задать дефолтное значение
+    'Проверка объекта по бронированию от OTA' AS purpose,
     ((r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp + interval '1 day') AS expires_at, -- например, истекает через 1 день после выезда
     (SELECT id FROM assignment_statuses WHERE slug = 'offered') -- или задай конкретный статус
 FROM ota_sg_reservations r
@@ -303,7 +303,7 @@ INSERT INTO ota_sg_reservations (
     (SELECT id FROM listings WHERE code = 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'),
     '2025-10-05T15:00:00Z',
     '2025-10-10T12:00:00Z',
-    '{"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}}'::jsonb,
+    '{"pricing":{"currency":"USD","total":25000,"breakdown":{"per_night":5000,"nights":5}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
     '{
       "reservation": {
@@ -313,7 +313,7 @@ INSERT INTO ota_sg_reservations (
         "listing":{"code":"b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0"},
         "dates":{"checkin":"2025-10-05T15:00:00Z","checkout":"2025-10-10T12:00:00Z"},
         "guests":{"adults":2,"children":1},
-        "pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}
+        "pricing":{"currency":"USD","total":25000,"breakdown":{"per_night":5000,"nights":5}}
       },
       "source":"Ostrovok.com",
       "received_at":"2025-10-01T12:00:00Z"
@@ -331,7 +331,7 @@ INSERT INTO ota_sg_reservations (
     (SELECT id FROM listings WHERE code = 'da5811d2-36e4-4d19-9b23-1234567890ab'),
     '2025-10-08T14:00:00Z',
     '2025-10-12T11:00:00Z',
-    '{"pricing":{"currency":"RUB","total":18000,"breakdown":{"per_night":4500,"nights":4}}}'::jsonb,
+    '{"pricing":{"currency":"BYN","total":18000,"breakdown":{"per_night":4500,"nights":4}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
     '{
       "reservation": {
@@ -341,7 +341,7 @@ INSERT INTO ota_sg_reservations (
         "listing":{"code":"da5811d2-36e4-4d19-9b23-1234567890ab"},
         "dates":{"checkin":"2025-10-08T14:00:00Z","checkout":"2025-10-12T11:00:00Z"},
         "guests":{"adults":1,"children":0},
-        "pricing":{"currency":"RUB","total":18000,"breakdown":{"per_night":4500,"nights":4}}
+        "pricing":{"currency":"BYN","total":18000,"breakdown":{"per_night":4500,"nights":4}}
       },
       "source":"Booking.com",
       "received_at":"2025-10-01T13:00:00Z"
@@ -359,7 +359,7 @@ INSERT INTO ota_sg_reservations (
     (SELECT id FROM listings WHERE code = '1fe9eba4-d884-22e0-891f-15920d90be7e'),
     '2025-10-03T16:00:00Z',
     '2025-10-07T11:00:00Z',
-    '{"pricing":{"currency":"RUB","total":22000,"breakdown":{"per_night":5500,"nights":4}}}'::jsonb,
+    '{"pricing":{"currency":"KZT","total":22000,"breakdown":{"per_night":5500,"nights":4}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
     '{
       "reservation": {
@@ -369,7 +369,7 @@ INSERT INTO ota_sg_reservations (
         "listing":{"code":"1fe9eba4-d884-22e0-891f-15920d90be7e"},
         "dates":{"checkin":"2025-10-03T16:00:00Z","checkout":"2025-10-07T11:00:00Z"},
         "guests":{"adults":3,"children":0},
-        "pricing":{"currency":"RUB","total":22000,"breakdown":{"per_night":5500,"nights":4}}
+        "pricing":{"currency":"KZT","total":22000,"breakdown":{"per_night":5500,"nights":4}}
       },
       "source":"Airbnb.com",
       "received_at":"2025-10-01T14:00:00Z"
@@ -387,7 +387,7 @@ INSERT INTO ota_sg_reservations (
     (SELECT id FROM listings WHERE code = 'c681b19c-8d17-548d-22f3-80e7266ecc36'),
     '2025-10-10T15:00:00Z',
     '2025-10-15T12:00:00Z',
-    '{"pricing":{"currency":"RUB","total":27000,"breakdown":{"per_night":5400,"nights":5}}}'::jsonb,
+    '{"pricing":{"currency":"EUR","total":27000,"breakdown":{"per_night":5400,"nights":5}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
     '{
       "reservation": {
@@ -397,7 +397,7 @@ INSERT INTO ota_sg_reservations (
         "listing":{"code":"c681b19c-8d17-548d-22f3-80e7266ecc36"},
         "dates":{"checkin":"2025-10-10T15:00:00Z","checkout":"2025-10-15T12:00:00Z"},
         "guests":{"adults":2,"children":2},
-        "pricing":{"currency":"RUB","total":27000,"breakdown":{"per_night":5400,"nights":5}}
+        "pricing":{"currency":"EUR","total":27000,"breakdown":{"per_night":5400,"nights":5}}
       },
       "source":"Expedia.com",
       "received_at":"2025-10-01T15:00:00Z"
@@ -424,7 +424,7 @@ SELECT
     (r.source_msg -> 'reservation' -> 'dates' ->> 'checkin')::timestamp AS checkin_date,
     (r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp AS checkout_date,
     r.listing_id,
-    'reservation' AS purpose,
+    'Проверка объекта по бронированию от OTA' AS purpose,
     ((r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp + interval '1 day') AS expires_at,
     (SELECT id FROM assignment_statuses WHERE slug = 'offered')
 FROM ota_sg_reservations r

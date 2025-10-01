@@ -21,7 +21,7 @@ interface AssignmentCarouselProps {
   currentUserId?: string;
   hasActiveAssignments?: boolean;
   // Фильтрация по типу объекта
-  selectedListingType?: string;
+  selectedListingType?: number| undefined;
   onListingTypeChange?: (type: number | undefined) => void;
 }
 

@@ -7,9 +7,11 @@ import type { Report } from '@/entities/reports/types'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import SelectRow from '@/components/ui/select-row'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import {ToggleButton, useToggleWithStorage} from "@/components/ToggleButton";
+import { ToggleButton } from '@/components/ToggleButton'
+import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import HotelImage from "@/components/HotelImage";
 import {reportStatusOptions} from "@/entities/reports/const";
 import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
@@ -19,7 +21,7 @@ export default function ReportsStaffPage() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(50)
   const [statusId, setStatusId] = React.useState<string>('')
-  const [isShow, setIsShow] = useToggleWithStorage(false);
+  const [isShow, setIsShow] = useResponsiveToggle(false, 'reports-view-mode');
 
   const { data, isLoading, isError, isFetching } = useQuery({
     queryKey: ['reports_staff', page, limit, statusId],
@@ -86,18 +88,16 @@ export default function ReportsStaffPage() {
       <div className="flex items-center gap-3">
         <div className="space-y-1">
           <div className="text-sm text-muted-foreground">Статус</div>
-          <select
+          <SelectRow
             value={statusId}
-            onChange={(e) => setStatusId(e.target.value)}
-            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-w-[200px]"
-          >
-            <option value="">Все статусы</option>
-            {reportStatusOptions.map((status) => (
-              <option key={status.id} value={status.id.toString()}>
-                {status.name}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => setStatusId(value ? String(value) : '')}
+            placeholder="Все статусы"
+            variant='select'
+            options={reportStatusOptions.map((status) => ({
+              value: status.id.toString(),
+              label: status.name
+            }))}
+          />
         </div>
       </div>
 
