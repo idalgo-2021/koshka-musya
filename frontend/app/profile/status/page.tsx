@@ -1,15 +1,17 @@
 "use client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useUserProfile } from "@/entities/auth/useUserProfile";
 import { useAuth } from "@/entities/auth/useAuth";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import HomeButton from "@/components/HomeButton";
+import UserRatingBadge from "@/components/UserRatingBadge";
 
 export default function ProfileStatusPage() {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading, error } = useUserProfile();
   const router = useRouter();
+  const [isRatingSystemExpanded, setIsRatingSystemExpanded] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -188,27 +190,110 @@ export default function ProfileStatusPage() {
                     <span className="text-lg">⭐</span>
                     <h3 className="font-bold text-gray-800 text-lg">Рейтинг</h3>
                   </div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <motion.span 
-                          key={i}
-                          initial={{ opacity: 0, scale: 0 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: 0.9 + i * 0.1 }}
-                          className={`text-lg ${i < Math.min(5, Math.floor(profile.points / 20)) ? 'text-yellow-400' : 'text-gray-300'}`}
+                  <div className="flex items-center gap-3 mb-4">
+                    <UserRatingBadge profile={profile} size="md" showPoints={true} showPointsToNext={true} />
+                  </div>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Продолжайте выполнять задания для повышения рейтинга
+                  </p>
+                  
+                  {/* Система рейтинга */}
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => setIsRatingSystemExpanded(!isRatingSystemExpanded)}
+                      className="flex items-center gap-2 text-left w-full"
+                    >
+                      <h4 className="font-semibold text-gray-700 text-sm">Система рейтинга:</h4>
+                      <svg
+                        className={`w-4 h-4 transition-transform ${isRatingSystemExpanded ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    <AnimatePresence>
+                      {isRatingSystemExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="overflow-hidden"
                         >
-                          ★
-                        </motion.span>
+                          <div className="grid grid-cols-1 gap-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[...Array(1)].map((_, i) => (
+                            <svg key={i} className="w-3 h-3 text-yellow-500 fill-current" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">Новичок</span>
+                          <span className="text-gray-500 text-xs">0 → 49 очков</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[...Array(2)].map((_, i) => (
+                            <svg key={i} className="w-3 h-3 text-yellow-500 fill-current" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block px-2 py-1 bg-yellow-100 text-yellow-600 rounded-full text-xs">Начинающий</span>
+                          <span className="text-gray-500 text-xs">50 → 199 очков</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[...Array(3)].map((_, i) => (
+                            <svg key={i} className="w-3 h-3 text-yellow-500 fill-current" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">Продвинутый</span>
+                          <span className="text-gray-500 text-xs">200 → 499 очков</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[...Array(4)].map((_, i) => (
+                            <svg key={i} className="w-3 h-3 text-yellow-500 fill-current" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs">Опытный</span>
+                          <span className="text-gray-500 text-xs">500 → 999 очков</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <svg key={i} className="w-3 h-3 text-yellow-500 fill-current" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
                       ))}
                     </div>
-                    <span className="text-accenttext font-semibold text-lg">
-                      {profile.rank}
-                    </span>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-block px-2 py-1 bg-purple-100 text-purple-600 rounded-full text-xs">Эксперт</span>
+                          <span className="text-gray-500 text-xs">1000+ очков</span>
+                        </div>
+                      </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <p className="text-gray-500 text-sm">
-                    {profile.points} очков
-                  </p>
                 </div>
               </div>
             </motion.div>

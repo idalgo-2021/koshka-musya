@@ -1,6 +1,8 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useUserProfile } from "@/entities/auth/useUserProfile";
+import UserRatingBadge from "./UserRatingBadge";
 
 interface UserProfileMenuProps {
   username: string;
@@ -11,6 +13,7 @@ export default function UserProfileMenu({ username, onLogout }: UserProfileMenuP
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { profile } = useUserProfile();
 
   // Закрытие меню при клике вне его
   useEffect(() => {
@@ -66,7 +69,12 @@ export default function UserProfileMenu({ username, onLogout }: UserProfileMenuP
             {username?.charAt(0).toUpperCase()}
           </span>
         </div>
-        <span className="text-sm font-medium text-accenttext">{username}</span>
+        <div className="flex flex-col items-start">
+          <span className="text-sm font-medium text-accenttext">{username}</span>
+          {profile && (
+            <UserRatingBadge profile={profile} size="sm" starsOnly={true} />
+          )}
+        </div>
         <svg
           className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
@@ -82,6 +90,7 @@ export default function UserProfileMenu({ username, onLogout }: UserProfileMenuP
         <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-xl border border-gray-200 py-2 z-[99999]">
           <div className="px-4 py-2 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-900">Личный кабинет</p>
+            <p className="text-xs text-gray-500 mt-1">{username}</p>
           </div>
           
           {menuItems.map((item, index) => (

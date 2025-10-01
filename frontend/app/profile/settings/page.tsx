@@ -1,11 +1,13 @@
   "use client";
 import { useAuth } from "@/entities/auth/useAuth";
+import { useUserProfile } from "@/entities/auth/useUserProfile";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import HomeButton from "@/components/HomeButton";
 
 export default function ProfileSettingsPage() {
   const { user } = useAuth();
+  useUserProfile();
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [formData, setFormData] = useState({
     username: user?.username || '',
