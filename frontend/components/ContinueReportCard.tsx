@@ -37,7 +37,7 @@ export default function ContinueReportCard({ assignment, report, onContinue, onS
     checkin_date: assignment.checkin_date,
     checkout_date: assignment.checkout_date
   });
-  
+
   console.log("ContinueReportCard - report data:", {
     reportId: report?.id,
     hasReport: !!report,
@@ -114,7 +114,7 @@ export default function ContinueReportCard({ assignment, report, onContinue, onS
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 mb-1">Срок действия до</p>
                 <p className="text-sm text-gray-600">
-                  {assignment.expires_at ? new Date(assignment.expires_at).toLocaleString('ru-RU', {
+                  {assignment.expires_at ? new Date(assignment.expires_at)?.toLocaleString('ru-RU', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',
@@ -136,10 +136,10 @@ export default function ContinueReportCard({ assignment, report, onContinue, onS
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Адрес</p>
                   <p className="text-sm text-gray-600">
-                    {assignment.listing.address}
                     {assignment.listing.city && (
-                      <span className="block">{assignment.listing.city}, {assignment.listing.country}</span>
+                      <span>{`${assignment.listing.country}, ${assignment.listing.city}, `}</span>
                     )}
+                    {assignment.listing.address}
                   </p>
                   {/* Ссылка на карту под адресом */}
                   {assignment.listing?.latitude && assignment.listing?.longitude && (
@@ -172,7 +172,7 @@ export default function ContinueReportCard({ assignment, report, onContinue, onS
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 mb-1">Номер бронирования</p>
+                  <p className="text-sm font-medium text-gray-900 mb-1">Номер бронирования 2</p>
                   <p className="text-sm text-gray-600 font-mono">
                     {report?.booking_details?.booking_number || assignment.booking_number}
                   </p>
@@ -215,13 +215,13 @@ export default function ContinueReportCard({ assignment, report, onContinue, onS
                     {(() => {
                       const pricing = report?.booking_details?.pricing || assignment.pricing;
                       if (!pricing || !pricing.total) return 'Не указана';
-                      return `${pricing.total.toLocaleString('ru-RU')} ${pricing.currency || 'руб.'}`;
+                      return `${pricing.total?.toLocaleString('ru-RU')} ${pricing.currency || 'руб.'}`;
                     })()}
                     {(() => {
                       const pricing = report?.booking_details?.pricing || assignment.pricing;
                       return pricing?.breakdown && pricing.breakdown.per_night ? (
                         <span className="block text-xs text-gray-500 mt-1">
-                          {pricing.breakdown.per_night.toLocaleString('ru-RU')} {pricing.currency || 'руб.'} × {pricing.breakdown.nights} ноч{pricing.breakdown.nights === 1 ? 'ь' : pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                          {pricing.breakdown.per_night?.toLocaleString('ru-RU')} {pricing.currency || 'руб.'} × {pricing.breakdown.nights} ноч{pricing.breakdown.nights === 1 ? 'ь' : pricing.breakdown.nights < 5 ? 'и' : 'ей'}
                         </span>
                       ) : null;
                     })()}

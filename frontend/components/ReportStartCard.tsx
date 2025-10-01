@@ -34,7 +34,7 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
               </div>
             </div>
           )}
-          
+
           {/* Dark overlay for better text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
@@ -78,7 +78,7 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 mb-1">Срок действия до</p>
                     <p className="text-sm text-gray-600">
-                      {report.created_at ? new Date(report.created_at).toLocaleString('ru-RU', {
+                      {report.created_at ? new Date(report.created_at)?.toLocaleString('ru-RU', {
                         year: 'numeric',
                         month: '2-digit',
                         day: '2-digit',
@@ -136,7 +136,7 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 mb-1">Номер бронирования</p>
+                  <p className="text-sm font-medium text-gray-900 mb-1">Номер бронирования 1</p>
                   <p className="text-sm text-gray-600 font-mono">
                     {report.booking_details.booking_number}
                   </p>
@@ -175,10 +175,10 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Стоимость</p>
                   <p className="text-sm text-green-600 font-semibold">
-                    {report.booking_details.pricing.total ? report.booking_details.pricing.total.toLocaleString('ru-RU') : 'Не указана'} {report.booking_details.pricing.currency || 'руб.'}
+                    {report.booking_details.pricing.total ? report.booking_details.pricing.total?.toLocaleString('ru-RU') : 'Не указана'} {report.booking_details.pricing.currency || 'руб.'}
                     {report.booking_details.pricing.breakdown && report.booking_details.pricing.breakdown.per_night && (
                       <span className="block text-xs text-gray-500 mt-1">
-                        {report.booking_details.pricing.breakdown.per_night.toLocaleString('ru-RU')} {report.booking_details.pricing.currency || 'руб.'} × {report.booking_details.pricing.breakdown.nights} ноч{report.booking_details.pricing.breakdown.nights === 1 ? 'ь' : report.booking_details.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                        {report.booking_details.pricing.breakdown.per_night?.toLocaleString('ru-RU')} {report.booking_details.pricing.currency || 'руб.'} × {report.booking_details.pricing.breakdown.nights} ноч{report.booking_details.pricing.breakdown.nights === 1 ? 'ь' : report.booking_details.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
                       </span>
                     )}
                   </p>
@@ -200,7 +200,7 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
               </svg>
               Начать заполнение
             </Button>
-            
+
             {/* Back to FAQ Link */}
             {onBackToFAQ && (
               <div className="text-center mt-4">

@@ -59,7 +59,7 @@ export default function AssignmentCarousel({
   // Фильтруем задания по выбранному типу
   const filteredAssignments = React.useMemo(() => {
     if (!selectedListingType) return assignments;
-    return assignments.filter(assignment => 
+    return assignments.filter(assignment =>
       assignment.listing.listing_type?.slug === selectedListingType
     );
   }, [assignments, selectedListingType]);
@@ -259,15 +259,15 @@ function AssignmentCard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Стоимость</p>
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex flex-row gap-4">
                     {(assignment.pricing as any)?.pricing?.total && (assignment.pricing as any).pricing.total > 0 && (
                       <p className="text-sm text-green-600 font-semibold">
-                        <span className="font-medium">{(assignment.pricing as any).pricing.total.toLocaleString('ru-RU')}</span> {(assignment.pricing as any).pricing.currency || 'руб.'}
+                        <span className="font-medium">{(assignment.pricing as any).pricing.total?.toLocaleString('ru-RU')}</span> {(assignment.pricing as any).pricing.currency || 'руб.'}
                       </p>
                     )}
                     {(assignment.pricing as any)?.pricing?.breakdown && (assignment.pricing as any).pricing.breakdown.per_night && (assignment.pricing as any).pricing.breakdown.nights && (
                       <p className="text-sm text-gray-500">
-                        {(assignment.pricing as any).pricing.breakdown.per_night.toLocaleString('ru-RU')} {(assignment.pricing as any).pricing.currency || 'руб.'} × {(assignment.pricing as any).pricing.breakdown.nights} ноч{(assignment.pricing as any).pricing.breakdown.nights === 1 ? 'ь' : (assignment.pricing as any).pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                        {(assignment.pricing as any).pricing.breakdown.per_night?.toLocaleString('ru-RU')} {(assignment.pricing as any).pricing.currency || 'руб.'} × {(assignment.pricing as any).pricing.breakdown.nights} ноч{(assignment.pricing as any).pricing.breakdown.nights === 1 ? 'ь' : (assignment.pricing as any).pricing.breakdown.nights < 5 ? 'и' : 'ей'}
                       </p>
                     )}
                   </div>
@@ -301,7 +301,7 @@ function AssignmentCard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Гости</p>
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex flex-row gap-4">
                     {assignment.guests.adults > 0 && (
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">{assignment.guests.adults}</span> {assignment.guests.adults === 1 ? 'взрослый' : assignment.guests.adults < 5 ? 'взрослых' : 'взрослых'}
@@ -327,7 +327,7 @@ function AssignmentCard({
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Даты проживания</p>
-                  <div className="space-y-1">
+                  <div className="space-y-1 flex flex-row gap-2">
                     {assignment.dates.checkin && (
                       <p className="text-sm text-gray-600">
                         <span className="font-medium">Заезд:</span> {(() => {
@@ -371,16 +371,18 @@ function AssignmentCard({
                     <p className="text-sm text-gray-500">Загружаем адрес…</p>
                   ) : (
                     <div className="space-y-1">
-                      {hotelDetails[assignment.listing.id]?.address && (
-                        <p className="text-sm text-gray-600">{hotelDetails[assignment.listing.id]?.address}</p>
-                      )}
-                      {(hotelDetails[assignment.listing.id]?.city || hotelDetails[assignment.listing.id]?.country) && (
-                        <p className="text-sm text-gray-500">
+                      <p>
+                        {(hotelDetails[assignment.listing.id]?.city || hotelDetails[assignment.listing.id]?.country) && (
+                          <span className="text-sm text-gray-500">
                           {hotelDetails[assignment.listing.id]?.city}
-                          {hotelDetails[assignment.listing.id]?.city && hotelDetails[assignment.listing.id]?.country ? ", " : ""}
-                          {hotelDetails[assignment.listing.id]?.country}
-                        </p>
-                      )}
+                            {hotelDetails[assignment.listing.id]?.city && hotelDetails[assignment.listing.id]?.country ? ", " : ""}
+                            {hotelDetails[assignment.listing.id]?.country}
+                        </span>
+                        )}
+                        {hotelDetails[assignment.listing.id]?.address && (
+                          <span className="text-sm text-gray-600">, {hotelDetails[assignment.listing.id]?.address}</span>
+                        )}
+                      </p>
                       {(hotelDetails[assignment.listing.id]?.latitude !== undefined && hotelDetails[assignment.listing.id]?.longitude !== undefined) && (
                         <a
                           className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
