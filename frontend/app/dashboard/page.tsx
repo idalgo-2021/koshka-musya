@@ -604,11 +604,11 @@ function DashboardContent() {
                   <div key={assignment.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">{assignment.listing.title}</h3>
-                        <p className="text-gray-600 text-sm mb-2">{assignment.listing.address}</p>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{assignment?.listing?.title}</h3>
+                        <p className="text-gray-600 text-sm mb-2">{assignment?.listing?.address}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span>📅 {assignment.checkin_date && assignment.checkout_date ? `${new Date(assignment.checkin_date).toLocaleDateString('ru-RU')} - ${new Date(assignment.checkout_date).toLocaleDateString('ru-RU')}` : 'Даты не указаны'}</span>
-                          <span>🏨 {assignment.listing.listing_type?.name || 'Тип не указан'}</span>
+                          <span>🏨 {assignment?.listing?.listing_type?.name || 'Тип не указан'}</span>
                         </div>
                       </div>
                       <div className="ml-4">

@@ -17,10 +17,10 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
       <div className="relative">
         {/* Hotel Image with Overlay */}
         <div className="h-48 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-          {report.listing?.main_picture ? (
+          {report?.listing?.main_picture ? (
                 <Image
-                  src={report.listing.main_picture}
-                  alt={report.listing.title || 'Отель'}
+                  src={report?.listing.main_picture}
+                  alt={report?.listing.title || 'Отель'}
                   fill
                   sizes="(max-width: 768px) 100vw, 400px"
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -41,10 +41,10 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
           {/* Hotel name overlay on image */}
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <h3 className="text-lg font-bold text-white mb-1 drop-shadow-2xl shadow-black/50">
-              {report.listing?.title || 'Отель'}
+              {report?.listing?.title || 'Отель'}
             </h3>
             <p className="text-white text-sm leading-relaxed drop-shadow-xl shadow-black/50 font-medium">
-              {report.listing?.description || 'Описание отеля'}
+              {report?.listing?.description || 'Описание отеля'}
             </p>
           </div>
         </div>
@@ -181,7 +181,7 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
               </div>
             )}
             {/* Address */}
-            {report.listing?.address && (
+            {report?.listing?.address && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -191,16 +191,16 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Адрес</p>
                   <p className="text-sm text-gray-600">
-                    {report.listing.address}
-                    {report.listing.city && (
-                      <span className="block">{report.listing.city}, {report.listing.country}</span>
+                    {report?.listing?.address}
+                    {report?.listing?.city && (
+                      <span className="block">{report?.listing?.city}, {report?.listing?.country}</span>
                     )}
                   </p>
                   {/* Ссылка на карту под адресом */}
-                  {report.listing?.latitude && report.listing?.longitude && (
+                  {report?.listing?.latitude && report?.listing?.longitude && (
                     <a
                       className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 mt-2"
-                      href={`https://yandex.ru/maps/?pt=${report.listing.longitude},${report.listing.latitude}&z=16&l=map`}
+                      href={`https://yandex.ru/maps/?pt=${report?.listing?.longitude},${report?.listing?.latitude}&z=16&l=map`}
                       target="_blank"
                       rel="noreferrer"
                     >
