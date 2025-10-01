@@ -79,30 +79,8 @@ function DashboardContent() {
     assignment.status.slug === 'offered'
   );
 
-  console.log({displayAssignments });
-
   // Проверяем, есть ли активные задания
   const hasActiveAssignments = acceptedAssignments.length > 0 || takenAssignments.length > 0;
-
-  // Логируем для отладки
-  console.log("=== DASHBOARD DEBUG ===");
-  console.log("Current user:", user);
-  console.log("User ID:", user?.id);
-  console.log("Is authenticated:", isAuthenticated);
-  console.log("All assignments:", assignments);
-  console.log("All assignments count:", assignments.length);
-  console.log("Display assignments:", displayAssignments);
-  console.log("Accepted assignments:", acceptedAssignments);
-  console.log("Taken assignments:", takenAssignments);
-  console.log("Has active assignments:", hasActiveAssignments);
-  console.log("Assignments details:", assignments.map(a => ({
-    id: a.id,
-    status: a.status.slug,
-    statusId: a.status.id,
-    statusName: a.status.name
-  })));
-  console.log("Current user ID for AssignmentCarousel:", user?.id);
-  console.log("=== END DASHBOARD DEBUG ===");
 
   // Обработка параметров showFAQ и reportId из URL
   useEffect(() => {
@@ -175,25 +153,16 @@ function DashboardContent() {
   const handleBackToReport = () => {
     const fromContinue = localStorage.getItem('faqFromContinue');
 
-    console.log("=== HANDLE BACK TO REPORT ===");
-    console.log("fromContinue:", fromContinue);
-    console.log("reportId:", reportId);
-    console.log("Current showInstructions:", showInstructions);
-    console.log("Current fromReportCard:", fromReportCard);
-
     if (fromContinue === 'true') {
       // Возвращаемся к карточке "Продолжить заполнение" или "Начать заполнение"
-      console.log("Returning to Report Card");
       localStorage.removeItem('faqFromContinue');
       setShowInstructions(false); // Сбрасываем показ FAQ
       setFromReportCard(false); // Сбрасываем флаг
       // Не делаем router.push, просто скрываем FAQ - карточка уже отображается
     } else if (reportId) {
       // Возвращаемся к карточке "Начать заполнение"
-      console.log("Returning to Start Report Card");
       router.push(`/reports/${reportId}/start`);
     }
-    console.log("=== END HANDLE BACK TO REPORT ===");
   };
 
   const handleContinueReport = async (assignmentId: string) => {
@@ -203,16 +172,12 @@ function DashboardContent() {
       const report = my.reports.find(r => r.assignment_id === assignmentId);
 
       if (report) {
-        console.log('Navigating to report:', report.id);
-
         // Проверяем статус отчета (generating и draft считаем рабочими статусами)
         if (report.status?.slug === 'draft' || report.status?.slug === 'generating') {
           // Для новых отчетов (без checklist_schema) используем start страницу
           if (!report.checklist_schema || Object.keys(report.checklist_schema).length === 0) {
-            console.log('New report detected, using start page');
             router.push(`/reports/${report.id}/start`);
           } else {
-            console.log('Existing report detected, using main page');
             router.push(`/reports/${report.id}`);
           }
         } else {
@@ -220,13 +185,9 @@ function DashboardContent() {
           toast.error(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
         }
       } else {
-        console.log('Report not found for assignment:', assignmentId);
         toast.error('Отчет не найден');
       }
     } catch (error) {
-      console.error('Error finding report:', error);
-      console.error('Error details:', error);
-
       // Показываем более детальную ошибку
       const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
       if (errorMessage.includes('500') || errorMessage.includes('Internal server error')) {
@@ -247,45 +208,22 @@ function DashboardContent() {
       const report = my.reports.find(r => r.assignment_id === assignmentId);
 
       if (report) {
-        console.log("Found report:", report.id, "Status:", report.status);
-
-        // Отправляем отчет на проверку
-        console.log("Calling ReportsApi.submit...");
         await ReportsApi.submit(report.id);
-        console.log("Report submitted successfully");
 
         toast.success('Отчет отправлен на проверку');
 
-        // Обновляем список заданий после отправки
-        console.log("Refreshing assignments after submit...");
         await fetchAssignments();
       } else {
-        console.log("Report not found for assignment:", assignmentId);
         toast.error('Отчет не найден');
       }
     } catch (error) {
       console.error('Error submitting report:', error);
-      console.log("Error type:", typeof error);
-      console.log("Error message:", error instanceof Error ? error.message : String(error));
       toast.error('Ошибка при отправке отчета');
     }
-
-    console.log("=== END HANDLE SUBMIT REPORT ===");
   };
 
   const handleAcceptAssignment = async (assignmentId: string) => {
-    console.log("=== HANDLE ACCEPT ASSIGNMENT ===");
-    console.log("Assignment ID:", assignmentId);
-    console.log("Display assignments:", displayAssignments);
-
     const current = displayAssignments.find(a => a.id === assignmentId);
-    console.log("Current assignment:", current);
-    console.log("Current assignment reporter:", current?.reporter);
-    console.log("Current assignment reporter ID:", current?.reporter?.id);
-    console.log("Reporter ID type:", typeof current?.reporter?.id);
-    console.log("Reporter ID === null:", current?.reporter?.id === null);
-    console.log("Reporter ID === undefined:", current?.reporter?.id === undefined);
-    console.log("Reporter ID === '00000000-0000-0000-0000-000000000000':", current?.reporter?.id === '00000000-0000-0000-0000-000000000000');
 
     // Проверяем, взято ли задание текущим пользователем
     const isAssignedToCurrentUser = current?.reporter?.id &&
@@ -294,16 +232,12 @@ function DashboardContent() {
       current.reporter.id !== '00000000-0000-0000-0000-000000000000' &&
       current.reporter.id === user?.id;
 
-    console.log("Is assigned to current user:", isAssignedToCurrentUser);
-
     if (isAssignedToCurrentUser) {
       // Если задание уже взято пользователем - показываем Памятку Агента
-      console.log("Assignment is taken by user, showing agent instructions");
       setAcceptedAssignment(assignmentId);
       setShowInstructions(true);
     } else {
       // Если задание в общем пуле - просто берем его через API
-      console.log("Assignment is in general pool, taking it via API");
       try {
         await acceptAssignment(assignmentId);
         toast.success("Задание успешно взято!");
@@ -334,8 +268,6 @@ function DashboardContent() {
   };
 
   const handleTakeAssignment = async (assignmentId: string) => {
-    console.log("=== HANDLE TAKE ASSIGNMENT ===");
-    console.log("Assignment ID:", assignmentId);
 
     try {
       // Используем API для взятия предложения
@@ -349,27 +281,13 @@ function DashboardContent() {
   };
 
   const handleConfirmAcceptance = async (assignmentId: string) => {
-    console.log("Starting handleConfirmAcceptance for assignment:", assignmentId);
-
     try {
       // Сначала проверяем, есть ли уже отчет для этого задания
-      console.log("Checking if report already exists...");
       const my = await ReportsApi.getMyReports(1, 50);
-      console.log("All reports from API:", my.reports.map(r => ({
-        id: r.id,
-        assignment_id: r.assignment_id,
-        status: r.status || 'unknown'
-      })));
-      console.log("Looking for assignment_id:", assignmentId);
       const existingReport = my.reports.find(r => r.assignment_id === assignmentId);
-      console.log("Found existing report:", existingReport);
 
       if (existingReport) {
-        console.log("Report already exists, assignment is already accepted");
-        console.log("Existing report ID:", existingReport.id);
-        console.log("Assignment ID:", assignmentId);
-        console.log("This means assignment should have status 'accepted' (2) in DB");
-        console.log("Redirecting to existing report:", existingReport.id);
+
         toast.success("Переходим к заполнению отчета...");
         // Сбрасываем состояние перед переходом
         setAcceptedAssignment(null);
@@ -379,7 +297,6 @@ function DashboardContent() {
 
         // Проверяем, есть ли checklist_schema для определения правильного маршрута
         if (!existingReport.checklist_schema || Object.keys(existingReport.checklist_schema).length === 0) {
-          console.log('Existing report without schema, using start page');
           router.push(`/reports/${existingReport.id}/start`);
         } else {
           console.log('Existing report with schema, using main page');
@@ -388,10 +305,7 @@ function DashboardContent() {
         return;
       }
 
-      console.log("No existing report found, calling acceptAssignment...");
-      console.log("Assignment ID:", assignmentId);
       await acceptAssignment(assignmentId);
-      console.log("acceptAssignment completed successfully");
 
       // Обновляем список заданий после принятия
       await fetchAssignments();
@@ -404,13 +318,10 @@ function DashboardContent() {
       // После принятия задания, ждем немного и ищем отчет
       setTimeout(async () => {
         try {
-          console.log("Searching for report...");
           const my = await ReportsApi.getMyReports(1, 50);
-          console.log("All reports:", my.reports.map(r => ({ id: r.id, assignment_id: r.assignment_id })));
           const report = my.reports.find(r => r.assignment_id === assignmentId);
 
           if (report) {
-            console.log("Report found, redirecting to:", report.id);
             // Сбрасываем состояние перед переходом
             setAcceptedAssignment(null);
             setShowInstructions(false);
@@ -419,16 +330,13 @@ function DashboardContent() {
             // Для нового отчета всегда используем start страницу (карточка "Начать заполнение")
             router.push(`/reports/${report.id}/start`);
           } else {
-            console.log("Report not found, retrying...");
             // Если отчет не найден, попробуем еще раз через секунду
             setTimeout(async () => {
               try {
                 const myRetry = await ReportsApi.getMyReports(1, 50);
-                console.log("All reports on retry:", myRetry.reports.map(r => ({ id: r.id, assignment_id: r.assignment_id })));
                 const reportRetry = myRetry.reports.find(r => r.assignment_id === assignmentId);
 
                 if (reportRetry) {
-                  console.log("Report found on retry, redirecting to:", reportRetry.id);
                   // Сбрасываем состояние перед переходом
                   setAcceptedAssignment(null);
                   setShowInstructions(false);
@@ -437,7 +345,6 @@ function DashboardContent() {
                   // Для нового отчета всегда используем start страницу (карточка "Начать заполнение")
                   router.push(`/reports/${reportRetry.id}/start`);
                 } else {
-                  console.log("Report still not found after retry");
                   setReportSearchLoading(false);
                   toast.error('Отчёт не найден. Обратитесь к администратору.');
                 }
@@ -465,7 +372,6 @@ function DashboardContent() {
 
       // Если это ошибка дубликата отчета, попробуем найти существующий отчет
       if ((error as AppError)?.message?.includes('duplicate key') || (error as AppError)?.message?.includes('23505')) {
-        console.log("Duplicate report error detected, searching for existing report...");
         try {
           const my = await ReportsApi.getMyReports(1, 50);
           const existingReport = my.reports.find(r => r.assignment_id === assignmentId);

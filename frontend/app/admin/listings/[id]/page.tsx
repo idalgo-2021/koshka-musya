@@ -20,7 +20,6 @@ export default function ListingDetailPage() {
     queryFn: () => ListingsApi.getListingById(String(id)),
   })
 
-  console.log({ data });
   if (!id) return <div className="p-6 text-sm text-muted-foreground">No id</div>
   if (isLoading) return <div className="p-6">Loading...</div>
   if (isError) return <div className="p-6 text-red-600 text-sm">{(error as Error)?.message || 'Failed to load'}</div>

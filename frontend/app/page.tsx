@@ -13,25 +13,12 @@ export default function Home() {
   const { isAuthenticated, loading, user } = useAuth();
 
   const checkAuth = useCallback(() => {
-    console.log('Home useEffect triggered:', JSON.stringify({
-      loading: loading,
-      isAuthenticated: isAuthenticated,
-      loadingType: typeof loading,
-      isAuthenticatedType: typeof isAuthenticated
-    }));
-
     if (!loading && isAuthenticated) {
-      console.log('Conditions met! Redirecting to dashboard...');
       // Используем setTimeout для небольшой задержки, чтобы состояние успело обновиться
       setTimeout(() => {
         window.location.href = '/dashboard';
       }, 100);
     } else {
-      console.log('Conditions not met:', JSON.stringify({
-        '!loading': !loading,
-        'isAuthenticated': isAuthenticated,
-        'both': !loading && isAuthenticated
-      }));
     }
   }, [isAuthenticated, loading]);
 
@@ -42,7 +29,6 @@ export default function Home() {
   // Дополнительная проверка при изменении isAuthenticated
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('isAuthenticated changed to true, checking auth...');
       checkAuth();
     }
   }, [isAuthenticated, checkAuth]);

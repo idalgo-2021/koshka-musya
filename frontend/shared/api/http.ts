@@ -106,16 +106,13 @@ async function http<T>(path: string, opts: RequestInit & { auth?: boolean } = {}
     console.log(`Error message:`, error instanceof Error ? error.message : String(error));
 
     if (error instanceof AppError) {
-      console.log(`AppError thrown:`, error.message);
       throw error;
     }
 
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.log(`Network error detected:`, error.message);
       throw handleNetworkError(error);
     }
 
-    console.log(`Generic API error:`, error);
     throw handleApiError(error);
   }
 }
