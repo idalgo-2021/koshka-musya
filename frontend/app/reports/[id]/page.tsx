@@ -11,10 +11,9 @@ import { useConfirmation } from '@/entities/modals/ModalContext';
 
 import DashboardHeader from '@/components/DashboardHeader';
 import ReportHeader from '@/components/ReportHeader';
-import ErrorState from '@/components/ErrorState';
+import { ErrorState } from '@/components/ErrorHandler';
 import ChecklistContainer from '@/components/ChecklistContainer';
 import ReportActions from '@/components/ReportActions';
-import UploadProgressIndicator from '@/components/UploadProgressIndicator';
 
 // Функция для парсинга meta данных answer_types
 const parseAnswerTypeMeta = (meta: unknown): { min: number; max: number } => {
@@ -278,7 +277,7 @@ export default function ReportPage() {
             if (item.answer?.result) {
               if (item.answer_types.slug === 'boolean') {
                 const ok = item.answer.result === 'true';
-                restoredComments[key] = !ok ? (item.answer.comment || '') : '';
+                restoredComments[key] = item.answer.comment || '';
                 restoredChecks[key] = ok;
               } else if (item.answer_types.slug.startsWith('rating_')) {
                 restoredRatings[key] = parseInt(item.answer.result);
@@ -432,7 +431,7 @@ export default function ReportPage() {
   const parseCommentValue = React.useCallback((it: any, resultValue: string | undefined, key: string) => {
     // Комментарии нужны не для всех типов
     const isBool = it.answer_types.slug === 'boolean';
-    return isBool && resultValue === 'false' ? comments[key] : undefined;
+    return isBool ? comments[key] : undefined;
   }, [comments]);
 
 // Debounce autosave
@@ -667,8 +666,6 @@ export default function ReportPage() {
             onComplete={handleComplete}
           />
 
-          {/* Upload Progress Indicator */}
-          <UploadProgressIndicator uploadProgress={uploadProgress} />
       </div>
       </main>
     </div>

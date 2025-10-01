@@ -3,6 +3,20 @@ export type Assignment = {
   code: string;
   title?: string;
   purpose: string;
+  pricing?: {
+    currency: string;
+    total: number;
+    breakdown?: {
+      per_night: number;
+      nights: number;
+    };
+  };
+  guests?: {
+    adults: number;
+    children: number;
+  };
+  checkin_date?: string;
+  checkout_date?: string;
   listing: {
     id: string;
     title: string;

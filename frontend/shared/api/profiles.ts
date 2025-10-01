@@ -11,6 +11,8 @@ export interface UserProfile {
   registered_at: string;
   last_active_at?: string;
   additional_info?: any;
+  points: number;
+  rank: string;
 }
 
 export interface UserFilters {

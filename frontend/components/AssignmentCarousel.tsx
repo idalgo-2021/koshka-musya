@@ -7,6 +7,36 @@ import HotelImage from "./HotelImage";
 import AssignmentActionButtons from "./AssignmentActionButtons";
 import { formatDate } from "@/lib/date";
 
+
+// Функция для получения вознаграждения из данных задания
+const getRewardInfo = (assignment: Assignment): string => {
+  // Если есть данные о стоимости из pricing, используем их
+  if (assignment.pricing?.total) {
+    const currency = assignment.pricing.currency || 'RUB';
+    const total = assignment.pricing.total;
+    
+    // Рассчитываем вознаграждение как процент от стоимости (например, 20%)
+    const reward = Math.round(total * 0.2);
+    
+    if (currency === 'RUB') {
+      return `${reward} ₽`;
+    } else {
+      return `${reward} ${currency}`;
+    }
+  }
+  
+  // Fallback на базовые суммы по типу отеля
+  const listingType = assignment.listing.listing_type?.slug || 'hotel';
+  const rewards: Record<string, string> = {
+    'hotel': '5000 ₽',
+    'apartment': '3000 ₽', 
+    'hostel': '2000 ₽',
+    'guest_house': '2500 ₽'
+  };
+  
+  return rewards[listingType.toLowerCase()] || '3000 ₽';
+};
+
 // Функция для проверки, можно ли принять задание (в течение 24 часов до заселения)
 const canAcceptAssignment = (assignment: Assignment): boolean => {
   if (!assignment.expires_at) return true;
@@ -199,7 +229,9 @@ function AssignmentCard({
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900 mb-1">Цель проверки</p>
-                <p className="text-sm text-gray-600 leading-relaxed">{assignment.purpose}</p>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {assignment.purpose}
+                </p>
               </div>
             </div>
 
@@ -218,6 +250,23 @@ function AssignmentCard({
                 </p>
               </div>
             </div>
+
+            {/* Информация о вознаграждении */}
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd"/>
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 mb-1">Вознаграждение</p>
+                <p className="text-sm text-gray-600 font-semibold text-green-600">
+                  {getRewardInfo(assignment)}
+                </p>
+              </div>
+            </div>
+
 
             {/* Справка о недоступности задания */}
             {!canAcceptAssignment(assignment) && (assignment.status.slug === 'pending' || assignment.status.slug === 'offered') && (
@@ -271,7 +320,7 @@ function AssignmentCard({
                           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                             <path
                               fillRule="evenodd"
-                              d="M12 1.586l-4 4v12.828l4-4V1.586zM3.707 3.293A1 1 0 002 4v10a1 1 0 00.293.707L6 18.414V5.586L3.707 3.293zM17.707 5.293L14 1.586v12.828l2.293 2.293A1 1 0 0018 16V6a1 1 0 00-.293-.707z"
+                              d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
                               clipRule="evenodd"
                             />
                           </svg>
@@ -283,6 +332,7 @@ function AssignmentCard({
                 </div>
               </div>
             )}
+
           </div>
 
           {/* Divider */}

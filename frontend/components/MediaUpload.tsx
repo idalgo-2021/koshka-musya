@@ -198,6 +198,20 @@ export default function MediaUpload({
         </label>
       )}
 
+      {/* Upload Progress Indicator */}
+      {Object.keys(uploadProgress).length > 0 && (
+        <div className="mt-4 space-y-2">
+          {Object.entries(uploadProgress).map(([key, progress]) => (
+            <div key={key} className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${progress}%` }} 
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Media Preview */}
       {media.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mt-3">

@@ -494,7 +494,6 @@ function DashboardContent() {
                 storedHotelName ||
                 "отель"
               }
-              isStartCard={false}
               onContinue={async () => {
                 if (!acceptedAssignment) return;
                 if (startLoading) return;
@@ -514,7 +513,6 @@ function DashboardContent() {
             <AssignmentProcess
               assignmentId={acceptedAssignment || ''}
               hotelName={displayAssignments[0]?.listing.title || storedHotelName || 'отеля'}
-              isStartCard={false}
               onContinue={acceptedAssignment ? async () => {
                 if (startLoading) return;
                 setStartLoading(true);
@@ -603,9 +601,9 @@ function DashboardContent() {
                     // Рассчитываем прогресс заполнения отчета
                     const progress = calculateReportProgress(report?.checklist_schema);
                     // Определяем, является ли это новым заданием
-                    // "Начать заполнение" - если отчет новый (нет checklist_schema или прогресс 0%)
-                    // "Продолжить заполнение" - если пользователь уже начал заполнять
-                    const isStartCard = !report || !report.checklist_schema || progress === 0;
+                    // "Начать заполнение" - только если отчета вообще нет
+                    // "Продолжить заполнение" - если отчет существует (даже с прогрессом 0%)
+                    const isStartCard = !report;
                     return (
                       <ContinueReportCard
                         key={assignment.id}

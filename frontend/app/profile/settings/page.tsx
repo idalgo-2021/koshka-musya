@@ -1,8 +1,8 @@
   "use client";
 import { useAuth } from "@/entities/auth/useAuth";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import HomeButton from "@/components/HomeButton";
 
 export default function ProfileSettingsPage() {
   const { user } = useAuth();
@@ -34,6 +34,18 @@ export default function ProfileSettingsPage() {
     newPassword: "",
     confirmPassword: ""
   });
+
+  const [expandedSections, setExpandedSections] = useState({
+    notifications: false,
+    security: false
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   const handleSavePersonal = () => {
     console.log("Saving personal settings:", formData);
@@ -86,49 +98,74 @@ export default function ProfileSettingsPage() {
 
 
   return (
-    <main className="max-w-2xl mx-auto px-4 pb-8">
+    <main className="max-w-4xl mx-auto px-4 pb-8">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="bg-white rounded-3xl shadow-2xl border-0 overflow-hidden hover:shadow-3xl transition-all duration-500"
+        className="bg-white rounded-3xl shadow-2xl border-0 overflow-hidden"
       >
-        <div className="p-8 space-y-6">
-          <motion.h1 
+        {/* Header Section */}
+        <div className="bg-gradient-to-r from-accenttext to-accenttext/80 p-8 text-white relative">
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-3xl font-bold text-accenttext text-center"
           >
-            Настройки профиля
-          </motion.h1>
+            <h1 className="text-3xl font-bold mb-2">Настройки профиля</h1>
+            <p className="text-white/90 text-lg">
+              Управление аккаунтом и безопасностью
+            </p>
+          </motion.div>
           
-          <div className="space-y-6">
+          {/* Home Button - Desktop */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="absolute top-6 right-6 hidden md:block"
+          >
+            <HomeButton variant="floating" size="sm" />
+          </motion.div>
+          
+          {/* Home Button - Mobile White */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="absolute top-6 right-6 md:hidden"
+          >
+            <HomeButton variant="mobile-white" size="sm" />
+          </motion.div>
+        </div>
+
+        <div className="p-8">
+          
+          <div className="space-y-4">
             {/* Личная информация */}
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300"
+              className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-300 hover:border-accenttext/30"
             >
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="font-bold text-blue-800 text-lg flex items-center">
-                  <span className="mr-3">👤</span>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-gray-800 text-lg">
                   Личная информация
                 </h3>
                 {!isEditingPersonal && (
                   <button
                     onClick={() => setIsEditingPersonal(true)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg text-sm"
+                    className="bg-accenttext hover:bg-accenttext/80 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 text-sm"
                   >
                     Редактировать
                   </button>
                 )}
               </div>
               
-              <div className="space-y-5">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Имя пользователя
                   </label>
                   {isEditingPersonal ? (
@@ -136,31 +173,31 @@ export default function ProfileSettingsPage() {
                       type="text"
                       value={formData.username}
                       onChange={(e) => setFormData({...formData, username: e.target.value})}
-                      className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext transition-all"
                     />
                   ) : (
-                    <p className="text-blue-900 text-lg font-medium">{user?.username}</p>
+                    <p className="text-gray-800 text-sm">{user?.username}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
-                    Mail
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
                   </label>
                   {isEditingPersonal ? (
                     <input
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext transition-all"
                     />
                   ) : (
-                    <p className="text-blue-900 text-lg font-medium">{formData.email}</p>
+                    <p className="text-gray-800 text-sm">{formData.email}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Телефон
                   </label>
                   {isEditingPersonal ? (
@@ -168,16 +205,16 @@ export default function ProfileSettingsPage() {
                       type="tel"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                      className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext transition-all"
                       placeholder="+7 (999) 123-45-67"
                     />
                   ) : (
-                    <p className="text-blue-900 text-lg font-medium">{formData.phone}</p>
+                    <p className="text-gray-800 text-sm">{formData.phone}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-blue-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Telegram
                   </label>
                   {isEditingPersonal ? (
@@ -185,11 +222,11 @@ export default function ProfileSettingsPage() {
                       type="text"
                       value={formData.telegram}
                       onChange={(e) => setFormData({...formData, telegram: e.target.value})}
-                      className="w-full px-4 py-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext transition-all"
                       placeholder="@username"
                     />
                   ) : (
-                    <p className="text-blue-900 text-lg font-medium">{formData.telegram}</p>
+                    <p className="text-gray-800 text-sm">{formData.telegram}</p>
                   )}
                 </div>
               </div>
@@ -200,109 +237,154 @@ export default function ProfileSettingsPage() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.6 }}
-                  className="flex space-x-4 pt-4 border-t border-blue-200"
+                  className="flex space-x-3 pt-4 border-t border-gray-200"
                 >
-                  <Button
+                  <button
                     onClick={handleSavePersonal}
-                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="bg-accenttext hover:bg-accenttext/80 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 text-sm"
                   >
                     Сохранить
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     onClick={handleCancelPersonal}
-                    variant="outline"
-                    className="border-blue-300 text-blue-700 hover:bg-blue-50 font-semibold py-2 px-6 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md"
+                    className="border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-lg transition-all duration-300 text-sm"
                   >
                     Отмена
-                  </Button>
+                  </button>
                 </motion.div>
               )}
             </motion.div>
 
             {/* Уведомления */}
             <motion.div 
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
-              className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300"
+              className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-300 hover:border-accenttext/30"
             >
-              <h3 className="font-bold text-blue-800 text-lg mb-6 flex items-center">
-                <span className="mr-3">🔔</span>
-                Уведомления
-              </h3>
+              <button
+                onClick={() => toggleSection('notifications')}
+                className="w-full flex items-center justify-between gap-2 mb-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-gray-800 text-lg">Уведомления</h3>
+                </div>
+                <motion.span
+                  animate={{ rotate: expandedSections.notifications ? 90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-accenttext"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                  </svg>
+                </motion.span>
+              </button>
               
-              <div className="space-y-4">
-                <label className="flex items-center p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.notifications}
-                    onChange={(e) => setFormData({...formData, notifications: e.target.checked})}
-                    className="mr-3 w-5 h-5 text-blue-600 focus:ring-blue-500 rounded"
-                  />
-                  <span className="text-blue-700 font-medium">Получать уведомления о новых заданиях</span>
-                </label>
+              <AnimatePresence>
+                {expandedSections.notifications && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-3">
+                      <label className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.notifications}
+                          onChange={(e) => setFormData({...formData, notifications: e.target.checked})}
+                          className="mr-3 w-4 h-4 text-accenttext focus:ring-accenttext/20 rounded"
+                        />
+                        <span className="text-gray-700 text-sm">Получать уведомления о новых заданиях</span>
+                      </label>
 
-                <label className="flex items-center p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.emailNotifications}
-                    onChange={(e) => setFormData({...formData, emailNotifications: e.target.checked})}
-                    className="mr-3 w-5 h-5 text-blue-600 focus:ring-blue-500 rounded"
-                  />
-                  <span className="text-blue-700 font-medium">Mail уведомления</span>
-                </label>
+                      <label className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.emailNotifications}
+                          onChange={(e) => setFormData({...formData, emailNotifications: e.target.checked})}
+                          className="mr-3 w-4 h-4 text-accenttext focus:ring-accenttext/20 rounded"
+                        />
+                        <span className="text-gray-700 text-sm">Email уведомления</span>
+                      </label>
 
-                <label className="flex items-center p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.smsNotifications}
-                    onChange={(e) => setFormData({...formData, smsNotifications: e.target.checked})}
-                    className="mr-3 w-5 h-5 text-blue-600 focus:ring-blue-500 rounded"
-                  />
-                  <span className="text-blue-700 font-medium">SMS уведомления</span>
-                </label>
+                      <label className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.smsNotifications}
+                          onChange={(e) => setFormData({...formData, smsNotifications: e.target.checked})}
+                          className="mr-3 w-4 h-4 text-accenttext focus:ring-accenttext/20 rounded"
+                        />
+                        <span className="text-gray-700 text-sm">SMS уведомления</span>
+                      </label>
 
-                <label className="flex items-center p-3 bg-white/50 rounded-xl hover:bg-white/70 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={formData.telegramNotifications}
-                    onChange={(e) => setFormData({...formData, telegramNotifications: e.target.checked})}
-                    className="mr-3 w-5 h-5 text-blue-600 focus:ring-blue-500 rounded"
-                  />
-                  <span className="text-blue-700 font-medium">Telegram уведомления</span>
-                </label>
-              </div>
-
+                      <label className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={formData.telegramNotifications}
+                          onChange={(e) => setFormData({...formData, telegramNotifications: e.target.checked})}
+                          className="mr-3 w-4 h-4 text-accenttext focus:ring-accenttext/20 rounded"
+                        />
+                        <span className="text-gray-700 text-sm">Telegram уведомления</span>
+                      </label>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
 
             {/* Безопасность */}
             <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300"
+              className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-all duration-300 hover:border-accenttext/30"
             >
-              <h3 className="font-bold text-red-800 text-lg mb-6 flex items-center">
-                <span className="mr-3">🛡️</span>
-                Безопасность
-              </h3>
+              <button
+                onClick={() => toggleSection('security')}
+                className="w-full flex items-center justify-between gap-2 mb-3 text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-gray-800 text-lg">Безопасность</h3>
+                </div>
+                <motion.span
+                  animate={{ rotate: expandedSections.security ? 90 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-accenttext"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                  </svg>
+                </motion.span>
+              </button>
               
-              <div className="space-y-6">
+              <AnimatePresence>
+                {expandedSections.security && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-4">
                 {/* Password Section */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-red-700">
+                    <h4 className="font-semibold text-gray-800">
                       Пароль
                     </h4>
                     <button
                       onClick={() => setShowChangePassword(!showChangePassword)}
-                      className="bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded-lg transition-all duration-300 text-sm"
+                      className="bg-accenttext hover:bg-accenttext/80 text-white font-semibold py-1 px-3 rounded-lg transition-all duration-300 text-sm"
                     >
                       {showChangePassword ? "Отмена" : "Изменить"}
                     </button>
                   </div>
                   
-                  <p className="text-red-600 text-sm mb-3">
+                  <p className="text-gray-600 text-sm mb-3">
                     Последнее изменение: {securitySettings.passwordLastChanged}
                   </p>
                   
@@ -311,32 +393,32 @@ export default function ProfileSettingsPage() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="space-y-3 pt-3 border-t border-red-200"
+                      className="space-y-3 pt-3 border-t border-gray-200"
                     >
                       <input
                         type="password"
                         value={passwordForm.currentPassword}
                         onChange={(e) => handlePasswordChange("currentPassword", e.target.value)}
-                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext text-sm"
                         placeholder="Текущий пароль"
                       />
                       <input
                         type="password"
                         value={passwordForm.newPassword}
                         onChange={(e) => handlePasswordChange("newPassword", e.target.value)}
-                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext text-sm"
                         placeholder="Новый пароль"
                       />
                       <input
                         type="password"
                         value={passwordForm.confirmPassword}
                         onChange={(e) => handlePasswordChange("confirmPassword", e.target.value)}
-                        className="w-full px-3 py-2 border border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext text-sm"
                         placeholder="Подтвердите пароль"
                       />
                       <button
                         onClick={handleSavePassword}
-                        className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 text-sm"
+                        className="w-full bg-accenttext hover:bg-accenttext/80 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 text-sm"
                       >
                         Сохранить пароль
                       </button>
@@ -347,10 +429,10 @@ export default function ProfileSettingsPage() {
                 {/* Two-Factor Authentication */}
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-semibold text-red-700">
+                    <h4 className="font-semibold text-gray-800">
                       Двухфакторная аутентификация
                     </h4>
-                    <p className="text-red-600 text-sm">
+                    <p className="text-gray-600 text-sm">
                       {securitySettings.twoFactorAuth 
                         ? "Включена - дополнительная защита активна"
                         : "Отключена - включите для большей безопасности"
@@ -364,34 +446,36 @@ export default function ProfileSettingsPage() {
                       onChange={handleToggle2FA}
                       className="sr-only peer"
                     />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accenttext/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accenttext"></div>
                   </label>
                 </div>
 
                 {/* Security Info */}
-                <div className="pt-3 border-t border-red-200">
-                  <h4 className="font-semibold text-red-700 mb-3">
+                <div className="pt-3 border-t border-gray-200">
+                  <h4 className="font-semibold text-gray-800 mb-3">
                     Информация о безопасности
                   </h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-red-600">Последний вход:</span>
-                      <span className="text-red-700 font-medium">{securitySettings.lastLogin}</span>
+                      <span className="text-gray-600">Последний вход:</span>
+                      <span className="text-gray-800 font-medium">{securitySettings.lastLogin}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-red-600">Активные сессии:</span>
-                      <span className="text-red-700 font-medium">{securitySettings.activeSessions} устройств</span>
+                      <span className="text-gray-600">Активные сессии:</span>
+                      <span className="text-gray-800 font-medium">{securitySettings.activeSessions} устройств</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-red-600">Уровень защиты:</span>
-                      <span className="text-red-700 font-medium">
+                      <span className="text-gray-600">Уровень защиты:</span>
+                      <span className="text-gray-800 font-medium">
                         {securitySettings.twoFactorAuth ? "Высокий" : "Средний"}
                       </span>
                     </div>
                   </div>
                 </div>
-              </div>
-
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </div>
         </div>
