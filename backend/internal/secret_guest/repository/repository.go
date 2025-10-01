@@ -1370,6 +1370,7 @@ func (r *SecretGuestRepository) scanReport(row pgx.Row) (*models.Report, error) 
 
 		&rep.ChecklistSchema,
 
+		&rep.Listing.ID,
 		&rep.Listing.Code,
 		&rep.Listing.Title,
 		&rep.Listing.Description,
@@ -1616,10 +1617,14 @@ func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, repor
 			r.checkout_date,
 			
 			r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, 
+			r.created_at, r.updated_at, r.submitted_at, 
+			
+			r.checklist_schema, 
+
 			l.ID,
 			l.code as "listing_code",
-			l.title as "listing_title", l.description as "listing_description",
+			l.title as "listing_title", 
+			l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
 
 			l.listing_type_id,
