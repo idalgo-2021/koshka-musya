@@ -47,10 +47,6 @@ class ListingsApi {
     return api.get<Listing>(`/listings/${id}`, true);
   }
 
-  // Admin endpoints
-  async createListing(data: CreateListingRequest): Promise<Listing> {
-    return api.post<Listing>('/admin/listings', data, true);
-  }
 }
 
 export const listingsApi = new ListingsApi();

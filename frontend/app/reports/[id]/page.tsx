@@ -37,7 +37,6 @@ export default function ReportPage() {
   const { user, logout } = useAuth();
   const { confirm, closeModal } = useConfirmation();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [report, setReport] = React.useState<Report | null>(null);
   const [assignmentInfo, setAssignmentInfo] = React.useState<{title: string; address: string; city: string; country: string; purpose?: string} | null>(null);
   const [saving, setSaving] = React.useState(false);

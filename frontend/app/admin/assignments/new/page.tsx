@@ -41,7 +41,7 @@ export default function NewAssignmentPage() {
 
   const listings = listingsQuery.data || [];
   const createMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
+    mutationFn: async () => {
       // TODO: API doesn't support creating assignments yet
       throw new Error('Creating assignments is not supported by the API yet');
       // return await AssignmentsApi.createAssignment({
@@ -63,7 +63,7 @@ export default function NewAssignmentPage() {
       return;
     }
     try {
-      const data = await createMutation.mutateAsync(values);
+      await createMutation.mutateAsync(values);
     } catch (e) {
       console.error(e);
     }

@@ -32,7 +32,7 @@ interface AppError {
 
 function DashboardContent() {
   const { user, isAuthenticated, loading, logout } = useAuth();
-  const { assignments, loading: assignmentsLoading, setError, setLoading, error: assignmentsError, retry, acceptAssignment, declineAssignment, fetchAssignments, setAssignments } = useAssignments();
+  const { assignments, loading: assignmentsLoading, setLoading, error: assignmentsError, retry, acceptAssignment, declineAssignment, fetchAssignments, setAssignments } = useAssignments();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [acceptedAssignment, setAcceptedAssignment] = useState<string | null>(null);
@@ -42,7 +42,7 @@ function DashboardContent() {
   const [reportSearchLoading, setReportSearchLoading] = useState(false);
   const [fromReportCard, setFromReportCard] = useState<boolean>(false);
   const [reportId, setReportId] = useState<string | null>(null);
-  const [hotelLoading, setHotelLoading] = useState<Record<string, boolean>>({});
+  const [hotelLoading] = useState<Record<string, boolean>>({});
   const [currentAssignmentIndex, setCurrentAssignmentIndex] = useState(0);
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedListingType, setSelectedListingType] = useState<number | undefined>(undefined);
@@ -58,6 +58,7 @@ function DashboardContent() {
       // debugger;
       setLoading(false)
     } catch (error) {
+      console.error(error);
       setLoading(false)
 
     }
