@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -301,6 +302,7 @@ func (s *SecretGuestService) GetMyActiveAssignments(ctx context.Context, dto Get
 		ReporterID: &dto.UserID,
 		StatusIDs:  activeStatuses,
 		Limit:      dto.Limit,
+		City:       strings.ToLower(dto.City),
 		Offset:     (dto.Page - 1) * dto.Limit,
 	}
 
