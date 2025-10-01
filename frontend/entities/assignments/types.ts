@@ -52,6 +52,7 @@ export type Assignment = {
     name: string;
   };
   created_at: string;
+  taked_at?: string;
   accepted_at?: string;
   expires_at: string;
   deadline?: string;
