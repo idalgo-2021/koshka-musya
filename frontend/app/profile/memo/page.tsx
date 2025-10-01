@@ -21,7 +21,7 @@ export default function ProfileMemoPage() {
   };
   return (
     <main className="max-w-4xl mx-auto px-4 pb-8">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -33,39 +33,40 @@ export default function ProfileMemoPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
+            className=" cursor-pointer"
           >
             <h1 className="text-3xl font-bold mb-2">Памятка</h1>
             <p className="text-white/90 text-lg">
               Руководство для тайных гостей
             </p>
           </motion.div>
-          
+
           {/* Home Button - Desktop */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="absolute top-6 right-6 hidden md:block"
+            className="absolute top-6 right-6 hidden md:block cursor-pointer"
           >
             <HomeButton variant="floating" size="sm" />
           </motion.div>
-          
+
           {/* Home Button - Mobile White */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
-            className="absolute top-6 right-6 md:hidden"
+            className="absolute top-6 right-6 md:hidden cursor-pointer"
           >
             <HomeButton variant="mobile-white" size="sm" />
           </motion.div>
         </div>
 
         <div className="p-8">
-          
+
           <div className="space-y-4">
             {/* Введение о программе */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -98,7 +99,7 @@ export default function ProfileMemoPage() {
                     className="overflow-hidden"
                   >
                     <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                      <strong>Секретные гости</strong> проверяют качество обслуживания в отелях и других заведениях. 
+                      <strong>Секретные гости</strong> проверяют качество обслуживания в отелях и других заведениях.
                       Вы получаете <strong>бонусы</strong>, а отель — <strong>честную оценку</strong> своего сервиса.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -130,7 +131,7 @@ export default function ProfileMemoPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -185,7 +186,7 @@ export default function ProfileMemoPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
@@ -240,7 +241,7 @@ export default function ProfileMemoPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
@@ -295,7 +296,7 @@ export default function ProfileMemoPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.7 }}
@@ -354,7 +355,7 @@ export default function ProfileMemoPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
