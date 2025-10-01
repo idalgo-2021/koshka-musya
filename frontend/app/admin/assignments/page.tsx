@@ -56,7 +56,7 @@ export default function AssignmentsStaffPage() {
   const canNext = page < totalPages
 
   return (
-    <div className="container max-w-6xl py-6 space-y-4">
+    <div className="container max-w-8xl py-6 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-md md:text-2xl font-semibold">Предложения на оценку</h1>
         <div className="flex items-center gap-3">

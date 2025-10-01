@@ -80,21 +80,26 @@ export function ImageViewer() {
 
       switch (e.key) {
         case 'Escape':
+          e.preventDefault()
           closeViewer()
           break
         case '+':
         case '=':
+          e.preventDefault()
           handleZoomIn()
           break
         case '-':
+          e.preventDefault()
           handleZoomOut()
           break
         case 'r':
         case 'R':
+          e.preventDefault()
           handleRotate()
           break
         case 'd':
         case 'D':
+          e.preventDefault()
           handleDownload()
           break
       }
@@ -109,7 +114,7 @@ export function ImageViewer() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 bg-black/25 backdrop-blur-sm">
       {/* Header Controls */}
       <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4">
         <div className="flex items-center justify-between">

@@ -26,7 +26,7 @@ export default function ListingDetailPage() {
   const l = data!
 
   return (
-    <div className="container max-w-6xl py-6 space-y-4">
+    <div className="container max-w-8xl py-6 space-y-4">
       <div className="flex items-center gap-3">
         <Button variant="outline" onClick={() => router.back()}>
           <StepBackIcon/>

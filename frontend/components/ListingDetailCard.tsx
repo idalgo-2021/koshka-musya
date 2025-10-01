@@ -57,9 +57,9 @@ export function ListingDetailCard({ listing }: ListingDetailCardProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 gap-2 flex flex-col">
       {/* Header Section */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden py-0 my-0">
         <div className="relative">
           {listing.main_picture && (
             <div className="h-64 relative overflow-hidden cursor-pointer group" onClick={handleOpenImageViewer}>
@@ -68,7 +68,7 @@ export function ListingDetailCard({ listing }: ListingDetailCardProps) {
                 alt={listing.title}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 800px"
+                sizes="(max-width: 568px) 100vw, 800px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
