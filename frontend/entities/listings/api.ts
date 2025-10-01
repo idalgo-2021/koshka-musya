@@ -43,7 +43,7 @@ export const ListingsApi = {
   },
   async getListingById(id: string): Promise<{ id: string; title: string; description: string; code: string; address: string; city: string; country: string; latitude: number; longitude: number; mainPicture?: string; listing_type: { id: number; name: string; slug: string } }>{
     let data = await api.get(`/listings/${id}`, true);
-    data = camelCaseKeysDeep(data);
+    // data = camelCaseKeysDeep(data);
     // @ts-ignore
     return data;
   },

@@ -18,6 +18,13 @@ import {ChevronLeftIcon, ChevronRightIcon, Eye} from "lucide-react";
 import {formatDate} from "@/lib/date";
 import { ReportStatusBadge } from '@/components/ReportStatusBadge';
 
+const isValidReportId = (reporterId: string) => {
+  return (reporterId &&
+    reporterId !== null &&
+    reporterId !== undefined &&
+    reporterId !== '00000000-0000-0000-0000-000000000000');
+}
+
 export default function ReportsStaffPage() {
   const [page, setPage] = React.useState(1)
   const [limit] = React.useState(50)
@@ -71,6 +78,8 @@ export default function ReportsStaffPage() {
   const canNext = reports.length === limit || (total ? page * limit < total : true)
 
 
+
+
   return (
     <div className="container max-w-6xl py-6 space-y-4">
       <div className="flex items-center justify-between">
@@ -120,7 +129,7 @@ export default function ReportsStaffPage() {
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Статус</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden lg:table-cell">Создан</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden xl:table-cell">Обновлен</th>
-                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden 2xl:table-cell">Объект</th>
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden xl:table-cell">Объект</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground">Действия</th>
                 </tr>
               </thead>
@@ -138,8 +147,13 @@ export default function ReportsStaffPage() {
                       </Link>
                     </td>
                     <td className="p-3 align-middle text-sm hidden sm:table-cell">
-                      <div>{r.reporter?.username}</div>
-                      <div className="text-xs text-muted-foreground">{r.reporter?.id}</div>
+                      {isValidReportId(r.reporter?.id) ? (
+                        <>
+                          <div>{r.reporter?.username}</div>
+                        </>
+                      ) : (
+                        <span>-</span>
+                      )}
                     </td>
                     <td className="p-3 align-middle hidden lg:table-cell">
                       {r.status && <ReportStatusBadge status={r.status} />}

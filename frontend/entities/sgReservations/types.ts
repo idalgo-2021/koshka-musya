@@ -5,6 +5,7 @@ export interface SgReservationStatus {
 }
 
 export interface SgReservationPricing {
+  pricing?: SgReservationPricing;
   total: number
   currency: string
   breakdown: {

@@ -12,9 +12,16 @@ import SelectRowMulti from '@/components/ui/select-row-multi'
 import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import AssignmentCard, { getStatusBadgeClasses } from '@/components/AssignmentCard'
-import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Loader} from 'lucide-react'
+import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Eye, Loader} from 'lucide-react'
 import {assignmentStatusOptions} from "@/entities/assignments/const";
 import { ListingsApi } from '@/entities/listings/api'
+
+const isValidReportId = (reporterId: string) => {
+  return (reporterId &&
+    reporterId !== null &&
+    reporterId !== undefined &&
+    reporterId !== '00000000-0000-0000-0000-000000000000');
+}
 
 export default function AssignmentsStaffPage() {
   const [page, setPage] = React.useState(1)
@@ -149,8 +156,12 @@ export default function AssignmentsStaffPage() {
                           {a.code}
                         </td>
                         <td className="p-2 md:p-4 align-middle text-sm hidden sm:table-cell">
-                          <div>{a.reporter?.username}</div>
-                          <div className="text-xs text-muted-foreground">{a.reporter?.id}</div>
+                          {isValidReportId(a.reporter?.id) ? (
+                            <>
+                              <div>{a.reporter?.username}</div>
+                              <div className="text-xs text-muted-foreground">{a.reporter?.id}</div>
+                            </>
+                          ): <span>-</span>}
                         </td>
                         <td className="p-2 md:p-4 align-middle hidden md:table-cell">
                           <span
@@ -159,7 +170,7 @@ export default function AssignmentsStaffPage() {
                           </span>
                         </td>
                         <td className="p-2 md:p-4 align-middle text-sm hidden lg:table-cell">
-                          {a.deadline ? new Date(a.deadline)?.toLocaleDateString('ru-RU') : '-'}
+                          {a.expires_at ? new Date(a.expires_at)?.toLocaleDateString('ru-RU') : '-'}
                         </td>
                         <td className="p-2 md:p-4 align-middle text-sm hidden xl:table-cell">
                           {a.listing?.id ? (
@@ -176,7 +187,7 @@ export default function AssignmentsStaffPage() {
                         </td>
                         <td className="p-2 md:p-4 align-middle">
                           <Link href={`/admin/assignments/${a.id}`} className="text-sm text-primary hover:underline">
-                            View
+                            <Eye className="w-4 h-4" />
                           </Link>
                         </td>
                       </tr>

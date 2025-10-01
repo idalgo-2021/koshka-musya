@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import {useMemo, useState} from 'react'
 import Link from 'next/link'
+import {CopyToClipboard} from "@/components/CopyToClipboard";
 
 interface SgReservationCardProps {
   reservation: SgReservation
@@ -148,7 +149,7 @@ export default function SgReservationCard({
 
           {/* OTA ID */}
           <div className="text-sm text-gray-500">
-            OTA ID: {reservation.ota_id}
+            OTA ID: <CopyToClipboard text={reservation.ota_id} />
           </div>
 
           {/* Actions */}

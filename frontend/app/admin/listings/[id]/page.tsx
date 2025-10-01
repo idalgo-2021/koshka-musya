@@ -8,6 +8,7 @@ import { ListingsApi } from '@/entities/listings/api'
 import { Button } from '@/components/ui/button'
 import MapLink from '@/components/MapLink'
 import {StepBackIcon} from "lucide-react";
+import {CopyToClipboard} from "@/components/CopyToClipboard";
 
 export default function ListingDetailPage() {
   const params = useParams<{ id: string }>()
@@ -43,7 +44,12 @@ export default function ListingDetailPage() {
         )} */}
       </div>
       <div className="flex flex-col gap-2">
-         <h1 className="text-md md:text-2xl font-semibold">{l.title}</h1>
+        <h1 className="text-md md:text-2xl font-semibold">{l.title}</h1>
+
+        <div className="space-y-2">
+          <div className="text-sm leading-relaxed whitespace-pre-wrap">{l.description}</div>
+        </div>
+
         <p className="text-sm text-muted-foreground">{l.city}, {l.country}</p>
       </div>
 
@@ -56,27 +62,21 @@ export default function ListingDetailPage() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <div className="text-sm text-muted-foreground">Code</div>
-          <div className="text-sm">{l.code}</div>
+          <div className="text-sm text-muted-foreground">Код объекта</div>
+          <div className="text-sm"><CopyToClipboard text={l.code} /></div>
         </div>
         <div className="space-y-2">
-          <div className="text-sm text-muted-foreground">Type</div>
+          <div className="text-sm text-muted-foreground">Тип объекта</div>
           <div className="text-sm">{l.listing_type?.name}</div>
         </div>
         <div className="space-y-2 sm:col-span-2">
-          <div className="text-sm text-muted-foreground">Address</div>
           <div className="text-sm flex items-center gap-2">
-            <span>{l.address}</span>
+            <span>{l.country + ', ' + l.city + ', ' + l.address}</span>
             {typeof l.longitude === 'number' && typeof l.latitude === 'number' && (
               <MapLink longitude={l.longitude} latitude={l.latitude} />
             )}
           </div>
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <div className="text-sm text-muted-foreground">Description</div>
-        <div className="text-sm leading-relaxed whitespace-pre-wrap">{l.description}</div>
       </div>
     </div>
   );

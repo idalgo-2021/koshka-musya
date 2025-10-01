@@ -88,7 +88,7 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
             )}
 
             {/* Guests Info */}
-            {assignment.guests && (
+            {assignment.guests?.adults && (
               <div className="text-sm gap-2">
                 <span className="text-muted-foreground">Гости:</span>
                 <span className="font-medium">
@@ -101,14 +101,14 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
             )}
 
             {/* Pricing Info */}
-            {assignment.pricing && (
+            {assignment.pricing?.pricing && (
               <div className="text-sm gap-2">
                 <span className="text-muted-foreground">Стоимость:</span>
                 <span className="font-medium">
-                  {assignment.pricing.total} {assignment.pricing.currency}
-                  {assignment.pricing.breakdown && (
+                  {assignment.pricing.pricing.total} {assignment.pricing.pricing.currency}
+                  {assignment.pricing.pricing.breakdown && (
                     <span className="text-xs text-muted-foreground ml-1">
-                      ({assignment.pricing.breakdown.nights} ноч{assignment.pricing.breakdown.nights === 1 ? 'ь' : assignment.pricing.breakdown.nights < 5 ? 'и' : 'ей'}, {assignment.pricing.breakdown.per_night} {assignment.pricing.currency}/ночь)
+                      ({assignment.pricing.pricing.breakdown.nights} ноч{assignment.pricing.pricing.breakdown.nights === 1 ? 'ь' : assignment.pricing.pricing.breakdown.nights < 5 ? 'и' : 'ей'}, {assignment.pricing.pricing.breakdown.per_night} {assignment.pricing.pricing.currency}/ночь)
                     </span>
                   )}
                 </span>
