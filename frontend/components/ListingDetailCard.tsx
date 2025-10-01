@@ -14,13 +14,10 @@ import {
   Calendar,
   Globe,
   Image as ImageIcon,
-  X,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  Download
+  ZoomIn
 } from 'lucide-react'
 import Image from 'next/image'
+import { useImageViewer } from '@/hooks/useImageViewer'
 
 interface ListingDetailData {
   id: string
@@ -47,107 +44,17 @@ interface ListingDetailCardProps {
 }
 
 export function ListingDetailCard({ listing }: ListingDetailCardProps) {
-  const [isImageViewerOpen, setIsImageViewerOpen] = React.useState(false)
-  const [imageScale, setImageScale] = React.useState(1)
-  const [imageRotation, setImageRotation] = React.useState(0)
-  const [imagePosition, setImagePosition] = React.useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = React.useState(false)
-  const [dragStart, setDragStart] = React.useState({ x: 0, y: 0 })
+  const { openImage } = useImageViewer()
 
   const getMapUrl = (lat: number, lng: number) => {
     return `https://yandex.ru/maps/?pt=${lng},${lat}&z=16&l=map`
   }
 
-  const openImageViewer = () => {
-    setIsImageViewerOpen(true)
-    setImageScale(1)
-    setImageRotation(0)
-    setImagePosition({ x: 0, y: 0 })
-  }
-
-  const closeImageViewer = () => {
-    setIsImageViewerOpen(false)
-    setImageScale(1)
-    setImageRotation(0)
-    setImagePosition({ x: 0, y: 0 })
-  }
-
-  const handleZoomIn = () => {
-    setImageScale(prev => Math.min(prev * 1.2, 5))
-  }
-
-  const handleZoomOut = () => {
-    setImageScale(prev => Math.max(prev / 1.2, 0.1))
-  }
-
-  const handleRotate = () => {
-    setImageRotation(prev => (prev + 90) % 360)
-  }
-
-  const handleDownload = () => {
+  const handleOpenImageViewer = () => {
     if (listing.main_picture) {
-      const link = document.createElement('a')
-      link.href = listing.main_picture
-      link.download = `${listing.title}-image.jpg`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      openImage(listing.main_picture, listing.title)
     }
   }
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragStart({ x: e.clientX - imagePosition.x, y: e.clientY - imagePosition.y })
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      setImagePosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
-      })
-    }
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault()
-    const delta = e.deltaY > 0 ? 0.9 : 1.1
-    setImageScale(prev => Math.max(0.1, Math.min(5, prev * delta)))
-  }
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isImageViewerOpen) return
-      
-      switch (e.key) {
-        case 'Escape':
-          closeImageViewer()
-          break
-        case '+':
-        case '=':
-          handleZoomIn()
-          break
-        case '-':
-          handleZoomOut()
-          break
-        case 'r':
-        case 'R':
-          handleRotate()
-          break
-        case 'd':
-        case 'D':
-          handleDownload()
-          break
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isImageViewerOpen])
 
   return (
     <div className="space-y-6">
@@ -155,7 +62,7 @@ export function ListingDetailCard({ listing }: ListingDetailCardProps) {
       <Card className="overflow-hidden">
         <div className="relative">
           {listing.main_picture && (
-            <div className="h-64 relative overflow-hidden cursor-pointer group" onClick={openImageViewer}>
+            <div className="h-64 relative overflow-hidden cursor-pointer group" onClick={handleOpenImageViewer}>
               <Image
                 src={listing.main_picture}
                 alt={listing.title}
@@ -411,7 +318,7 @@ export function ListingDetailCard({ listing }: ListingDetailCardProps) {
                   <div className="text-sm font-medium text-muted-foreground mb-2">Главное изображение</div>
                   <div 
                     className="relative h-48 w-full overflow-hidden rounded-lg border cursor-pointer group"
-                    onClick={openImageViewer}
+                    onClick={handleOpenImageViewer}
                   >
                     <Image
                       src={listing.main_picture}
@@ -473,109 +380,6 @@ export function ListingDetailCard({ listing }: ListingDetailCardProps) {
         </Card>
       )}
 
-      {/* Full Screen Image Viewer */}
-      {isImageViewerOpen && listing.main_picture && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm">
-          {/* Header Controls */}
-          <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/80 to-transparent p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-white">
-                <ImageIcon className="w-5 h-5" />
-                <span className="font-medium">{listing.title}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleDownload}
-                  className="text-white hover:bg-white/20"
-                >
-                  <Download className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={closeImageViewer}
-                  className="text-white hover:bg-white/20"
-                >
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Image Container */}
-          <div 
-            className="absolute inset-0 flex items-center justify-center p-16 cursor-grab active:cursor-grabbing"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onWheel={handleWheel}
-          >
-            <img
-              src={listing.main_picture}
-              alt={listing.title}
-              className="max-w-full max-h-full object-contain select-none"
-              style={{
-                transform: `scale(${imageScale}) rotate(${imageRotation}deg) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
-                transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-              }}
-              draggable={false}
-            />
-          </div>
-
-          {/* Bottom Controls */}
-          <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-4">
-            <div className="flex items-center justify-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleZoomOut}
-                className="text-white hover:bg-white/20"
-                disabled={imageScale <= 0.1}
-              >
-                <ZoomOut className="w-4 h-4" />
-              </Button>
-              
-              <div className="text-white text-sm font-medium min-w-[60px] text-center">
-                {Math.round(imageScale * 100)}%
-              </div>
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleZoomIn}
-                className="text-white hover:bg-white/20"
-                disabled={imageScale >= 5}
-              >
-                <ZoomIn className="w-4 h-4" />
-              </Button>
-              
-              <div className="w-px h-6 bg-white/30" />
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRotate}
-                className="text-white hover:bg-white/20"
-              >
-                <RotateCw className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            {/* Keyboard Shortcuts Help */}
-            <div className="text-center text-white/60 text-xs mt-2">
-              <div className="flex items-center justify-center gap-4">
-                <span>ESC - закрыть</span>
-                <span>+/- - масштаб</span>
-                <span>R - поворот</span>
-                <span>D - скачать</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

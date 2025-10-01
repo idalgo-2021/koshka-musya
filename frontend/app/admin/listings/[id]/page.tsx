@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from 'react'
-import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import { ListingsApi } from '@/entities/listings/api'

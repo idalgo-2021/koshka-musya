@@ -6,11 +6,8 @@ import type * as React from 'react'
 import {Suspense} from "react";
 import { ModalProvider, useModal, ModalContent } from '@/entities/modals/ModalContext';
 import { Modal } from '@/components/ui/modal';
-import {useAuth, useSessionActionContextValue, useSessionContextValue} from "@/entities/auth/useAuth";
-import {SessionProvider} from "@/entities/auth/SessionContext";
-import {SessionActionProvider} from "@/entities/auth/SessionActionContext";
-import {SidebarProvider} from "@/state/contexts/SidebarContext";
-import {AdminLayout as AdminLayoutComponent} from "@/components/AdminLayout";
+import { ImageViewerProvider } from '@/contexts/ImageViewerContext';
+import { ImageViewer } from '@/components/ImageViewer';
 
 function ModalRenderer() {
   const { modalState, closeModal } = useModal();
@@ -42,12 +39,15 @@ export default function Providers({children}: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ModalProvider>
-        <Suspense>
-          {children}
-        </Suspense>
-        <ModalRenderer />
-      </ModalProvider>
+      <ImageViewerProvider>
+        <ModalProvider>
+          <Suspense>
+            {children}
+          </Suspense>
+          <ModalRenderer />
+          <ImageViewer />
+        </ModalProvider>
+      </ImageViewerProvider>
       {/*<ReactQueryDevtools />*/}
     </QueryClientProvider>
   )

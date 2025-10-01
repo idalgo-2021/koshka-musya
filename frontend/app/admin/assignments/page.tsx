@@ -12,7 +12,7 @@ import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import AssignmentCard from '@/components/AssignmentCard'
 import { AssignmentTable } from '@/components/AssignmentTable'
-import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Eye, Loader} from 'lucide-react'
+import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Loader} from 'lucide-react'
 import {assignmentStatusOptions} from "@/entities/assignments/const";
 import { ListingsApi } from '@/entities/listings/api'
 
