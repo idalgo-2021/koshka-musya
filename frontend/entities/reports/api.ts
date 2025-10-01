@@ -37,11 +37,11 @@ export const ReportsApi = {
 
   // Staff actions
   async approve(id: string): Promise<{ message?: string }> {
-    return api.post<{ message?: string }>(`/staff/reports/${id}/approve`, undefined, true);
+    return api.patch<{ message?: string }>(`/staff/reports/${id}/approve`, undefined, true);
   },
 
   async reject(id: string): Promise<{ message?: string }> {
-    return api.post<{ message?: string }>(`/staff/reports/${id}/reject`, undefined, true);
+    return api.patch<{ message?: string }>(`/staff/reports/${id}/reject`, undefined, true);
   },
 
   // Staff: get report by ID
