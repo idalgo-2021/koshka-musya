@@ -110,7 +110,7 @@ export default function ProfileCard({ profile, className }: ProfileCardProps) {
         </div>
 
         {/* Additional Info */}
-        {Object.keys(profile.additional_info).length > 0 && (
+        {profile.additional_info && Object.keys(profile.additional_info).length > 0 && (
           <div className="pt-2 border-t">
             <div className="text-sm text-gray-600">
               <span className="font-medium">Доп. информация:</span>

@@ -63,6 +63,13 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
               </div>
             )}
 
+            {assignment.created_at && (
+              <div className="text-sm gap-2">
+                <span className="text-muted-foreground">Создано:</span>
+                <span className="font-medium">{formatDate(assignment.created_at)}</span>
+              </div>
+            )}
+
             {/* Listing Info */}
             {assignment?.listing && (
               <div className="text-sm">

@@ -126,23 +126,25 @@ export default function AssignmentsStaffPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
+                      {/*<th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>*/}
                       <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Код</th>
                       <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Репортер</th>
                       <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">Статус</th>
                       <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden lg:table-cell">Срок</th>
                       <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden xl:table-cell">Объект</th>
+                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden xl:table-cell">Создано</th>
                       <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
                     </tr>
                   </thead>
                   <tbody>
                     {assignments.map((a: Assignment) => (
                       <tr key={a.id} className="border-b transition-colors hover:bg-muted/50">
-                        <td className="p-2 md:p-4 align-middle">
-                          <Link href={`/admin/assignments/${a.id}`} className="text-sm font-medium hover:underline break-all">
-                            {a.id}
-                          </Link>
-                        </td>
+                        {/*<td className="p-2 md:p-4 align-middle">*/}
+                        {/*  <Link href={`/admin/assignments/${a.id}`}*/}
+                        {/*        className="text-sm font-medium hover:underline break-all">*/}
+                        {/*    {a.title}*/}
+                        {/*  </Link>*/}
+                        {/*</td>*/}
                         <td className="p-2 md:p-4 align-middle text-sm">
                           {a.code}
                         </td>
@@ -151,12 +153,13 @@ export default function AssignmentsStaffPage() {
                           <div className="text-xs text-muted-foreground">{a.reporter?.id}</div>
                         </td>
                         <td className="p-2 md:p-4 align-middle hidden md:table-cell">
-                          <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(a.status?.id)}`}>
+                          <span
+                            className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(a.status?.id)}`}>
                             {a.status?.name}
                           </span>
                         </td>
                         <td className="p-2 md:p-4 align-middle text-sm hidden lg:table-cell">
-                          {a.deadline ? new Date(a.deadline).toLocaleDateString('ru-RU') : '-'}
+                          {a.deadline ? new Date(a.deadline)?.toLocaleDateString('ru-RU') : '-'}
                         </td>
                         <td className="p-2 md:p-4 align-middle text-sm hidden xl:table-cell">
                           {a.listing?.id ? (
@@ -166,6 +169,10 @@ export default function AssignmentsStaffPage() {
                           ) : (
                             <span className="text-muted-foreground">{a.listing?.title || '-'}</span>
                           )}
+                        </td>
+
+                        <td className="p-2 md:p-4 align-middle text-sm hidden lg:table-cell">
+                          {a.created_at ? new Date(a.created_at)?.toLocaleDateString('ru-RU') : '-'}
                         </td>
                         <td className="p-2 md:p-4 align-middle">
                           <Link href={`/admin/assignments/${a.id}`} className="text-sm text-primary hover:underline">

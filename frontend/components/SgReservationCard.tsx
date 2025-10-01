@@ -56,7 +56,7 @@ const formatGuests = (guests: any) => {
       return `${guests.count} гостей`
     }
     // If it's an object with guest details
-    const guestCount = Object.keys(guests).length
+    const guestCount = guests && Object.keys(guests).length
     return guestCount > 0 ? `${guestCount} гостей` : 'N/A'
   }
 
