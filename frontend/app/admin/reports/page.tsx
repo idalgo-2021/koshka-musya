@@ -14,7 +14,7 @@ import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import HotelImage from "@/components/HotelImage";
 import {reportStatusOptions} from "@/entities/reports/const";
-import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
+import {ChevronLeftIcon, ChevronRightIcon, Eye} from "lucide-react";
 import {formatDate} from "@/lib/date";
 import { ReportStatusBadge } from '@/components/ReportStatusBadge';
 
@@ -116,7 +116,7 @@ export default function ReportsStaffPage() {
                 <tr>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground">ID</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground">Задание</th>
-                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden sm:table-cell">Reporter</th>
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden sm:table-cell">Автор отчета</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Статус</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden lg:table-cell">Создан</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden xl:table-cell">Обновлен</th>
@@ -176,7 +176,7 @@ export default function ReportsStaffPage() {
                               disabled={approveMutation.isPending}
                               onClick={() => approveMutation.mutate(r.id)}
                             >
-                              {approveMutation.isPending ? 'Approving…' : 'Approve'}
+                              {approveMutation.isPending ? 'Обработка…' : 'Принять'}
                             </Button>
                             <Button
                               size="sm"
@@ -184,12 +184,12 @@ export default function ReportsStaffPage() {
                               disabled={rejectMutation.isPending}
                               onClick={() => rejectMutation.mutate(r.id)}
                             >
-                              {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
+                              {rejectMutation.isPending ? 'Обработка…' : 'Принять'}
                             </Button>
                           </>
                         )}
                         <Link href={`/admin/reports/${r.id}`} className="text-sm text-primary hover:underline">
-                          View
+                          <Eye  className="w-4 h-4" />
                         </Link>
                       </div>
                     </td>
@@ -238,7 +238,7 @@ export default function ReportsStaffPage() {
                               approveMutation.mutate(r.id)
                             }}
                           >
-                            {approveMutation.isPending ? 'Approving…' : 'Approve'}
+                            {approveMutation.isPending ? 'Обработка…' : 'Принять'}
                           </Button>
                           <Button
                             size="sm"
@@ -249,7 +249,7 @@ export default function ReportsStaffPage() {
                               rejectMutation.mutate(r.id)
                             }}
                           >
-                            {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
+                            {rejectMutation.isPending ? 'Обработка…' : 'Отклонить'}
                           </Button>
                         </div>
                       )}
@@ -260,7 +260,7 @@ export default function ReportsStaffPage() {
             ))}
             {reports.length === 0 && (
               <div className="col-span-full text-center py-8 text-sm text-muted-foreground">
-                No reports found.
+                Отчеты не найдены
               </div>
             )}
           </div>
