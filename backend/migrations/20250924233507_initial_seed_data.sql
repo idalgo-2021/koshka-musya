@@ -117,6 +117,26 @@ INSERT INTO users (username, email, password_hash, role_id) VALUES
     )
 ON CONFLICT (username) DO NOTHING;
 
+
+
+-- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ user_profiles (ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ) ===========
+
+INSERT INTO user_profiles (user_id, accepted_offers_count, submitted_reports_count, correct_reports_count, registered_at)
+VALUES
+  ((SELECT id FROM users WHERE username = 'alfred'),   10, 10, 5, '2025-09-01 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'boris'),    2, 3, 2, '2025-09-02 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'celine'),   2, 1, 1, '2025-09-03 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'diana'),    0, 0, 0, '2025-09-04 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'alpha'),    5, 5, 4, '2025-09-05 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'beta'),     10, 9, 8, '2025-09-10 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'gamma'),    22, 10, 1, '2025-09-11 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'delta'),    7, 6, 5, '2025-09-12 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'epsilon'),  2, 1, 0, '2025-09-13 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'zetta'),    7, 0, 0, '2025-09-20 06:46:45.268'),
+  ((SELECT id FROM users WHERE username = 'hetta'),    0, 0, 0, '2025-09-21 06:46:45.268')
+ON CONFLICT (user_id) DO NOTHING; 
+
+
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ listings (ОБЪЕКТЫ РАЗМЕЩЕНИЯ) ===========
 
 INSERT INTO listings (
@@ -131,27 +151,11 @@ INSERT INTO listings (
 ('Квартира у моря', 'Светлая двухкомнатная квартира с балконом и видом на море, в 5 минутах от пляжа.', 'https://cdn.worldota.net/t/1200x616/extranet/c6/81/c681b19c8d17548d22f3800e7266ecc361f258f1.jpeg', 2, 'ул. Ленина, д. 112', 'Адлер', 'Россия', 43.4299, 39.9234, gen_random_uuid()),
 -- --- Хостелы (listing_type_id = 3) ---
 ('Хостел "Друзья"', 'Веселый и современный хостел с общей кухней и игровой зоной.', 'https://cdn.worldota.net/t/1200x616/extranet/2e/8c/2e8cfffa97a4f7a39db1f4e57491f60f7a804a35.JPEG', 3, 'ул. Лиговский проспект, д. 50', 'Санкт-Петербург', 'Россия', 59.9256, 30.3587, gen_random_uuid()),
-('Горный Приют', 'Хостел для любителей активного отдыха у подножия гор.', NULL, 3, 'пос. Красная Поляна, ул. Защитников Кавказа, д. 77', 'Красная Поляна', 'Россия', 43.6834, 40.2045, gen_random_uuid()),
+('Горный Приют', 'Хостел для любителей активного отдыха у подножия гор.', 'https://cdn.worldota.net/t/1200x616/extranet/63/d2/63d241586793115d87818109ac43123d002fa4d8.JPEG', 3, 'пос. Красная Поляна, ул. Защитников Кавказа, д. 77', 'Красная Поляна', 'Россия', 43.6834, 40.2045, gen_random_uuid()),
 -- --- Гостевые дома (listing_type_id = 4) ---
 ('Уютный дворик', 'Семейный гостевой дом с садом и зоной для барбекю.', 'https://cdn.worldota.net/t/1200x616/extranet/b4/5e/b45efcf3cfcb1c6ef47cae6c3427a97e18a39d5c.jpeg', 4, 'ул. Виноградная, д. 25', 'Суздаль', 'Россия', 56.4168, 40.4499, gen_random_uuid()),
 ('Дом у озера', 'Гостевой дом на берегу живописного озера с возможностью рыбалки и проката лодок.', 'https://cdn.worldota.net/t/1200x616/extranet/7c/16/7c16d355fc7c18098445cb227620b1ff29ac1d37.jpeg', 4, 'д. Селигер, ул. Озерная, д. 1', 'Осташков', 'Россия', 57.1481, 33.1039, gen_random_uuid()),
-('Альпийская Вилла', 'Шале в альпийском стиле с сауной и каминным залом.', NULL, 4, 'ул. Горная, д. 5', 'Красная Поляна', 'Россия', 43.6800, 40.2050, gen_random_uuid());
-
-
-INSERT INTO user_profiles (user_id, accepted_offers_count, submitted_reports_count, correct_reports_count, registered_at)
-VALUES
-  ('ed4e10ad-b49e-440c-9a02-be0c7098a61d', 0, 0, 0, '2025-09-01 06:46:45.268'),
-  ('a5e2bdc5-78de-46d3-a18e-8b9d648d9311', 0, 0, 0, '2025-09-02 06:46:45.268'),
-  ('7056417e-b9ce-4d4b-ad05-1ed3f9d2464e', 0, 0, 0, '2025-09-03 06:46:45.268'),
-  ('d4e2d555-8460-4b7e-bcc1-da6e77a32404', 0, 0, 0, '2025-09-04 06:46:45.268'),
-  ('1a2309a6-6bdb-4372-9814-076b526ac5a7', 0, 0, 0, '2025-09-05 06:46:45.268'),
-  ('8d64945c-33fb-4ee4-9e59-962c0cded6bc', 0, 0, 0, '2025-09-10 06:46:45.268'),
-  ('d125760c-2ce8-449c-a4f9-11cc40c70df2', 0, 0, 0, '2025-09-11 06:46:45.268'),
-  ('a11833d9-29f6-438b-b8d1-cbabeb01be3a', 0, 0, 0, '2025-09-12 06:46:45.268'),
-  ('9be31ef3-013c-4f82-965b-679f4557febd', 0, 0, 0, '2025-09-13 06:46:45.268'),
-  ('4809b958-f69d-4a94-8998-946a3b7efae2', 0, 0, 0, '2025-09-20 06:46:45.268'),
-  ('0aad1e28-d86f-4986-a0df-f86ae2627639', 0, 0, 0, '2025-09-21 06:46:45.268')
-ON CONFLICT (user_id) DO NOTHING; 
+('Альпийская Вилла', 'Шале в альпийском стиле с сауной и каминным залом.', 'https://cdn.worldota.net/t/1200x616/extranet/2c/f1/2cf13650103ed67ba82ebbbf4953ba30ceac6b70.JPEG', 4, 'ул. Горная, д. 5', 'Красная Поляна', 'Россия', 43.6800, 40.2050, gen_random_uuid());
 
 
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ checklist_sections (СЕКЦИИ ЧЕК-ЛИСТОВ) ===========
@@ -213,7 +217,7 @@ INSERT INTO checklist_items (listing_type_id, section_id, answer_type_id, media_
 
 
 
--- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ ota_sg_reservations (БРОНИРОВАНИЯ) ===========
+-- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ ota_sg_reservations (БРОНИРОВАНИЯ ОТА) ===========
 
 -- Бронирование 1: 
 INSERT INTO ota_sg_reservations (created_at,
@@ -237,3 +241,29 @@ VALUES (
     '{"reservation":{"ota_id":"f6b1c8f4-23ab-4c32-87a1-7810e7a3e9b1","booking_number":"TG-20250927-AB1234","status":"reserved","listing":{"id":"b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0","title":"Гранд Отель \"Центральный\"","description":"Роскошный отель в самом сердце города с видом на главную площадь.","main_picture":"https://cdn.worldota.net/t/1200x616/extranet/c5/b7/c5b726bddddc50f063af1577614fdb9ce026812e.jpeg","listing_type":{"id":1,"slug":"hotel","name":"Отель"},"address":"ул. Тверская, д. 1","city":"Москва","country":"Россия","latitude":55.7558,"longitude":37.6176},"dates":{"checkin":"2025-10-05T15:00:00Z","checkout":"2025-10-10T12:00:00Z"},"guests":{"adults":2,"children":1},"pricing":{"currency":"RUB","total":25000,"breakdown":{"per_night":5000,"nights":5}}},"source":"Ostrovok.com","received_at":"2025-09-27T00:12:00Z"}'::jsonb
 );
 
+-- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ assignments (ПРЕДЛОЖЕНИЕ НА ОСНОВЕ БРОНИРОВАНИЯ ОТ ОТА) ===========
+
+INSERT INTO assignments (
+    ota_sg_reservation_id,
+    pricing,
+    guests,
+    checkin_date,
+    checkout_date,
+    listing_id,
+    purpose,
+    expires_at,
+    status_id
+)
+SELECT
+    r.id AS ota_sg_reservation_id,
+    r.pricing,
+    r.source_msg -> 'reservation' -> 'guests' AS guests,
+    (r.source_msg -> 'reservation' -> 'dates' ->> 'checkin')::timestamp AS checkin_date,
+    (r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp AS checkout_date,
+    r.listing_id,
+    'reservation' AS purpose, -- можно задать дефолтное значение
+    ((r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp + interval '1 day') AS expires_at, -- например, истекает через 1 день после выезда
+    (SELECT id FROM assignment_statuses WHERE slug = 'offered') -- или задай конкретный статус
+FROM ota_sg_reservations r
+WHERE r.booking_number = 'TG-20250927-AB1234'
+ON CONFLICT (ota_sg_reservation_id) DO NOTHING;

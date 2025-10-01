@@ -496,7 +496,7 @@ func (s *SecretGuestService) HandleOTAReservation(ctx context.Context, dto OTARe
 
 		// register listing object
 		listingID, err = s.repo.CreateListing(ctx, &models.Listing{
-			Code:          dto.Reservation.OTAID,
+			Code:          dto.Reservation.Listing.ID,
 			Title:         dto.Reservation.Listing.Title,
 			Description:   dto.Reservation.Listing.Description,
 			ListingTypeID: listingType.ID,
