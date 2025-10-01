@@ -33,14 +33,14 @@ func (r *SecretGuestRepository) CreateListing(ctx context.Context, listing *mode
 
 	query := `
 		INSERT INTO listings (
-			code, 
-			title, 
-			description, 
-			listing_type_id, 
-			address, 
-			city, 
-			country, 
-			latitude, 
+			code,
+			title,
+			description,
+			listing_type_id,
+			address,
+			city,
+			country,
+			latitude,
 			longitude,
 			main_picture
 		)
@@ -452,6 +452,7 @@ type AssignmentsFilter struct {
 	ListingTypeIDs []int
 	Limit          int
 	Offset         int
+	City           string
 }
 
 func buildAssignmentWhereClause(filter AssignmentsFilter) (string, []interface{}, int) {
@@ -550,7 +551,7 @@ func (r *SecretGuestRepository) CreateAssignment(ctx context.Context, assignment
 
 	query := `
 		INSERT INTO assignments (
-			ota_sg_reservation_id, 
+			ota_sg_reservation_id,
 			pricing,
 			guests,
 			checkin_date,
@@ -619,20 +620,20 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 
 	baseQuery := `
 		SELECT
-			a.id, 
-			
+			a.id,
+
 			a.ota_sg_reservation_id,
 			a.pricing,
-			a.guests, 
+			a.guests,
 			a.checkin_date,
 			a.checkout_date,
-			
+
 			a.listing_id, a.reporter_id, a.status_id,
 			a.purpose,
 			a.created_at,
 			a.expires_at,
 			a.accepted_at,
-			
+
 			a.taked_at,
 
 			l.code as "listing_code",
@@ -669,12 +670,17 @@ func (r *SecretGuestRepository) GetAssignments(ctx context.Context, filter Assig
 		query += " WHERE " + whereClause
 	}
 
+	if len(filter.City) > 0 {
+		query += fmt.Sprintf(" AND l.city ILIKE $%d ", paramCount)
+		args = append(args, "%" + filter.City + "%")
+		paramCount++
+	}
 	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
 	args = append(args, filter.Limit, filter.Offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
-		log.Error(ctx, "Failed to query assignments with filter", zap.Error(err), zap.Any("filter", filter))
+        log.Error(ctx, "Failed to query assignments with filter", zap.Error(err), zap.Any("filter", filter))
 		return nil, 0, err
 	}
 	defer rows.Close()
@@ -774,20 +780,20 @@ func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter A
 
 	baseQuery := `
 		SELECT
-			a.id, 
-			
+			a.id,
+
 			a.ota_sg_reservation_id,
 			a.pricing,
-			a.guests, 
+			a.guests,
 			a.checkin_date,
 			a.checkout_date,
-			
+
 			a.listing_id, a.reporter_id, a.status_id,
 			a.purpose,
 			a.created_at,
 			a.expires_at,
 			a.accepted_at,
-			
+
 			a.taked_at,
 
 			l.id,
@@ -898,16 +904,16 @@ func (r *SecretGuestRepository) GetAssignmentByID(ctx context.Context, assignmen
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			a.id, 
+			a.id,
 
 			a.ota_sg_reservation_id,
 			a.pricing,
-			a.guests, 
+			a.guests,
 			a.checkin_date,
 			a.checkout_date,
-			
+
 			a.listing_id, a.reporter_id, a.status_id,
-			a.purpose, a.created_at, a.expires_at, a.accepted_at, 
+			a.purpose, a.created_at, a.expires_at, a.accepted_at,
 			a.taked_at,
 
 			l.id,
@@ -981,15 +987,15 @@ func (r *SecretGuestRepository) GetAssignmentByIDAndOwner(ctx context.Context, a
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			a.id, 
-			
+			a.id,
+
 			a.ota_sg_reservation_id,
 			a.pricing,
-			a.guests,  
+			a.guests,
 			a.checkin_date,
 			a.checkout_date,
-						
-			a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at, 
+
+			a.listing_id, a.reporter_id, a.status_id, a.purpose, a.created_at, a.expires_at, a.accepted_at,
 			a.taked_at,
 
 			l.id,
@@ -1039,16 +1045,16 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 
 	updateQuery := `
 		UPDATE assignments
-		SET 
-			status_id = $1, 
+		SET
+			status_id = $1,
 			accepted_at = $2
-		WHERE 
-			id = $3 
-			AND reporter_id = $4 
+		WHERE
+			id = $3
+			AND reporter_id = $4
 			AND status_id = $5
-		RETURNING 
-			listing_id, 
-			purpose, 
+		RETURNING
+			listing_id,
+			purpose,
 			ota_sg_reservation_id,
 			pricing,
 			guests,
@@ -1123,13 +1129,13 @@ func (r *SecretGuestRepository) AcceptMyAssignment(ctx context.Context, assignme
 
 	insertQuery := `
 		INSERT INTO reports (
-			id, 
-			assignment_id, 
-			listing_id, 
-			purpose, 
-			reporter_id, 
+			id,
+			assignment_id,
+			listing_id,
+			purpose,
+			reporter_id,
 			status_id,
-			ota_id, 
+			ota_id,
 			booking_number,
 			ota_sg_reservation_id,
 			pricing,
@@ -1178,13 +1184,13 @@ func (r *SecretGuestRepository) DeclineMyAssignment(ctx context.Context, assignm
 	// Обновляем статус задания и очищаем reporter_id
 	updateQuery := `
 		UPDATE assignments
-		SET 
+		SET
 			status_id   = $1,
 			reporter_id = NULL,
 			taked_at    = NULL
-		WHERE 
-			id = $2 
-			AND reporter_id = $3 
+		WHERE
+			id = $2
+			AND reporter_id = $3
 			AND status_id = $4
 	`
 
@@ -1242,10 +1248,10 @@ func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, ass
 	var count int
 	err = tx.QueryRow(ctx, `
 		SELECT COUNT(*)
-		FROM 
+		FROM
 			assignments
-		WHERE 
-			reporter_id = $1 
+		WHERE
+			reporter_id = $1
 			AND status_id = $2
 	`, userID, models.AssignmentStatusOffered).Scan(&count)
 	if err != nil {
@@ -1258,11 +1264,11 @@ func (r *SecretGuestRepository) TakeFreeAssignmentsByID(ctx context.Context, ass
 
 	updateQuery := `
 		UPDATE assignments
-		SET 
-			reporter_id = $1, 
-			status_id = $2, 
+		SET
+			reporter_id = $1,
+			status_id = $2,
 			taked_at = $3
-		WHERE 
+		WHERE
 			id = $4
 		  	AND status_id = $5
 		  	AND reporter_id IS NULL
@@ -1404,8 +1410,8 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 	whereClause, args, paramCount := buildReportWhereClause(filter)
 
 	countQuery := `
-		SELECT COUNT(r.id) 
-		FROM reports r 
+		SELECT COUNT(r.id)
+		FROM reports r
 		JOIN report_statuses s ON r.status_id = s.id
 		`
 	if len(filter.ListingTypeIDs) > 0 {
@@ -1429,8 +1435,8 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 	baseQuery := `
 		SELECT
 			r.id,
-			r.assignment_id, 
-			
+			r.assignment_id,
+
 			r.ota_id,
 			r.booking_number,
 			r.ota_sg_reservation_id,
@@ -1438,7 +1444,7 @@ func (r *SecretGuestRepository) GetReports(ctx context.Context, filter ReportsFi
 			r.guests,
 			r.checkin_date,
 			r.checkout_date,
-						
+
 			r.listing_id, r.reporter_id, r.status_id,
 			r.purpose,
 			r.created_at,
@@ -1553,9 +1559,9 @@ func (r *SecretGuestRepository) GetReportByID(ctx context.Context, reportID uuid
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			r.id, 
-			r.assignment_id, 
-			
+			r.id,
+			r.assignment_id,
+
 			r.ota_id,
 			r.booking_number,
 			r.ota_sg_reservation_id,
@@ -1563,10 +1569,10 @@ func (r *SecretGuestRepository) GetReportByID(ctx context.Context, reportID uuid
 			r.guests,
 			r.checkin_date,
 			r.checkout_date,
-						
+
 			r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, 
-			
+			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema,
+
 			l.ID,
 			l.code as "listing_code",
 			l.title as "listing_title", l.description as "listing_description",
@@ -1605,9 +1611,9 @@ func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, repor
 	log := logger.GetLoggerFromCtx(ctx)
 	query := `
 		SELECT
-			r.id, 
-			r.assignment_id, 
-			
+			r.id,
+			r.assignment_id,
+
 			r.ota_id,
 			r.booking_number,
 			r.ota_sg_reservation_id,
@@ -1615,15 +1621,15 @@ func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, repor
 			r.guests,
 			r.checkin_date,
 			r.checkout_date,
-			
+
 			r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, 
-			
-			r.checklist_schema, 
+			r.created_at, r.updated_at, r.submitted_at,
+
+			r.checklist_schema,
 
 			l.ID,
 			l.code as "listing_code",
-			l.title as "listing_title", 
+			l.title as "listing_title",
 			l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
 
@@ -2831,12 +2837,12 @@ func (r *SecretGuestRepository) GetStatistics(ctx context.Context) (*models.Stat
 
 			-- Предложения (assignments)
 			(SELECT COUNT(*) FROM assignments) AS total_assignments,
-			(SELECT COUNT(*) 
+			(SELECT COUNT(*)
 				FROM assignments a
 				JOIN assignment_statuses s ON a.status_id = s.id
 				WHERE s.slug = 'offered' AND a.reporter_id IS NULL
 			) AS open_assignments,
-			(SELECT COUNT(*) 
+			(SELECT COUNT(*)
 				FROM assignments a
 				JOIN assignment_statuses s ON a.status_id = s.id
 				WHERE s.slug = 'offered' AND a.reporter_id IS NOT NULL
