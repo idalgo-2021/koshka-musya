@@ -52,24 +52,3 @@ export default function Providers({children}: { children: React.ReactNode }) {
     </QueryClientProvider>
   )
 }
-
-
-function AuthProider({ children }: { children: React.ReactNode }) {
-  const auth = useAuth();
-  const sessionValue = useSessionContextValue(auth);
-  const sessionActionValue = useSessionActionContextValue(auth);
-
-  return (
-    <SessionProvider value={sessionValue}>
-      <SessionActionProvider value={sessionActionValue}>
-        <ModalProvider>
-          <SidebarProvider>
-            <AdminLayoutComponent>
-              {children}
-            </AdminLayoutComponent>
-          </SidebarProvider>
-        </ModalProvider>
-      </SessionActionProvider>
-    </SessionProvider>
-  );
-}
