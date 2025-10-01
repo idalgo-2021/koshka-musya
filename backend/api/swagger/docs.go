@@ -1821,6 +1821,66 @@ const docTemplate = `{
                 }
             }
         },
+        "/journal/my": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a chronological history of the user's reports.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Journal (User)"
+                ],
+                "summary": "Get My History",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number for pagination",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Number of items per page",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.JournalResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/listing_types": {
             "get": {
                 "security": [
@@ -3386,6 +3446,58 @@ const docTemplate = `{
                 }
             }
         },
+        "/staff/statistics": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns basic statistics about the system",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Statistics (Staff)"
+                ],
+                "summary": "Get Statistics (Staff)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer Access Token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.StatisticsResponseDTO"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/secret_guest.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/uploads/generate-url": {
             "post": {
                 "security": [
@@ -4044,6 +4156,49 @@ const docTemplate = `{
                 }
             }
         },
+        "secret_guest.JournalEntryDTO": {
+            "type": "object",
+            "properties": {
+                "checkin_date": {
+                    "type": "string"
+                },
+                "checklist_schema": {
+                    "$ref": "#/definitions/models.ChecklistSchema"
+                },
+                "checkout_date": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "listing": {
+                    "$ref": "#/definitions/secret_guest.ListingShortResponse"
+                },
+                "purpose": {
+                    "type": "string"
+                },
+                "status_slug": {
+                    "type": "string"
+                }
+            }
+        },
+        "secret_guest.JournalResponse": {
+            "type": "object",
+            "properties": {
+                "entries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/secret_guest.JournalEntryDTO"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
         "secret_guest.ListingResponseDTO": {
             "type": "object",
             "properties": {
@@ -4262,7 +4417,6 @@ const docTemplate = `{
                 "latitude",
                 "listing_type",
                 "longitude",
-                "main_picture",
                 "title"
             ],
             "properties": {
@@ -4291,6 +4445,7 @@ const docTemplate = `{
                     "type": "number"
                 },
                 "main_picture": {
+                    "description": "MainPicture *string             ` + "`" + `json:\"main_picture\" validate:\"required\"` + "`" + `",
                     "type": "string"
                 },
                 "title": {
@@ -4408,6 +4563,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "last_active_at": {
+                    "type": "string"
+                },
+                "points": {
+                    "type": "integer"
+                },
+                "rank": {
                     "type": "string"
                 },
                 "registered_at": {
@@ -4530,6 +4691,31 @@ const docTemplate = `{
                 },
                 "total": {
                     "type": "integer"
+                }
+            }
+        },
+        "secret_guest.StatisticItemDTO": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "key": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "integer"
+                }
+            }
+        },
+        "secret_guest.StatisticsResponseDTO": {
+            "type": "object",
+            "properties": {
+                "statistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/secret_guest.StatisticItemDTO"
+                    }
                 }
             }
         },

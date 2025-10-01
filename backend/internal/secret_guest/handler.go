@@ -2531,3 +2531,66 @@ func (h *SecretGuestHandler) GetProfileByUserID(w http.ResponseWriter, r *http.R
 
 	h.writeJSONResponse(ctx, w, http.StatusOK, profile)
 }
+
+// @Summary      Get Statistics (Staff)
+// @Security     BearerAuth
+// @Description  Returns basic statistics about the system
+// @Tags         Statistics (Staff)
+// @Produce      json
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.StatisticsResponseDTO
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      403 {object} ErrorResponse "Forbidden"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /staff/statistics [get]
+func (h *SecretGuestHandler) GetStatistics(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	stats, err := h.service.GetStatistics(ctx)
+	if err != nil {
+		log.Error(ctx, "Failed to get statistics", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, stats)
+}
+
+// @Summary      Get My History
+// @Security     BearerAuth
+// @Description  Returns a chronological history of the user's reports.
+// @Tags         Journal (User)
+// @Produce      json
+// @Param        page query int false "Page number for pagination" default(1)
+// @Param        limit query int false "Number of items per page" default(20)
+// @Param        Authorization header string true "Bearer Access Token"
+// @Success      200 {object} secret_guest.JournalResponse
+// @Failure      401 {object} ErrorResponse "Unauthorized"
+// @Failure      500 {object} ErrorResponse "Internal server error"
+// @Router       /journal/my [get]
+func (h *SecretGuestHandler) GetMyHistory(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log := logger.GetLoggerFromCtx(ctx)
+
+	userID, ok := h.parseUserAndID(w, r)
+	if !ok {
+		return
+	}
+
+	page, limit := h.parsePagination(r)
+	dto := GetMyHistoryRequestDTO{
+		UserID: userID,
+		Page:   page,
+		Limit:  limit,
+	}
+
+	journal, err := h.service.GetMyHistory(ctx, dto)
+	if err != nil {
+		log.Error(ctx, "Failed to get my history", zap.Error(err))
+		h.writeErrorResponse(ctx, w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	h.writeJSONResponse(ctx, w, http.StatusOK, journal)
+}

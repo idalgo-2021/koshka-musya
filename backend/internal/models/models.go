@@ -252,3 +252,22 @@ type UserProfile struct {
 	Username string `db:"username"`
 	Email    string `db:"email"`
 }
+
+type Statistics struct {
+	// OTA бронирования
+	TotalOtaReservations   int `db:"total_ota_reservations"`
+	OtaReservationsLast24h int `db:"ota_reservations_last_24h"`
+	// Предложения (assignments)
+	TotalAssignments         int `db:"total_assignments"`
+	OpenAssignments          int `db:"open_assignments"`
+	PendingAcceptAssignments int `db:"pending_accept_assignments"`
+	// Отказы по предложениям
+	TotalAssignmentDeclines int `db:"total_assignment_declines"`
+	// Отчёты
+	TotalReports     int `db:"total_reports"`
+	ReportsToday     int `db:"reports_today"`
+	SubmittedReports int `db:"submitted_reports"`
+	// Пользователи
+	TotalSg      int `db:"total_sg"`
+	NewSgLast24h int `db:"new_sg_last_24h"`
+}

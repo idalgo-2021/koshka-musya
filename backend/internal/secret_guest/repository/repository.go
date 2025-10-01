@@ -1370,6 +1370,7 @@ func (r *SecretGuestRepository) scanReport(row pgx.Row) (*models.Report, error) 
 
 		&rep.ChecklistSchema,
 
+		&rep.Listing.ID,
 		&rep.Listing.Code,
 		&rep.Listing.Title,
 		&rep.Listing.Description,
@@ -1616,10 +1617,14 @@ func (r *SecretGuestRepository) GetReportByIDAndOwner(ctx context.Context, repor
 			r.checkout_date,
 			
 			r.listing_id, r.reporter_id, r.status_id, r.purpose,
-			r.created_at, r.updated_at, r.submitted_at, r.checklist_schema, 
+			r.created_at, r.updated_at, r.submitted_at, 
+			
+			r.checklist_schema, 
+
 			l.ID,
 			l.code as "listing_code",
-			l.title as "listing_title", l.description as "listing_description",
+			l.title as "listing_title", 
+			l.description as "listing_description",
 			l.main_picture as "listing_main_picture",
 
 			l.listing_type_id,
@@ -2812,6 +2817,145 @@ func (r *SecretGuestRepository) GetAllUserProfiles(ctx context.Context, limit, o
 	}
 
 	return profiles, total, nil
+}
+
+// statistics
+func (r *SecretGuestRepository) GetStatistics(ctx context.Context) (*models.Statistics, error) {
+	// TODO: только для демки. Это нужно сразу убрать!
+
+	query := `
+		SELECT
+			-- OTA бронирования
+			(SELECT COUNT(*) FROM ota_sg_reservations) AS total_ota_reservations,
+			(SELECT COUNT(*) FROM ota_sg_reservations WHERE created_at >= NOW() - INTERVAL '24 hours') AS ota_reservations_last_24h,
+
+			-- Предложения (assignments)
+			(SELECT COUNT(*) FROM assignments) AS total_assignments,
+			(SELECT COUNT(*) 
+				FROM assignments a
+				JOIN assignment_statuses s ON a.status_id = s.id
+				WHERE s.slug = 'offered' AND a.reporter_id IS NULL
+			) AS open_assignments,
+			(SELECT COUNT(*) 
+				FROM assignments a
+				JOIN assignment_statuses s ON a.status_id = s.id
+				WHERE s.slug = 'offered' AND a.reporter_id IS NOT NULL
+			) AS pending_accept_assignments,
+
+			-- Отказы
+			(SELECT COUNT(*) FROM assignment_declines) AS total_assignment_declines,
+
+			-- Отчёты
+			(SELECT COUNT(*) FROM reports) AS total_reports,
+			(SELECT COUNT(*) FROM reports WHERE created_at::date = CURRENT_DATE) AS reports_today,
+			(SELECT COUNT(*) FROM reports WHERE status_id = 3) AS submitted_reports,
+
+			-- Тайные гости (role_id = 3)
+			(SELECT COUNT(*) FROM users WHERE role_id = 3) AS total_sg,
+			(SELECT COUNT(*) FROM users WHERE role_id = 3 AND created_at >= NOW() - INTERVAL '24 hours') AS new_sg_last_24h
+	`
+
+	row := r.db.QueryRow(ctx, query)
+
+	var stats models.Statistics
+	err := row.Scan(
+		&stats.TotalOtaReservations,
+		&stats.OtaReservationsLast24h,
+		&stats.TotalAssignments,
+		&stats.OpenAssignments,
+		&stats.PendingAcceptAssignments,
+		&stats.TotalAssignmentDeclines,
+		&stats.TotalReports,
+		&stats.ReportsToday,
+		&stats.SubmittedReports,
+		&stats.TotalSg,
+		&stats.NewSgLast24h,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan statistics: %w", err)
+	}
+
+	return &stats, nil
+}
+
+// journal
+
+func (r *SecretGuestRepository) GetUserHistory(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*models.Report, int, error) {
+	log := logger.GetLoggerFromCtx(ctx)
+
+	countQuery := `SELECT COUNT(*) FROM reports WHERE reporter_id = $1;`
+	var total int
+	err := r.db.QueryRow(ctx, countQuery, userID).Scan(&total)
+	if err != nil {
+		log.Error(ctx, "Failed to query total user history count", zap.Error(err), zap.String("user_id", userID.String()))
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []*models.Report{}, 0, nil
+	}
+
+	query := `
+		SELECT
+			r.created_at,
+			r.purpose,
+			r.checkin_date,
+			r.checkout_date,
+			r.checklist_schema,
+			s.slug as status_slug,
+			l.id as listing_id,
+			l.code as listing_code,
+			l.title as listing_title,
+			l.description as listing_description,
+			l.main_picture as listing_main_picture,
+			l.listing_type_id,
+			lt.slug as listing_type_slug,
+			lt.name as listing_type_name,
+			l.address as listing_address
+		FROM reports r
+		JOIN listings l ON r.listing_id = l.id
+		JOIN listing_types lt ON l.listing_type_id = lt.id
+		JOIN report_statuses s ON r.status_id = s.id
+		WHERE r.reporter_id = $1
+		ORDER BY r.created_at DESC
+		LIMIT $2 OFFSET $3;
+	`
+
+	rows, err := r.db.Query(ctx, query, userID, limit, offset)
+	if err != nil {
+		log.Error(ctx, "Failed to query user history", zap.Error(err), zap.String("user_id", userID.String()))
+		return nil, total, err
+	}
+	defer rows.Close()
+
+	reports := make([]*models.Report, 0, limit)
+	for rows.Next() {
+		var rep models.Report
+		err = rows.Scan(
+			&rep.CreatedAt,
+			&rep.Purpose,
+			&rep.BookingDetails.CheckinDate,
+			&rep.BookingDetails.CheckoutDate,
+			&rep.ChecklistSchema,
+			&rep.Status.Slug,
+			&rep.Listing.ID,
+			&rep.Listing.Code,
+			&rep.Listing.Title,
+			&rep.Listing.Description,
+			&rep.Listing.MainPicture,
+			&rep.Listing.ListingTypeID,
+			&rep.Listing.ListingTypeSlug,
+			&rep.Listing.ListingTypeName,
+			&rep.Listing.Address,
+		)
+		if err != nil {
+			log.Error(ctx, "Failed to scan user history row", zap.Error(err))
+			return nil, total, err
+		}
+		reports = append(reports, &rep)
+	}
+
+	return reports, total, nil
 }
 
 // ГЕнерация отчета

@@ -94,6 +94,12 @@ type SecretGuestRepository interface {
 	// profiles
 	GetUserProfileByID(ctx context.Context, userID uuid.UUID) (*models.UserProfile, error)
 	GetAllUserProfiles(ctx context.Context, limit, offset int) ([]*models.UserProfile, int, error)
+
+	// statistics
+	GetStatistics(ctx context.Context) (*models.Statistics, error)
+
+	// journal
+	GetUserHistory(ctx context.Context, userID uuid.UUID, limit, offset int) ([]*models.Report, int, error)
 }
 
 type SecretGuestService struct {
@@ -1448,7 +1454,35 @@ func toGenerateUploadURLResponseDTO(s *storage.UploadResponse) *GenerateUploadUR
 
 // Profile
 
+func calculateUserPointsAndRank(AcceptedOffersCount, SubmittedReportsCount, CorrectReportsCount int) (int, string) {
+
+	points := 0
+	rank := "Новичок"
+
+	points += AcceptedOffersCount * 10
+	points += SubmittedReportsCount * 5
+	points += CorrectReportsCount * 20
+
+	if points >= 100 {
+		rank = "Опытный"
+	}
+	if points >= 300 {
+		rank = "Профи"
+	}
+	if points >= 600 {
+		rank = "Мастер"
+	}
+	if points >= 1000 {
+		rank = "Легенда"
+	}
+
+	return points, rank
+}
+
 func toProfileResponseDTO(p *models.UserProfile) *ProfileResponseDTO {
+
+	points, rank := calculateUserPointsAndRank(p.AcceptedOffersCount, p.SubmittedReportsCount, p.CorrectReportsCount)
+
 	return &ProfileResponseDTO{
 		ID:                    p.ID,
 		UserID:                p.UserID,
@@ -1460,6 +1494,9 @@ func toProfileResponseDTO(p *models.UserProfile) *ProfileResponseDTO {
 		RegisteredAt:          p.RegisteredAt,
 		LastActiveAt:          p.LastActiveAt,
 		AdditionalInfo:        p.AdditionalInfo,
+
+		Points: points,
+		Rank:   rank,
 	}
 }
 
@@ -1492,4 +1529,75 @@ func (s *SecretGuestService) GetAllProfiles(ctx context.Context, dto GetAllProfi
 	}
 
 	return response, nil
+}
+
+// statistics
+
+func (s *SecretGuestService) GetStatistics(ctx context.Context) (*StatisticsResponseDTO, error) {
+	stat, err := s.repo.GetStatistics(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get statistics information from repository: %w", err)
+	}
+
+	items := []StatisticItemDTO{
+		{Key: "total_ota_reservations", Value: stat.TotalOtaReservations, Description: "Всего бронирований от OTA"},
+		{Key: "ota_reservations_last_24h", Value: stat.OtaReservationsLast24h, Description: "Новых бронирований от OTA за 24 часа"},
+		{Key: "total_assignments", Value: stat.TotalAssignments, Description: "Всего предложений"},
+		{Key: "open_assignments", Value: stat.OpenAssignments, Description: "Свободных предложений"},
+		{Key: "pending_accept_assignments", Value: stat.PendingAcceptAssignments, Description: "Предложений, ожидающих принятия"},
+		{Key: "total_assignment_declines", Value: stat.TotalAssignmentDeclines, Description: "Всего отказов от предложений"},
+		{Key: "total_reports", Value: stat.TotalReports, Description: "Всего отчетов"},
+		{Key: "reports_today", Value: stat.ReportsToday, Description: "Отчетов создано сегодня"},
+		{Key: "submitted_reports", Value: stat.SubmittedReports, Description: "Отчетов ожидают модерации"},
+		{Key: "total_sg", Value: stat.TotalSg, Description: "Всего тайных гостей"},
+		{Key: "new_sg_last_24h", Value: stat.NewSgLast24h, Description: "Новых тайных гостей за 24 часа"},
+	}
+
+	return &StatisticsResponseDTO{Statistics: items}, nil
+}
+
+// journal
+
+func (s *SecretGuestService) GetMyHistory(ctx context.Context, dto GetMyHistoryRequestDTO) (*JournalResponse, error) {
+	offset := (dto.Page - 1) * dto.Limit
+
+	reports, total, err := s.repo.GetUserHistory(ctx, dto.UserID, dto.Limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user history from repository: %w", err)
+	}
+
+	entries := make([]*JournalEntryDTO, 0, len(reports))
+	for _, r := range reports {
+		entries = append(entries, toJournalEntryDTO(r))
+	}
+
+	return &JournalResponse{
+		Entries: entries,
+		Total:   total,
+		Page:    dto.Page,
+	}, nil
+}
+
+func toJournalEntryDTO(r *models.Report) *JournalEntryDTO {
+	return &JournalEntryDTO{
+		CreatedAt: r.CreatedAt,
+		Listing: ListingShortResponse{
+			ID:          r.Listing.ID,
+			Code:        r.Listing.Code,
+			Title:       r.Listing.Title,
+			Description: r.Listing.Description,
+			MainPicture: r.Listing.MainPicture,
+			ListingType: ListingTypeResponse{
+				ID:   r.Listing.ListingTypeID,
+				Slug: r.Listing.ListingTypeSlug,
+				Name: r.Listing.ListingTypeName,
+			},
+			Address: r.Listing.Address,
+		},
+		Purpose:         r.Purpose,
+		CheckinDate:     r.BookingDetails.CheckinDate,
+		CheckoutDate:    r.BookingDetails.CheckoutDate,
+		ChecklistSchema: r.ChecklistSchema,
+		StatusSlug:      r.Status.Slug,
+	}
 }

@@ -78,10 +78,11 @@ type OTAReservationDTO struct {
 }
 
 type OTAReservationListingDTO struct {
-	ID          uuid.UUID           `json:"id" validate:"required,uuid"`
-	Title       string              `json:"title" validate:"required"`
-	Description string              `json:"description" validate:"required"`
-	MainPicture *string             `json:"main_picture" validate:"required"`
+	ID          uuid.UUID `json:"id" validate:"required,uuid"`
+	Title       string    `json:"title" validate:"required"`
+	Description string    `json:"description" validate:"required"`
+	// MainPicture *string             `json:"main_picture" validate:"required"`
+	MainPicture *string             `json:"main_picture" validate:"omitempty"`
 	ListingType ListingTypeResponse `json:"listing_type" validate:"required"`
 	Address     string              `json:"address" validate:"required"`
 	City        string              `json:"city" validate:"required"`
@@ -599,6 +600,8 @@ type ProfileResponseDTO struct {
 	RegisteredAt          time.Time       `json:"registered_at"`
 	LastActiveAt          *time.Time      `json:"last_active_at,omitempty"`
 	AdditionalInfo        json.RawMessage `json:"additional_info,omitempty" swaggertype:"object"`
+	Points                int             `json:"points"`
+	Rank                  string          `json:"rank"`
 }
 
 type GetAllProfilesRequestDTO struct {
@@ -610,4 +613,37 @@ type ProfilesResponse struct {
 	Profiles []*ProfileResponseDTO `json:"profiles"`
 	Total    int                   `json:"total"`
 	Page     int                   `json:"page"`
+}
+
+type StatisticItemDTO struct {
+	Key         string `json:"key"`
+	Value       int    `json:"value"`
+	Description string `json:"description"`
+}
+type StatisticsResponseDTO struct {
+	Statistics []StatisticItemDTO `json:"statistics"`
+}
+
+// ================================
+
+type GetMyHistoryRequestDTO struct {
+	UserID uuid.UUID
+	Page   int
+	Limit  int
+}
+
+type JournalEntryDTO struct {
+	CreatedAt       time.Time              `json:"created_at"`
+	Listing         ListingShortResponse   `json:"listing"`
+	Purpose         string                 `json:"purpose"`
+	CheckinDate     time.Time              `json:"checkin_date"`
+	CheckoutDate    time.Time              `json:"checkout_date"`
+	ChecklistSchema models.ChecklistSchema `json:"checklist_schema"`
+	StatusSlug      string                 `json:"status_slug"`
+}
+
+type JournalResponse struct {
+	Entries []*JournalEntryDTO `json:"entries"`
+	Total   int                `json:"total"`
+	Page    int                `json:"page"`
 }
