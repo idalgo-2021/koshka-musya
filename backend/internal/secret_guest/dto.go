@@ -151,6 +151,7 @@ type GetMyAssignmentsRequestDTO struct {
 	UserID uuid.UUID
 	Page   int
 	Limit  int
+	City string
 }
 
 type GetFreeAssignmentsRequestDTO struct {

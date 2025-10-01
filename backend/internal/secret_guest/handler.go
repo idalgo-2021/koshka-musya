@@ -31,6 +31,12 @@ func NewSecretGuestHandler(service *SecretGuestService, cfg *config.Config) *Sec
 
 // helpers
 
+func (h *SecretGuestHandler) parseCity(w http.ResponseWriter, r *http.Request) string {
+	queryParams := r.URL.Query()
+	cityStr := queryParams.Get("city")
+	return cityStr
+}
+
 func (h *SecretGuestHandler) parseUserAndID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 	ctx := r.Context()
 	log := logger.GetLoggerFromCtx(ctx)
@@ -571,6 +577,7 @@ func (h *SecretGuestHandler) GetFreeAssignmentsByID(w http.ResponseWriter, r *ht
 // @Produce      json
 // @Param        page query int false "Page number for pagination" default(1)
 // @Param        limit query int false "Number of items per page" default(20)
+// @Param        city query string false "Filter by city name (case-insensitive partial match)"
 // @Param Authorization header string true "Bearer Access Token"
 // @Success      200 {object} secret_guest.AssignmentsResponse
 // @Failure      401 {object} ErrorResponse "Unauthorized"
@@ -584,12 +591,14 @@ func (h *SecretGuestHandler) GetMyAssignments(w http.ResponseWriter, r *http.Req
 	if !ok {
 		return
 	}
+	city := h.parseCity(w, r)
 
 	page, limit := h.parsePagination(r)
 	dto := GetMyAssignmentsRequestDTO{
 		UserID: userID,
 		Page:   page,
 		Limit:  limit,
+		City:   city,
 	}
 
 	assignments, err := h.service.GetMyActiveAssignments(ctx, dto)
