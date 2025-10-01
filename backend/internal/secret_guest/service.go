@@ -246,6 +246,7 @@ func (s *SecretGuestService) GetFreeAssignments(ctx context.Context, dto GetFree
 		ListingTypeIDs: dto.ListingTypeIDs,
 		Limit:          dto.Limit,
 		Offset:         (dto.Page - 1) * dto.Limit,
+		City:           dto.City,
 	}
 
 	// return s.getAssignmentsWithFilter(ctx, filter, dto.Page)

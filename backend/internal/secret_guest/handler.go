@@ -504,6 +504,7 @@ func (h *SecretGuestHandler) UpdateOTAReservationStatusNoShow(w http.ResponseWri
 // @Produce      json
 // @Param        page query int false "Page number for pagination" default(1)
 // @Param        limit query int false "Number of items per page" default(20)
+// @Param        city query string false "City search" default(20)
 // @Param        listing_type_id query []int false "Filter by one or more listing type IDs" collectionFormat(multi)
 // @Param Authorization header string true "Bearer Access Token"
 // @Success      200 {object} secret_guest.AssignmentsResponse
@@ -517,10 +518,12 @@ func (h *SecretGuestHandler) GetFreeAssignments(w http.ResponseWriter, r *http.R
 	page, limit := h.parsePagination(r)
 	_, _, listingTypeIDs := h.parseFilterParams(r)
 
+    city := h.parseCity(w, r)
 	dto := GetFreeAssignmentsRequestDTO{
 		Page:           page,
 		Limit:          limit,
 		ListingTypeIDs: listingTypeIDs,
+		City:           city,
 	}
 
 	assignments, err := h.service.GetFreeAssignments(ctx, dto)

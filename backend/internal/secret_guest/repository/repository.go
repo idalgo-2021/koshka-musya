@@ -831,6 +831,11 @@ func (r *SecretGuestRepository) GetFreeAssignments(ctx context.Context, filter A
 		query += " WHERE " + whereClause
 	}
 
+    if len(filter.City) > 0 {
+        query += fmt.Sprintf(" AND l.city ILIKE $%d ", paramCount)
+        args = append(args, "%" + filter.City + "%")
+        paramCount++
+    }
 	query += fmt.Sprintf(" ORDER BY a.created_at DESC LIMIT $%d OFFSET $%d", paramCount, paramCount+1)
 	args = append(args, filter.Limit, filter.Offset)
 
