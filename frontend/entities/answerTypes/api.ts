@@ -40,21 +40,8 @@ export const AnswerTypesApi = {
   },
 
   async remove(id: number): Promise<{ success?: boolean }> {
-    // shared api has no delete helper; use fetch directly via api.patch? Create ad-hoc fetch
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/answer_types/${id}`, {
-      method: 'DELETE',
-      headers: {
-        Accept: 'application/json',
-        Authorization: (() => {
-          const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
-          return token ? `Bearer ${token}` : ''
-        })(),
-      },
-    })
-    if (!res.ok && res.status !== 204) {
-      const text = await res.text()
-      throw new Error(text || `Failed to delete answer type ${id}`)
-    }
+    // Use the shared API delete method
+    await api.delete<void>(`/answer_types/${id}`, true)
     return { success: true }
   },
 }

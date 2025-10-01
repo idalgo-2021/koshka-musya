@@ -1,6 +1,5 @@
 import {api} from '@/shared/api/http';
 import type {Assignment, AssignmentsResponse, AssignmentActionResponse} from './types';
-import { camelCaseKeysDeep } from "@/lib/utils";
 
 // Тип для полной информации об отеле
 export interface HotelDetails {
@@ -20,7 +19,7 @@ export interface HotelDetails {
   };
 }
 
-export type ListingDto = { listings: Assignment[]; page: number; total: number };
+// Removed ListingDto as it's no longer needed
 
 export const AssignmentsApi = {
   async getMyAssignments(page = 1, limit = 20, status?: string): Promise<AssignmentsResponse> {
@@ -41,35 +40,28 @@ export const AssignmentsApi = {
   },
 
   async acceptAssignment(id: string): Promise<AssignmentActionResponse> {
-    return api.post<AssignmentActionResponse>(`/assignments/my/${id}/accept`, undefined, true);
+    return api.patch<AssignmentActionResponse>(`/assignments/my/${id}/accept`, undefined, true);
   },
 
   async declineAssignment(id: string): Promise<AssignmentActionResponse> {
-    return api.post<AssignmentActionResponse>(`/assignments/my/${id}/decline`, undefined, true);
+    return api.patch<AssignmentActionResponse>(`/assignments/my/${id}/decline`, undefined, true);
   },
 
   // Получить детальную информацию об отеле
   async getHotelDetails(hotelId: string): Promise<HotelDetails> {
-    return api.get<HotelDetails>(`/listings/${hotelId}`, false);
+    return api.get<HotelDetails>(`/listings/${hotelId}`, true);
   },
 
-  // Fetch listings with assignments-like envelope returned by GET /listings
-  async getAllListings(page = 1, limit = 50): Promise<ListingDto> {
-    const listingDto = await api.get<ListingDto>(`/listings?page=${page}&limit=${limit}`, true);
-    return camelCaseKeysDeep(listingDto);
+  // Get all available assignments (free assignments that can be taken)
+  async getAvailableAssignments(page = 1, limit = 50): Promise<AssignmentsResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString()
+    });
+    return api.get<AssignmentsResponse>(`/assignments?${params.toString()}`, true);
   },
 
-  async createAssignment(data: {
-    code: string;
-    expires_at: string;
-    listing_id: string;
-    purpose: string;
-    reporter_id: string;
-  }): Promise<Assignment> {
-    return api.post<Assignment>(`/admin/assignments`, data, true);
-  },
-
-  // Staff: Get all assignments with filters
+  // Staff: Get all assignments with filters (same endpoint as available assignments)
   async getAllAssignmentsStaff(params: { page?: number; limit?: number; reporter_id?: string; status_id?: number[] } = {}): Promise<AssignmentsResponse> {
     const sp = new URLSearchParams();
     sp.set('page', String(params.page ?? 1));
@@ -86,5 +78,15 @@ export const AssignmentsApi = {
   // Staff: Get assignment by ID
   async getAssignmentByIdStaff(id: string): Promise<Assignment> {
     return api.get<Assignment>(`/assignments/${id}`, true);
+  },
+
+  // Take free assignment
+  async takeFreeAssignment(id: string): Promise<AssignmentActionResponse> {
+    return api.patch<AssignmentActionResponse>(`/assignments/${id}/take`, undefined, true);
+  },
+
+  // Staff: Cancel assignment
+  async cancelAssignment(id: string): Promise<AssignmentActionResponse> {
+    return api.patch<AssignmentActionResponse>(`/staff/assignments/${id}/cancel`, undefined, true);
   },
 };

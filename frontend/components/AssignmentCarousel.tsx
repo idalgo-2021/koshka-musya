@@ -156,6 +156,8 @@ function AssignmentCard({
             <HotelImage
               src={hotelDetails[assignment.listing.id]?.main_picture || ''}
               alt={assignment.listing.title}
+              width={400}
+              height={192}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           )}

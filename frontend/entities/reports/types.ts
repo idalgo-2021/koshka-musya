@@ -1,7 +1,7 @@
 export type ReportStatus = {
   id: number;
   name: string;
-  slug: 'draft' | 'submitted' | 'approved' | 'rejected'
+  slug: 'generating' | 'draft' | 'submitted' | 'approved' | 'rejected' | 'refused' | 'failed_generation'
 };
 
 export type ChecklistSchema = {
