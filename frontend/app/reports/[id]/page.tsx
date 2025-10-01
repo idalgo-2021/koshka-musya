@@ -1,20 +1,19 @@
 "use client";
 import * as React from 'react';
-import {redirect, useParams, useRouter} from 'next/navigation';
+import {useParams, useRouter} from 'next/navigation';
 import {toast} from 'sonner';
 import {useMutation} from "@tanstack/react-query";
 
-import {useAuth, USER_ROLE} from '@/entities/auth/useAuth';
+import {useAuth} from '@/entities/auth/useAuth';
 import {ReportsApi} from '@/entities/reports/api';
 import type {ChecklistSchema, Report} from '@/entities/reports/types';
 import { useConfirmation } from '@/entities/modals/ModalContext';
 
 import DashboardHeader from '@/components/DashboardHeader';
 import ReportHeader from '@/components/ReportHeader';
-import ErrorState from '@/components/ErrorState';
+import { ErrorState } from '@/components/ErrorHandler';
 import ChecklistContainer from '@/components/ChecklistContainer';
 import ReportActions from '@/components/ReportActions';
-import UploadProgressIndicator from '@/components/UploadProgressIndicator';
 
 // Функция для парсинга meta данных answer_types
 const parseAnswerTypeMeta = (meta: unknown): { min: number; max: number } => {
@@ -31,12 +30,6 @@ const parseAnswerTypeMeta = (meta: unknown): { min: number; max: number } => {
 };
 
 
-function parseCommentValue(it: any,  resultValue: string | undefined, comment: string) {
-  // Комментарии нужны не  для всех типов
-  const isBool = it.answer_types.slug === 'boolean';
-  return isBool && resultValue === 'false' ? comment : undefined;
-}
-
 export default function ReportPage() {
   const params = useParams();
   const router = useRouter();
@@ -44,7 +37,6 @@ export default function ReportPage() {
   const { user, logout } = useAuth();
   const { confirm, closeModal } = useConfirmation();
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [report, setReport] = React.useState<Report | null>(null);
   const [assignmentInfo, setAssignmentInfo] = React.useState<{title: string; address: string; city: string; country: string; purpose?: string} | null>(null);
   const [saving, setSaving] = React.useState(false);
@@ -61,6 +53,7 @@ export default function ReportPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [expandedSections, setExpandedSections] = React.useState<Set<number>>(new Set());
   const [currentStep, setCurrentStep] = React.useState(0);
+  const [retryCount, setRetryCount] = React.useState(0);
 
   // Функция для расчета прогресса заполнения
   const calculateProgress = React.useCallback(() => {
@@ -207,157 +200,32 @@ export default function ReportPage() {
     return totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
   };
 
-  React.useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const r = await ReportsApi.getMyReportById(reportId);
-        if (!mounted) return;
-
-        setReport(r);
-        // Сохраняем информацию о задании отдельно
-        if (r.listing) {
-          setAssignmentInfo({
-            title: r.listing.title,
-            address: r.listing.address,
-            city: r.listing.city,
-            country: r.listing.country,
-            purpose: r.purpose
-          });
-        }
-        setError(null);
-
-        // Загружаем существующие данные чек-листа
-        if (r.checklist_schema && Object.keys(r.checklist_schema).length > 0) {
-          setChecklistSchema(r.checklist_schema);
-
-          // Восстанавливаем состояние из схемы
-          const restoredChecks: Record<string, boolean | undefined> = {};
-          const restoredRatings: Record<string, number> = {};
-          const restoredComments: Record<string, string> = {};
-          const restoredMedia: Record<string, Array<{ name: string; url: string; media_type: string }>> = {};
-
-          r.checklist_schema.sections.forEach(section => {
-            section.items?.forEach(item => {
-              const key = `item_${item.id}`;
-              if (item.answer?.result) {
-                if (item.answer_types.slug === 'boolean') {
-                  const ok = item.answer.result === 'true';
-                  restoredComments[key] = !ok ? (item.answer.comment || '') : '';
-                  restoredChecks[key] = ok;
-                } else if (item.answer_types.slug.startsWith('rating_')) {
-                  restoredRatings[key] = parseInt(item.answer.result);
-                } else if (item.answer_types.slug === 'text') {
-                  // Для текстового типа result - это основной ответ
-                  restoredComments[key] = item.answer.result;
-                }
-              }
-              // Комментарии не восстанавливаются для всех типов
-              if (item.answer?.media && item.answer.media.length > 0) {
-                restoredMedia[key] = item.answer.media.map(m => ({
-                  name: `media_${m.id}`,
-                  url: m.url,
-                  media_type: m.media_type
-                }));
-              }
-            });
-          });
-
-          setChecks(restoredChecks);
-          setRatings(restoredRatings);
-          setComments(restoredComments);
-          setItemMedia(restoredMedia);
-        } else {
-          // Если схема еще не сгенерирована, ждем и перезагружаем
-          console.log('Checklist schema not ready, waiting...');
-          setTimeout(() => {
-            if (mounted) {
-              // Перезагружаем отчет через 2 секунды
-              ReportsApi.getMyReportById(reportId).then((updatedReport) => {
-                if (mounted && updatedReport.checklist_schema && Object.keys(updatedReport.checklist_schema).length > 0) {
-                  setChecklistSchema(updatedReport.checklist_schema);
-                }
-              }).catch((err) => {
-                console.error('Error reloading report:', err);
-                setError('Не удалось загрузить чек-лист');
-              });
-            }
-          }, 2000);
-        }
-      } catch (err) {
-        console.error('Error loading report:', err);
-        setError('Не удалось загрузить отчет');
-        toast.error('Не удалось загрузить отчет');
-        // Не перенаправляем сразу, даем пользователю возможность повторить
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
-  }, [reportId, router]);
-
-// Debounce autosave
-  React.useEffect(() => {
-    if (loading || !checklistSchema) return;
-
-    const handle = setTimeout(async () => {
-      try {
-        setSaving(true);
-
-        // Обновляем схему с ответами пользователя (не генерируем новую)
-        const updatedSchema = {
-          ...checklistSchema,
-          sections: checklistSchema.sections.map((sec) => ({
-            ...sec,
-            items: sec.items.map((it) => {
-              const key = `item_${it.id}`;
-              const resultValue = getItemValueById(it, key)
-              const commentValue = parseCommentValue(it, resultValue, comments[key]);
-
-              return {
-                ...it,
-                answer: {
-                  result: resultValue,
-                  comment: commentValue,
-                  media: (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type })),
-                },
-              };
-            }),
-          }))
-        };
-
-        const payload = {
-          checklist_schema: updatedSchema
-        };
-
-        const updated = await ReportsApi.saveDraft(reportId, payload);
-        // Обновляем отчет, но сохраняем информацию о задании отдельно
-        setReport(updated);
-        setError(null);
-      } catch (err) {
-        console.error('Error saving draft:', err);
-        setError('Не удалось сохранить черновик');
-        toast.error('Не удалось сохранить черновик');
-      } finally {
-        setSaving(false);
-      }
-    }, 1000); // Увеличиваем задержку для лучшей производительности
-
-    return () => clearTimeout(handle);
-  }, [checks, ratings, comments, itemMedia, checklistSchema, loading, reportId]);
-
-  const handleLogout = () => {
-    logout();
-    toast.success("Вы вышли из системы");
-    router.push('/');
-  };
-
-  // сервис плох
-  const handleRetry = async () => {
+  const loadReport = React.useCallback(async () => {
     setLoading(true);
     setError(null);
+
     try {
+      // Сначала проверим, есть ли отчет в списке моих отчетов
+      try {
+        const reportExists = await ReportsApi.getMyReportById(reportId);
+        // const reportExists = myReports.reports.some(r => r.id === reportId);
+        if (reportExists) {
+          const reportInfo = reportExists;
+          // const reportInfo = myReports.reports.find(r => r.id === reportId);
+
+          // Проверяем, может ли отчет быть загружен (generating и draft считаем рабочими статусами)
+          if (reportInfo?.status?.slug === 'draft' || reportInfo?.status?.slug === 'generating') {
+            // Report is in working status
+          } else {
+            // Report is NOT in working status
+          }
+        }
+      } catch (listError) {
+        // Failed to check my reports list
+      }
+
       const r = await ReportsApi.getMyReportById(reportId);
+
       setReport(r);
       // Сохраняем информацию о задании отдельно
       if (r.listing) {
@@ -369,29 +237,269 @@ export default function ReportPage() {
           purpose: r.purpose
         });
       }
+      setError(null);
 
-      if (r.checklist_schema && Object.keys(r.checklist_schema).length > 0) {
+      // Загружаем существующие данные чек-листа
+      if (r.checklist_schema && r.checklist_schema.sections && r.checklist_schema.sections.length > 0) {
         setChecklistSchema(r.checklist_schema);
+
+        // Восстанавливаем состояние из схемы
+        const restoredChecks: Record<string, boolean | undefined> = {};
+        const restoredRatings: Record<string, number> = {};
+        const restoredComments: Record<string, string> = {};
+        const restoredMedia: Record<string, Array<{ name: string; url: string; media_type: string }>> = {};
+
+        r.checklist_schema.sections.forEach((section: any) => {
+          section.items?.forEach((item: any) => {
+            const key = `item_${item.id}`;
+            if (item.answer?.result) {
+              if (item.answer_types.slug === 'boolean') {
+                const ok = item.answer.result === 'true';
+                restoredComments[key] = item.answer.comment || '';
+                restoredChecks[key] = ok;
+              } else if (item.answer_types.slug.startsWith('rating_')) {
+                restoredRatings[key] = parseInt(item.answer.result);
+                restoredComments[key] = item.answer.comment || '';
+              } else if (item.answer_types.slug === 'text') {
+                // Для текстового типа result - это основной ответ
+                restoredComments[key] = item.answer.result;
+              }
+            }
+            // Комментарии не восстанавливаются для всех типов
+            if (item.answer?.media && item.answer.media.length > 0) {
+              restoredMedia[key] = item.answer.media.map((m: any) => ({
+                name: `media_${m.id}`,
+                url: m.url,
+                media_type: m.media_type
+              }));
+            }
+          });
+        });
+
+        setChecks(restoredChecks);
+        setRatings(restoredRatings);
+        setComments(restoredComments);
+        setItemMedia(restoredMedia);
+      } else {
+        // Если схема еще не сгенерирована или пустая, ждем и перезагружаем
+        setTimeout(() => {
+          // Перезагружаем отчет через 2 секунды
+          ReportsApi.getMyReportById(reportId).then((updatedReport) => {
+            if (updatedReport.checklist_schema && updatedReport.checklist_schema.sections && updatedReport.checklist_schema.sections.length > 0) {
+
+              // Обновляем весь отчет, а не только схему
+              setReport(updatedReport);
+              setChecklistSchema(updatedReport.checklist_schema);
+
+              // Восстанавливаем состояние из обновленной схемы
+              const restoredChecks: Record<string, boolean | undefined> = {};
+              const restoredRatings: Record<string, number> = {};
+              const restoredComments: Record<string, string> = {};
+              const restoredMedia: Record<string, Array<{ name: string; url: string; media_type: string }>> = {};
+
+              updatedReport.checklist_schema.sections.forEach((section: any) => {
+                section.items?.forEach((item: any) => {
+                  const key = `item_${item.id}`;
+                  if (item.answer?.result) {
+                    if (item.answer_types.slug === 'boolean') {
+                      const ok = item.answer.result === 'true';
+                      restoredComments[key] = !ok ? (item.answer.comment || '') : '';
+                      restoredChecks[key] = ok;
+                    } else if (item.answer_types.slug.startsWith('rating_')) {
+                      restoredRatings[key] = parseInt(item.answer.result);
+                    } else if (item.answer_types.slug === 'text') {
+                      restoredComments[key] = item.answer.result;
+                    }
+                  }
+                  if (item.answer?.media && item.answer.media.length > 0) {
+                    restoredMedia[key] = item.answer.media.map((m: any) => ({
+                      name: `media_${m.id}`,
+                      url: m.url,
+                      media_type: m.media_type
+                    }));
+                  }
+                });
+              });
+
+              setChecks(restoredChecks);
+              setRatings(restoredRatings);
+              setComments(restoredComments);
+              setItemMedia(restoredMedia);
+            }
+          }).catch((err) => {
+            console.error('Error reloading report:', err);
+            setError('Не удалось загрузить чек-лист');
+          });
+        }, 2000);
       }
-    } catch (err) {
-      console.error('Error retrying:', err);
-      setError('Не удалось загрузить отчет');
+    } catch (err: any) {
+      console.error('=== ERROR LOADING REPORT ===');
+      console.error('Report ID:', reportId);
+      console.error('Error:', err);
+      console.error('Error type:', typeof err);
+      console.error('Error message:', err?.message || String(err));
+      console.error('Error status:', err?.status);
+      console.error('=== END ERROR LOADING REPORT ===');
+
+      if (err?.status === 404) {
+        setError('Отчет не найден');
+        toast.error('Отчет не найден');
+        router.push('/dashboard');
+      } else if (err?.status === 500) {
+        // Проверяем, есть ли отчет в списке и какой у него статус
+        try {
+          const myReports = await ReportsApi.getMyReports(1, 50);
+          const reportInfo = myReports.reports.find(r => r.id === reportId);
+          if (reportInfo) {
+            if (reportInfo.status?.slug !== 'draft' && reportInfo.status?.slug !== 'generating') {
+              const statusName = reportInfo.status?.name || reportInfo.status?.slug || 'неизвестный';
+              setError(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
+              toast.error(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
+              // Перенаправляем на дашборд через 3 секунды
+              setTimeout(() => {
+                router.push('/dashboard');
+              }, 3000);
+             } else {
+               setError('Ошибка сервера при загрузке отчета. Попробуйте позже.');
+               toast.error('Ошибка сервера при загрузке отчета. Попробуйте позже.');
+             }
+           } else {
+             setError('Отчет не найден в вашем списке отчетов.');
+             toast.error('Отчет не найден в вашем списке отчетов.');
+             setTimeout(() => {
+               router.push('/dashboard');
+             }, 3000);
+           }
+         } catch {
+           setError('Ошибка сервера при загрузке отчета');
+           toast.error('Ошибка сервера. Попробуйте позже или обратитесь к администратору');
+         }
+      } else {
+        setError('Не удалось загрузить отчет');
+        toast.error('Не удалось загрузить отчет');
+      }
     } finally {
       setLoading(false);
     }
+  }, [reportId, router, retryCount]);
+
+  React.useEffect(() => {
+    loadReport();
+  }, [loadReport]);
+
+  const handleRetry = React.useCallback(() => {
+    setRetryCount(prev => prev + 1);
+  }, []);
+
+  const getItemValueById = React.useCallback((item: any, key: string) => {
+    if (item.answer_types.slug === 'boolean') {
+      return checks[key] !== undefined ? String(checks[key]) : undefined;
+    } else if (item.answer_types.slug.startsWith('rating_')) {
+      return ratings[key] !== undefined ? String(ratings[key]) : undefined;
+    } else if (item.answer_types.slug === 'text') {
+      return comments[key] || undefined;
+    }
+    return undefined;
+  }, [checks, ratings, comments]);
+
+  const parseCommentValue = React.useCallback((it: any, resultValue: string | undefined, key: string) => {
+    // Комментарии нужны для всех типов ответов
+    const isBool = it.answer_types.slug === 'boolean';
+    const isRating = it.answer_types.slug.startsWith('rating_');
+    const isText = it.answer_types.slug === 'text';
+
+    // Для текстового типа комментарий - это основной ответ
+    if (isText) {
+      return comments[key] || resultValue;
+    }
+
+    // Для boolean и rating типов возвращаем комментарий
+    if (isBool || isRating) {
+      return comments[key];
+    }
+
+    return undefined;
+  }, [comments]);
+
+// Debounce autosave
+  React.useEffect(() => {
+    if (loading || !checklistSchema) return;
+
+    const handle = setTimeout(async () => {
+      try {
+        setSaving(true);
+
+        // Обновляем схему с ответами пользователя (сохраняем существующие данные)
+        const updatedSchema = {
+          ...checklistSchema,
+          sections: checklistSchema.sections.map((sec) => ({
+            ...sec,
+            items: sec.items.map((it) => {
+              const key = `item_${it.id}`;
+              const resultValue = getItemValueById(it, key)
+              const commentValue = parseCommentValue(it, resultValue, key);
+
+              // Сохраняем существующие данные answer, обновляем только измененные поля
+              const existingAnswer = it.answer || {};
+              const newMedia = (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type }));
+
+              return {
+                ...it,
+                answer: {
+                  ...existingAnswer,
+                  result: resultValue !== undefined ? resultValue : existingAnswer.result,
+                  comment: commentValue !== undefined ? commentValue : existingAnswer.comment,
+                  media: newMedia.length > 0 ? newMedia : (existingAnswer.media || []),
+                },
+              };
+            }),
+          }))
+        };
+
+        const payload = {
+          checklist_schema: updatedSchema
+        };
+
+        await ReportsApi.saveDraft(reportId, payload);
+        // Обновляем отчет, но сохраняем информацию о задании отдельно
+        // debugger;
+        if (report) {
+          // @ts-ignore
+          setReport(prev => ({
+            ...prev,
+            checklist_schema: updatedSchema,
+          }));
+        }
+        // setReport(updated);
+        setError(null);
+      } catch (err) {
+        console.error('Error saving draft:', err);
+        setError('Не удалось сохранить черновик');
+        toast.error('Не удалось сохранить черновик');
+      } finally {
+        setSaving(false);
+      }
+    }, 1000); // Увеличиваем задержку для лучшей производительности
+
+    return () => clearTimeout(handle);
+  }, [checks, ratings, comments, itemMedia, checklistSchema, loading, reportId, getItemValueById, parseCommentValue]);
+
+  const handleLogout = () => {
+    logout();
+    toast.success("Вы вышли из системы");
+    router.push('/');
   };
+
 
   const refuseReportMutation = useMutation({
     mutationFn: async (reportId: string) => {
       return await ReportsApi.rejectReportByUser(reportId);
     },
     onError: (error) => {
-      console.log(error);
       toast.error(error instanceof Error ? error.message : 'Не удалось отказаться от отчета');
       closeModal();
     },
     onSuccess: () => {
-      console.log('success refuse report');
       toast.success('Успешно отказались от отчета');
       router.push('/dashboard');
     }
@@ -424,16 +532,6 @@ export default function ReportPage() {
       toast.error('Не удалось завершить отчёт');
     }
   };
-  function getItemValueById(item: any , key: string) {
-    if (item.answer_types.slug === 'boolean') {
-      return checks[key] !== undefined ? String(checks[key]) : undefined;
-    } else if (item.answer_types.slug.startsWith('rating_')) {
-      return ratings[key] !== undefined ? String(ratings[key]) : undefined;
-    } else if (item.answer_types.slug === 'text') {
-      return comments[key] || undefined;
-    }
-    return undefined;
-  }
 
   const handleSave = async () => {
     try {
@@ -445,7 +543,7 @@ export default function ReportPage() {
         return;
       }
 
-      // Обновляем схему с ответами пользователя (не генерируем новую)
+      // Обновляем схему с ответами пользователя (сохраняем существующие данные)
       const updatedSchema = {
         ...checklistSchema,
         sections: checklistSchema.sections.map((sec) => ({
@@ -453,14 +551,19 @@ export default function ReportPage() {
           items: sec.items.map((it) => {
             const key = `item_${it.id}`;
             const resultValue = getItemValueById(it, key)
-            const commentValue = parseCommentValue(it, resultValue, comments[key]);
+            const commentValue = parseCommentValue(it, resultValue, key);
+
+            // Сохраняем существующие данные answer, обновляем только измененные поля
+            const existingAnswer = it.answer || {};
+            const newMedia = (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type }));
 
             return {
               ...it,
               answer: {
-                result: resultValue,
-                comment: commentValue,
-                media: (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type })),
+                ...existingAnswer,
+                result: resultValue !== undefined ? resultValue : existingAnswer.result,
+                comment: commentValue !== undefined ? commentValue : existingAnswer.comment,
+                media: newMedia.length > 0 ? newMedia : (existingAnswer.media || []),
               },
             };
           }),
@@ -494,9 +597,7 @@ export default function ReportPage() {
       </div>
     );
   }
-  if (user?.role === USER_ROLE.Admin || user?.role === USER_ROLE.Staff) {
-    return redirect('/admin')
-  }
+
   const disabled = submitted;
 
   return (
@@ -509,13 +610,18 @@ export default function ReportPage() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Assignment Info with Progress */}
           <ReportHeader
+            report={report || undefined}
             assignmentInfo={assignmentInfo}
             progress={progress}
             checklistSchema={checklistSchema}
           />
 
         {/* Error State */}
-          <ErrorState error={error} onRetry={handleRetry} />
+          <ErrorState
+            error={error}
+            onRetry={handleRetry}
+            onBackToDashboard={() => router.push('/dashboard')}
+          />
 
         {/* Checklist */}
           <ChecklistContainer
@@ -564,8 +670,6 @@ export default function ReportPage() {
             onComplete={handleComplete}
           />
 
-          {/* Upload Progress Indicator */}
-          <UploadProgressIndicator uploadProgress={uploadProgress} />
       </div>
       </main>
     </div>

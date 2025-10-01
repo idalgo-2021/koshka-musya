@@ -7,7 +7,7 @@ import { AdminStatistic } from '@/entities/admin/types'
 import AdminGroupedStatisticCard from '@/components/AdminGroupedStatisticCard'
 import AdminStatisticCard from '@/components/AdminStatisticCard'
 import { StatisticCard } from '@/entities/admin/types'
-import ErrorState from '@/components/ErrorState'
+import {ErrorState} from '@/components/ErrorHandler'
 import { Button } from '@/components/ui/button'
 import { RefreshCw } from 'lucide-react'
 

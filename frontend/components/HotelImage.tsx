@@ -13,6 +13,8 @@ export default function HotelImage({
   alt,
   className = "w-full h-full object-cover",
   fallbackIcon = "🏨",
+  width = 300,
+  height = 200,
   ...props
 }: HotelImageProps) {
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +54,8 @@ export default function HotelImage({
       <Image
         src={src}
         alt={alt}
+        width={width}
+        height={height}
         className={className}
         onLoad={handleLoad}
         onError={handleError}

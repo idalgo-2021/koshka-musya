@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 const schema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z.string().email("Введите корректный mail"),
 });
 
 type RestoreData = z.infer<typeof schema>;
@@ -24,7 +24,7 @@ export function RestoreForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => v
   });
 
   const onSubmit: SubmitHandler<RestoreData> = () => {
-    toast.success("Письмо с инструкциями отправлено на ваш email");
+    toast.success("Письмо с инструкциями отправлено на ваш mail");
     onSwitchTab?.("login");
   };
 
@@ -36,14 +36,14 @@ export function RestoreForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => v
           Восстановление пароля
         </h2>
         <p className="text-gray-500 text-sm">
-          Введите email для восстановления доступа
+          Введите mail для восстановления доступа
         </p>
       </div>
 
-      {/* Поле email */}
+      {/* Поле mail */}
       <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-          Email
+          Mail
         </Label>
         <Input
           id="email"
@@ -53,7 +53,7 @@ export function RestoreForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => v
           className={`h-12 px-4 text-base border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all rounded-xl ${
             errors.email ? "border-red-500 focus:border-red-500 focus:ring-red-500/20" : ""
           }`}
-          placeholder="Введите ваш email"
+          placeholder="Введите ваш mail"
         />
         {errors.email && (
           <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>

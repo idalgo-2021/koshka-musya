@@ -16,6 +16,7 @@ import HotelImage from "@/components/HotelImage";
 import {reportStatusOptions} from "@/entities/reports/const";
 import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
 import {formatDate} from "@/lib/date";
+import { ReportStatusBadge } from '@/components/ReportStatusBadge';
 
 export default function ReportsStaffPage() {
   const [page, setPage] = React.useState(1)
@@ -141,10 +142,7 @@ export default function ReportsStaffPage() {
                       <div className="text-xs text-muted-foreground">{r.reporter?.id}</div>
                     </td>
                     <td className="p-3 align-middle hidden lg:table-cell">
-                      <span
-                        className="inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 border-gray-200">
-                        {r.status?.name}
-                      </span>
+                      {r.status && <ReportStatusBadge status={r.status} />}
                     </td>
                     <td className="p-3 align-middle hidden lg:table-cell">
                       <span
@@ -174,7 +172,7 @@ export default function ReportsStaffPage() {
                           <>
                             <Button
                               size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white "
                               disabled={approveMutation.isPending}
                               onClick={() => approveMutation.mutate(r.id)}
                             >
@@ -223,7 +221,9 @@ export default function ReportsStaffPage() {
                     )}
                     <div className="flex flex-col gap-2 p-3">
                       <div className="text-sm text-muted-foreground">Reporter {r.reporter?.username}</div>
-                      <div className="text-sm text-muted-foreground">Статус {r.status?.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Статус {r.status && <ReportStatusBadge status={r.status} />}
+                      </div>
                       <div className="text-sm text-muted-foreground">
                         {r.listing?.title}
                       </div>

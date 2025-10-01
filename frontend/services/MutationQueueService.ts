@@ -77,7 +77,6 @@ export class MutationQueueService {
 
     // If no items actually changed, don't add to queue
     if (itemsToUpdate.length === 0) {
-      console.log(`No items changed position for section ${sectionId}, skipping queue operation`)
       return operationId
     }
 
@@ -171,7 +170,6 @@ export class MutationQueueService {
       // Retry the operation
       item.retryCount++
       this.queue.unshift(item) // Add back to front of queue
-      console.log(`Retrying operation ${item.id} (attempt ${item.retryCount}/${item.maxRetries})`)
     } else {
       // Max retries reached, mark as failed
       this.failedCount++

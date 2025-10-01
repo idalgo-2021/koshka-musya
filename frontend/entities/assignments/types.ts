@@ -3,8 +3,17 @@ import { SgReservationPricing, SGReservationGuests} from "@/entities/sgReservati
 export type Assignment = {
   id: string;
   code: string;
+  booking_number?: string;
   title?: string;
   purpose: string;
+  checkin_date?: string;
+  checkout_date?: string;
+  // Новые поля для дат и резервации
+  dates?: {
+    checkin?: string;
+    checkout?: string;
+  };
+  reservation_id?: string;
   listing: {
     id: string;
     title: string;
@@ -35,6 +44,7 @@ export type Assignment = {
   guests?: SGReservationGuests;
   pricing?: SgReservationPricing;
   created_at: string;
+  taked_at?: string;
   accepted_at?: string;
   expires_at: string;
   deadline?: string;

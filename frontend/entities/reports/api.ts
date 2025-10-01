@@ -23,16 +23,17 @@ export const ReportsApi = {
     return api.get<Report>(`/reports/my/${id}`, true);
   },
 
+
   async saveDraft(id: string, data: unknown): Promise<Report> {
-    return api.patch<Report>(`/reports/my/${id}`, data as Record<string, unknown>, true);
+    return api.post<Report>(`/reports/my/${id}`, data as Record<string, unknown>, true);
   },
 
   async submit(id: string): Promise<{ message?: string } & Report> {
-    return api.post<{ message?: string } & Report>(`/reports/my/${id}/submit`, undefined, true);
+    return api.patch<{ message?: string } & Report>(`/reports/my/${id}/submit`, undefined, true);
   },
 
   async rejectReportByUser(id: string): Promise<{ message?: string } & Report> {
-    return api.post<{ message?: string } & Report>(`/reports/my/${id}/refuse`, undefined, true);
+    return api.patch<{ message?: string } & Report>(`/reports/my/${id}/refuse`, undefined, true);
   },
 
   // Staff actions

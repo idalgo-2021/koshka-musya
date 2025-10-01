@@ -71,7 +71,7 @@ export default function ChecklistContainer({
   onPreviousStep,
   onGoToStep
 }: ChecklistContainerProps) {
-  if (!checklistSchema) {
+  if (!checklistSchema || !checklistSchema.sections || checklistSchema.sections.length === 0) {
     return (
       <Card className="bg-white border-0 rounded-2xl shadow-xl mb-6">
         <CardContent className="p-4 sm:p-6">
@@ -79,6 +79,9 @@ export default function ChecklistContainer({
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
             <p className="text-gray-500">Генерация чек-листа...</p>
             <p className="text-sm text-gray-400 mt-2">Пожалуйста, подождите</p>
+            {checklistSchema && checklistSchema.sections && checklistSchema.sections.length === 0 && (
+              <p className="text-sm text-orange-500 mt-2">Схема пустая, ожидаем загрузки данных</p>
+            )}
           </div>
         </CardContent>
       </Card>

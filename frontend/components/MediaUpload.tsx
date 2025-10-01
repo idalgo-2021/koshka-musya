@@ -106,7 +106,7 @@ export default function MediaUpload({
           const response = await fetch(presigned.upload_url, { method: 'POST', body: form });
           const uploadResult = await response.json();
 
-          console.log('Upload result:', uploadResult);
+          // Upload completed
 
           // ImageKit возвращает информацию о загруженном файле в ответе
           if (uploadResult.url) {
@@ -196,6 +196,20 @@ export default function MediaUpload({
             : `Добавить фото (${media.length}/${mediaMaxFiles})`
           }
         </label>
+      )}
+
+      {/* Upload Progress Indicator */}
+      {Object.keys(uploadProgress).length > 0 && (
+        <div className="mt-4 space-y-2">
+          {Object.entries(uploadProgress).map(([key, progress]) => (
+            <div key={key} className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                style={{ width: `${progress}%` }} 
+              />
+            </div>
+          ))}
+        </div>
       )}
 
       {/* Media Preview */}

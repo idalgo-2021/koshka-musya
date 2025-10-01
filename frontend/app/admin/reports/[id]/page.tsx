@@ -35,13 +35,11 @@ export default function ReportStaffDetailPage() {
   const approveMutation = useMutation({
     mutationFn: () => ReportsApi.approve(id),
     onSuccess: () => {
-      console.log('approved')
       toast.success('Report approved')
       qc.invalidateQueries({queryKey: ['report_staff', id]})
       qc.invalidateQueries({queryKey: ['reports_staff']})
     },
     onError: () => {
-      console.log('rejected');
       toast.error('Failed to approve report');
     },
   })
@@ -59,9 +57,8 @@ export default function ReportStaffDetailPage() {
   const onAprove = useCallback(async () => {
     try {
       const result = await approveMutation.mutateAsync();
-      console.log(result);
     } catch (error) {
-      console.log(error);
+      // Error handling is done by the mutation
     }
   }, [approveMutation]);
 

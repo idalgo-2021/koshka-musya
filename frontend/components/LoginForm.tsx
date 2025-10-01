@@ -1,5 +1,6 @@
 "use client";
 import { useForm, type SubmitHandler } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
@@ -11,10 +12,10 @@ import type { ApiError } from "@/entities/auth/types";
 
 /** ───────────── future: login by email ─────────────
 const emailSchema = z.object({
-  email: z.string().email("Введите корректный email"),
+  email: z.string().email("Введите корректный mail"),
   password: z.string().min(6, "Минимум 6 символов"),
 });
-type EmailLoginData = z.infer<typeof emailSchema>;
+type MailLoginData = z.infer<typeof emailSchema>;
 ──────────────────────────────────────────────────── */
 
 /** текущий вариант: логин по username */
@@ -26,7 +27,13 @@ type LoginData = z.infer<typeof schema>;
 
 type AuthTab = "login" | "register" | "restore";
 
-export function LoginForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => void }) {
+interface LoginFormProps {
+  onSwitchTab?: (tab: AuthTab) => void;
+  hideRegistration?: boolean;
+}
+
+export function LoginForm({ hideRegistration = false }: LoginFormProps) {
+  const router = useRouter();
   const { login } = useAuth();
 
   const {
@@ -104,16 +111,18 @@ export function LoginForm({ onSwitchTab }: { onSwitchTab?: (tab: AuthTab) => voi
       </Button>
 
       {/* Ссылки */}
-      <div className="text-center pt-2">
-        <span className="text-gray-500 text-sm">Нет аккаунта? </span>
-        <button
-          type="button"
-          className="text-accenttext text-sm font-medium hover:text-accenttext/80 transition-colors"
-          onClick={() => onSwitchTab?.("register")}
-        >
-          Зарегистрироваться
-        </button>
-      </div>
+      {!hideRegistration && (
+        <div className="text-center pt-2">
+          <span className="text-gray-500 text-sm">Нет аккаунта? </span>
+          <button
+            type="button"
+            className="text-accenttext text-sm font-medium hover:text-accenttext/80 transition-colors"
+            onClick={() => router.push('/application')}
+          >
+            Оставьте заявку
+          </button>
+        </div>
+      )}
     </form>
   );
 }

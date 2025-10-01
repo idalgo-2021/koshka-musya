@@ -15,7 +15,6 @@ import Select from '@/components/ui/select'
 
 import {AssignmentsApi} from '@/entities/assignments/api'
 import { StepBackIcon } from 'lucide-react';
-import {toDate} from "@/lib/date";
 
 const schema = z.object({
   listing_id: z.string().min(1, 'Select a listing'),
@@ -34,25 +33,24 @@ export default function NewAssignmentPage() {
 
   const listingsQuery = useQuery({
     queryKey: ['listings', {page: 1, limit: 100}],
-    queryFn: async () => await AssignmentsApi.getAllListings(1, 100),
+    queryFn: async () => await AssignmentsApi.getAvailableAssignments(1, 100),
     select: (data) => {
-      console.log(data);
-      return data?.listings || []
+      return data?.assignments || []
     }
   });
 
   const listings = listingsQuery.data || [];
   const createMutation = useMutation({
-    mutationFn: async (values: FormValues) => {
-      console.log({values});
-      return await AssignmentsApi.createAssignment({
-        // code: values.code,
-        code: 'a1891b4f-3944-4e84-99f9-94305558e5b3',
-        expires_at: toDate(values.expires_at),
-        listing_id: values.listing_id,
-        purpose: values.purpose,
-        reporter_id: values.reporter_id || 'a1891b4f-3944-4e84-99f9-94305558e5b3',
-      })
+    mutationFn: async () => {
+      // TODO: API doesn't support creating assignments yet
+      throw new Error('Creating assignments is not supported by the API yet');
+      // return await AssignmentsApi.createAssignment({
+      //   code: 'a1891b4f-3944-4e84-99f9-94305558e5b3',
+      //   expires_at: toDate(values.expires_at),
+      //   listing_id: values.listing_id,
+      //   purpose: values.purpose,
+      //   reporter_id: values.reporter_id || 'a1891b4f-3944-4e84-99f9-94305558e5b3',
+      // })
     },
     onSuccess: () => {
       form.reset()
@@ -65,8 +63,7 @@ export default function NewAssignmentPage() {
       return;
     }
     try {
-      const data = await createMutation.mutateAsync(values);
-      console.log(data)
+      await createMutation.mutateAsync(values);
     } catch (e) {
       console.error(e);
     }

@@ -1,7 +1,7 @@
 export type ReportStatus = {
   id: number;
   name: string;
-  slug: 'draft' | 'submitted' | 'approved' | 'rejected'
+  slug: 'generating' | 'draft' | 'submitted' | 'approved' | 'rejected' | 'refused' | 'failed_generation'
 };
 
 export type ChecklistSchema = {
@@ -69,6 +69,28 @@ export type Report = {
   reporter: {
     id: string;
     username: string;
+  };
+  // Информация о бронировании (структура от бэкенда)
+  booking_details?: {
+    ota_id?: string;
+    booking_number?: string;
+    ota_sg_reservation_id?: string;
+    pricing?: {
+      pricing?: {
+        currency: string;
+        total: number;
+        breakdown?: {
+          per_night: number;
+          nights: number;
+        };
+      }
+    };
+    guests?: {
+      adults: number;
+      children: number;
+    };
+    checkin_date?: string;
+    checkout_date?: string;
   };
 };
 

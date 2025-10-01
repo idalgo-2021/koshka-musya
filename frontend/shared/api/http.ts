@@ -20,15 +20,8 @@ async function http<T>(path: string, opts: RequestInit & { auth?: boolean } = {}
     }
 
     const url = `${BASE_URL}${path}`;
-    console.log(`Making HTTP request to: ${url}`);
-    console.log(`Method: ${opts.method || 'GET'}`);
-    console.log(`Headers:`, Object.fromEntries(headers.entries()));
-    console.log(`Body:`, opts.body);
 
     const res = await fetch(url, { ...opts, headers });
-
-    console.log(`Response status: ${res.status}`);
-    console.log(`Response headers:`, Object.fromEntries(res.headers.entries()));
 
     if (res.ok) {
       if (res.status === 204) return undefined as unknown as T;
@@ -101,21 +94,15 @@ async function http<T>(path: string, opts: RequestInit & { auth?: boolean } = {}
 
     throw new AppError(message, res.status, undefined, details);
   } catch (error) {
-    console.log(`HTTP request failed:`, error);
-    console.log(`Error type:`, typeof error);
-    console.log(`Error message:`, error instanceof Error ? error.message : String(error));
 
     if (error instanceof AppError) {
-      console.log(`AppError thrown:`, error.message);
       throw error;
     }
 
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.log(`Network error detected:`, error.message);
       throw handleNetworkError(error);
     }
 
-    console.log(`Generic API error:`, error);
     throw handleApiError(error);
   }
 }

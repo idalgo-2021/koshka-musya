@@ -4,6 +4,8 @@ export type RegisterInput = {
   username: string;
   email: string;
   password: string;
+  phone?: string;
+  telegram?: string;
 };
 
 export type RegisterResponse = { message: string }; // 201

@@ -23,6 +23,18 @@ export interface HotelDetails {
 export type ListingDto = { listings: Assignment[]; page: number; total: number };
 
 export const AssignmentsApi = {
+  // Get all available assignments (free assignments that can be taken)
+  async getAvailableAssignments(page = 1, limit = 50, listingTypeId?: number): Promise<AssignmentsResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (listingTypeId) {
+      params.append('listing_type_id', listingTypeId.toString())
+    }
+    return api.get<AssignmentsResponse>(`/assignments?${params.toString()}`, true);
+  },
+
   async getMyAssignments(page = 1, limit = 20, status?: string): Promise<AssignmentsResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
@@ -41,11 +53,11 @@ export const AssignmentsApi = {
   },
 
   async acceptAssignment(id: string): Promise<AssignmentActionResponse> {
-    return api.post<AssignmentActionResponse>(`/assignments/my/${id}/accept`, undefined, true);
+    return api.patch<AssignmentActionResponse>(`/assignments/my/${id}/accept`, undefined, true);
   },
 
   async declineAssignment(id: string): Promise<AssignmentActionResponse> {
-    return api.post<AssignmentActionResponse>(`/assignments/my/${id}/decline`, undefined, true);
+    return api.patch<AssignmentActionResponse>(`/assignments/my/${id}/decline`, undefined, true);
   },
 
   // Получить детальную информацию об отеле
@@ -92,4 +104,10 @@ export const AssignmentsApi = {
   async getAssignmentByIdStaff(id: string): Promise<Assignment> {
     return api.get<Assignment>(`/staff/assignments/${id}`, true);
   },
+
+  // Staff: take assignment
+  async takeFreeAssignment(id: string): Promise<AssignmentActionResponse> { return api.patch<AssignmentActionResponse>(`/assignments/${id}/take`, undefined, true); },
+
+  // Staff: Cancel assignment
+  async cancelAssignment(id: string): Promise<AssignmentActionResponse> { return api.patch<AssignmentActionResponse>(`/staff/assignments/${id}/cancel`, undefined, true); },
 };
