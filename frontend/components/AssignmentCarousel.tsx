@@ -6,21 +6,7 @@ import AnimatedCard from "./AnimatedCard";
 import HotelImage from "./HotelImage";
 import AssignmentActionButtons from "./AssignmentActionButtons";
 import { formatDate } from "@/lib/date";
-import {LISTING_TYPES, ListingType} from "@/lib/listing-types";
-import Select from "@/components/ui/select";
-import NoAssignmentsCard from "@/components/NoAssignmentsCard";
-
-
-
-const options = [
-  {
-    label: "Все",
-    value: ""
-  },
-  ...LISTING_TYPES.map(it => ({
-    label: it.name,
-    value: it.slug
-  })),];
+import {LISTING_TYPES} from "@/lib/listing-types";
 
 interface AssignmentCarouselProps {
   assignments: Assignment[];
@@ -112,10 +98,7 @@ export default function AssignmentCarousel({
     <div className="relative">
       {/* Navigation Header */}
       <div className="flex items-center justify-between mb-6 p-4">
-        {isOne ? (
-          <h2 className="text-xl">Предложения</h2>
-
-        ): (
+        {isOne ? undefined : (
           <div className="flex items-center space-x-4">
             <span className="text-sm font-medium text-accenttext/80">
               {filteredAssignments?.length > 0 ? `${currentIndex + 1} из ${filteredAssignments.length}` : "0 из 0"}
@@ -260,7 +243,9 @@ function AssignmentCard({
 
         <div className="p-6 space-y-4">
           <div className="space-y-3">
-            <p className="text-lg font-medium text-gray-900 mb-1">{`Тип` + (assignment.listing.listing_type ? `: ${assignment.listing.listing_type.name}` : '')}</p>
+            <h2 className="text-2xl font-bold text-gray-900">Предложение</h2>
+            <p
+              className="text-lg font-medium text-gray-900 mb-1">{`Тип` + (assignment.listing.listing_type ? `: ${assignment.listing.listing_type.name}` : '')}</p>
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">

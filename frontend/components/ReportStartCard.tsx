@@ -53,6 +53,7 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
         <div className="p-6 space-y-4">
           {/* Task Details */}
           <div className="space-y-3">
+            <h2 className="text-2xl font-bold text-gray-900">Отчет</h2>
             {/* Purpose */}
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -165,7 +166,7 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
             )}
 
             {/* Стоимость */}
-            {report.booking_details?.pricing && (
+            {report.booking_details?.pricing?.pricing && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -175,10 +176,10 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Стоимость</p>
                   <p className="text-sm text-green-600 font-semibold">
-                    {report.booking_details.pricing.total ? report.booking_details.pricing.total?.toLocaleString('ru-RU') : 'Не указана'} {report.booking_details.pricing.currency || 'руб.'}
-                    {report.booking_details.pricing.breakdown && report.booking_details.pricing.breakdown.per_night && (
+                    {report.booking_details.pricing?.pricing.total ? report.booking_details.pricing?.pricing?.total?.toLocaleString('ru-RU') : 'Не указана'} {report.booking_details.pricing?.pricing.currency || 'руб.'}
+                    {report.booking_details.pricing?.pricing.breakdown && report.booking_details.pricing?.pricing?.breakdown.per_night && (
                       <span className="block text-xs text-gray-500 mt-1">
-                        {report.booking_details.pricing.breakdown.per_night?.toLocaleString('ru-RU')} {report.booking_details.pricing.currency || 'руб.'} × {report.booking_details.pricing.breakdown.nights} ноч{report.booking_details.pricing.breakdown.nights === 1 ? 'ь' : report.booking_details.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                        {report.booking_details.pricing?.pricing?.breakdown?.per_night?.toLocaleString('ru-RU')} {report.booking_details.pricing?.pricing.currency || 'руб.'} × {report.booking_details.pricing?.pricing.breakdown.nights} ноч{report.booking_details.pricing?.pricing.breakdown.nights === 1 ? 'ь' : report.booking_details.pricing?.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
                       </span>
                     )}
                   </p>

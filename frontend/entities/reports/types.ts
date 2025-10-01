@@ -76,12 +76,14 @@ export type Report = {
     booking_number?: string;
     ota_sg_reservation_id?: string;
     pricing?: {
-      currency: string;
-      total: number;
-      breakdown?: {
-        per_night: number;
-        nights: number;
-      };
+      pricing?: {
+        currency: string;
+        total: number;
+        breakdown?: {
+          per_night: number;
+          nights: number;
+        };
+      }
     };
     guests?: {
       adults: number;
