@@ -2,8 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Assignment } from "@/entities/assignments/types";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
-// Функция для проверки, можно ли принять задание (в течение 24 часов до заселения)
+// Функция для проверки, можно ли принять задание (в течение 24 часов до заселения или если заселение уже началось)
 const canAcceptAssignment = (assignment: Assignment): boolean => {
   if (!assignment.expires_at) return true;
   
@@ -12,7 +13,8 @@ const canAcceptAssignment = (assignment: Assignment): boolean => {
   const timeDiff = expiresAt.getTime() - now.getTime();
   const hoursDiff = timeDiff / (1000 * 60 * 60);
   
-  return hoursDiff <= 24 && hoursDiff > 0;
+  // Можно принять если: в течение 24 часов до заселения ИЛИ заселение уже началось
+  return hoursDiff <= 24;
 };
 
 // Функция для получения времени до заселения
@@ -91,12 +93,16 @@ export default function AssignmentActionButtons({
     console.log("isAssignedToCurrentUser:", isAssignedToCurrentUser);
     console.log("onAccept function:", onAccept);
     
-    // Убираем проверку времени - можно принимать в любое время
-    const canProceed = true;
-    
-            if (isLoading || !canProceed || (status !== 'pending' && status !== 'offered')) {
+    if (isLoading || (status !== 'pending' && status !== 'offered')) {
       console.log("Early return - conditions not met");
-      console.log("canProceed:", canProceed);
+      return;
+    }
+    
+    // Проверяем время для принятия
+    if (!canAccept) {
+      console.log("Cannot accept - time restriction");
+      // Показываем уведомление об ошибке
+      toast.error('Задание можно принять за 24 часа до заселения или после начала заселения. Пожалуйста, подождите.');
       return;
     }
     
@@ -205,7 +211,7 @@ export default function AssignmentActionButtons({
             <div className="flex-1">
               <h4 className="font-semibold text-blue-900 mb-1">Задание взято!</h4>
               <p className="text-sm text-blue-700 leading-relaxed mb-2">
-                Вы успешно взяли это задание. Принять его можно будет за 24 часа до заселения.
+                Вы успешно взяли это задание. Принять его можно за 24 часа до заселения или после начала заселения.
               </p>
               <div className="bg-blue-100 rounded-lg px-3 py-2">
                 <p className="text-sm font-medium text-blue-800">
@@ -219,10 +225,14 @@ export default function AssignmentActionButtons({
         {/* Кнопки действий */}
         <div className="flex gap-3">
           <Button 
-            className="flex-1 h-14 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold rounded-2xl shadow-lg cursor-not-allowed opacity-60"
-            disabled={true}
+            className="flex-1 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
+            onClick={handleAccept}
+            disabled={isLoading}
           >
-            Недоступно
+            {isLoading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+            ) : null}
+            Принять
           </Button>
           <Button 
             className="flex-1 h-14 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"

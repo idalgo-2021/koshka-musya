@@ -93,7 +93,7 @@ export default function AssignmentCarousel({
   return (
     <div className="relative">
       {/* Navigation Header */}
-      <div className="flex items-center justify-between mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-accenttext/10 shadow-sm">
+      <div className="flex items-center justify-between mb-6 p-4">
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium text-accenttext/80">
             Предложение {currentIndex + 1} из {filteredAssignments.length}
@@ -281,23 +281,6 @@ function AssignmentCard({
               </div>
             )}
 
-            {/* Временный блок для отладки стоимости */}
-            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 mb-1">Отладка стоимости</p>
-                <div className="text-xs text-gray-600 space-y-1">
-                  <p>pricing: {assignment.pricing ? JSON.stringify(assignment.pricing) : 'нет'}</p>
-                  <p>pricing.total: {assignment.pricing?.total || 'нет'}</p>
-                  <p>pricing.currency: {assignment.pricing?.currency || 'нет'}</p>
-                  <p>Все поля: {Object.keys(assignment).join(', ')}</p>
-                </div>
-              </div>
-            </div>
 
             {/* Даты заезда и выезда */}
             {assignment.dates && (
