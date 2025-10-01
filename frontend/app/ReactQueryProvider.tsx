@@ -6,6 +6,11 @@ import type * as React from 'react'
 import {Suspense} from "react";
 import { ModalProvider, useModal, ModalContent } from '@/entities/modals/ModalContext';
 import { Modal } from '@/components/ui/modal';
+import {useAuth, useSessionActionContextValue, useSessionContextValue} from "@/entities/auth/useAuth";
+import {SessionProvider} from "@/entities/auth/SessionContext";
+import {SessionActionProvider} from "@/entities/auth/SessionActionContext";
+import {SidebarProvider} from "@/state/contexts/SidebarContext";
+import {AdminLayout as AdminLayoutComponent} from "@/components/AdminLayout";
 
 function ModalRenderer() {
   const { modalState, closeModal } = useModal();
@@ -37,13 +42,34 @@ export default function Providers({children}: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ModalProvider>
+      <AuthProider>
         <Suspense>
           {children}
         </Suspense>
         <ModalRenderer />
-      </ModalProvider>
+      </AuthProider>
       {/*<ReactQueryDevtools />*/}
     </QueryClientProvider>
   )
+}
+
+
+function AuthProider({ children }: { children: React.ReactNode }) {
+  const auth = useAuth();
+  const sessionValue = useSessionContextValue(auth);
+  const sessionActionValue = useSessionActionContextValue(auth);
+
+  return (
+    <SessionProvider value={sessionValue}>
+      <SessionActionProvider value={sessionActionValue}>
+        <ModalProvider>
+          <SidebarProvider>
+            <AdminLayoutComponent>
+              {children}
+            </AdminLayoutComponent>
+          </SidebarProvider>
+        </ModalProvider>
+      </SessionActionProvider>
+    </SessionProvider>
+  );
 }
