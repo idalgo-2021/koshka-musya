@@ -589,6 +589,12 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
+                        "description": "Filter by city name (case-insensitive partial match)",
+                        "name": "city",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
                         "description": "Bearer Access Token",
                         "name": "Authorization",
                         "in": "header",

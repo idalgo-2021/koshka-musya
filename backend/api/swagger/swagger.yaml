@@ -1309,6 +1309,10 @@ paths:
         in: query
         name: limit
         type: integer
+      - description: Filter by city name (case-insensitive partial match)
+        in: query
+        name: city
+        type: string
       - description: Bearer Access Token
         in: header
         name: Authorization
