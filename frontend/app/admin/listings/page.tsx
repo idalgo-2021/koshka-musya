@@ -12,7 +12,7 @@ import { ListingsCardView } from '@/components/ListingsCardView'
 
 import { ListingsApi } from '@/entities/listings/api'
 import {USER_ROLE} from "@/entities/auth/useAuth";
-import {Plus, Grid3X3, Table} from "lucide-react";
+import {Plus} from "lucide-react";
 import {useUser} from "@/entities/auth/SessionContext";
 
 export default function ListingsPage() {
@@ -50,7 +50,7 @@ export default function ListingsPage() {
               Управление объектами недвижимости и их размещением
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="text-sm text-muted-foreground hidden sm:block bg-muted/50 px-3 py-1 rounded-full">
               Страница {page} из {totalPages}
@@ -79,7 +79,7 @@ export default function ListingsPage() {
             <ToggleButton checked={isShow} onToggle={setIsShow}/>
           </div>
         </div>
-        
+
         <div className="text-sm text-muted-foreground">
           Показано {listings.length} из {total} объектов
         </div>
@@ -103,13 +103,13 @@ export default function ListingsPage() {
           >
             Назад
           </Button>
-          
+
           <div className="flex items-center gap-2">
             <div className="text-sm text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
               Показано <span className="font-medium text-foreground">{(page - 1) * limit + 1}-{Math.min(page * limit, total)}</span> из <span className="font-medium text-foreground">{total}</span>
             </div>
           </div>
-          
+
           <Button
             variant="outline"
             onClick={() => setPage((p) => (canNext ? p + 1 : p))}

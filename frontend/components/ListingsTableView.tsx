@@ -7,14 +7,11 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useImageViewer } from '@/hooks/useImageViewer'
-import { CopyToClipboard } from '@/components/CopyToClipboard'
 import {
   MapPin,
   Building,
   Hash,
   Eye,
-  ChevronDown,
-  ChevronRight,
   ArrowUpDown,
   ArrowUp,
   ArrowDown
@@ -212,7 +209,7 @@ export function ListingsTableView({ listings }: ListingsTableViewProps) {
           <tbody>
             {sortedListings.map((listing) => {
               const isExpanded = expandedRows.has(listing.id)
-              
+
               return (
                 <React.Fragment key={listing.id}>
                   {/* Main Row */}
@@ -220,7 +217,7 @@ export function ListingsTableView({ listings }: ListingsTableViewProps) {
                     <td className="p-3 align-middle">
                       <div className="flex items-center gap-3">
                         {listing.main_picture ? (
-                          <div 
+                          <div
                             className="relative h-12 w-12 md:h-16 md:w-16 overflow-hidden rounded-lg border-2 border-border/50 cursor-pointer group transition-all duration-200 hover:border-primary/50 hover:shadow-md"
                             onClick={() => handleImageClick(listing.main_picture!, listing.title)}
                           >
@@ -239,8 +236,8 @@ export function ListingsTableView({ listings }: ListingsTableViewProps) {
                           </div>
                         )}
                         <div className="min-w-0 flex-1">
-                          <Link 
-                            href={`/admin/listings/${listing.id}`} 
+                          <Link
+                            href={`/admin/listings/${listing.id}`}
                             className="font-semibold text-foreground hover:text-primary transition-colors duration-200 line-clamp-1"
                           >
                             {listing.title}
@@ -265,8 +262,8 @@ export function ListingsTableView({ listings }: ListingsTableViewProps) {
                       </div>
                     </td>
                     <td className="p-3 align-middle hidden lg:table-cell">
-                      <Badge 
-                        variant="secondary" 
+                      <Badge
+                        variant="secondary"
                         className="bg-gradient-to-r from-primary/10 to-primary/5 text-primary border-primary/20 hover:from-primary/20 hover:to-primary/10 transition-all duration-200"
                       >
                         {listing.listing_type?.name}
@@ -280,9 +277,9 @@ export function ListingsTableView({ listings }: ListingsTableViewProps) {
                           </Link>
                         </Button>
                         {listing.latitude && listing.longitude && (
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             asChild
                             className="hover:bg-primary/10 hover:border-primary/50 transition-all duration-200"
                           >
