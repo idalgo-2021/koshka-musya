@@ -12,7 +12,7 @@ RUN yarn install --immutable
 
 COPY . .
 
-ENV NEXT_PUBLIC_API_URL=/api
+# ENV NEXT_PUBLIC_API_URL=/api
 
 RUN yarn build
 

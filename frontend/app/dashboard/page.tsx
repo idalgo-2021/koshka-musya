@@ -424,7 +424,7 @@ function DashboardContent() {
   }
 
   if (!isAuthenticated) {
-    return <p>sdfasf</p>;
+    return undefined;
   }
 
   return (

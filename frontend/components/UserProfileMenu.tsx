@@ -41,7 +41,7 @@ export default function UserProfileMenu({ username, onLogout }: UserProfileMenuP
       icon: "📊"
     },
     {
-      label: "История", 
+      label: "История",
       path: "/profile/history",
       icon: "✈️"
     },
@@ -62,14 +62,14 @@ export default function UserProfileMenu({ username, onLogout }: UserProfileMenuP
       {/* Кнопка с никнеймом */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 text-accenttext/70 hover:text-accenttext transition-colors"
+        className="flex items-center space-x-2 text-accenttext/70 hover:text-accenttext transition-colors cursor-pointer"
       >
         <div className="w-8 h-8 bg-accenttext rounded-full flex items-center justify-center">
           <span className="text-white text-sm font-medium">
             {username?.charAt(0).toUpperCase()}
           </span>
         </div>
-        <div className="flex flex-col items-start">
+        <div className="flex flex-col items-start cursor-pointer">
           <span className="text-sm font-medium text-accenttext">{username}</span>
           {profile && (
             <UserRatingBadge profile={profile} size="sm" starsOnly={true} />
@@ -92,25 +92,25 @@ export default function UserProfileMenu({ username, onLogout }: UserProfileMenuP
             <p className="text-sm font-medium text-gray-900">Личный кабинет</p>
             <p className="text-xs text-gray-500 mt-1">{username}</p>
           </div>
-          
+
           {menuItems.map((item, index) => (
             <button
               key={index}
               onClick={() => handleMenuClick(item.path)}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center space-x-3"
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center space-x-3 cursor-pointer"
             >
               <span className="text-lg">{item.icon}</span>
               <span className="text-sm text-gray-700">{item.label}</span>
             </button>
           ))}
-          
+
           <div className="border-t border-gray-100 mt-2 pt-2">
             <button
               onClick={() => {
                 setIsOpen(false);
                 onLogout();
               }}
-              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center space-x-3"
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors flex items-center space-x-3 cursor-pointer"
             >
               <span className="text-lg">🚪</span>
               <span className="text-sm text-red-600">Выйти</span>
