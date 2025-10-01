@@ -169,11 +169,22 @@ export function useAssignments() {
         // Игнорируем ошибку для отчетов
       }
       
-      // Объединяем все задания: доступные (отфильтрованные) + мои + принятые (из отчетов)
-      const allAssignments = [...filteredOfferedAssignments, ...myAssignments, ...acceptedAssignments];
+      // Проверяем, есть ли у пользователя активные задания
+      const hasActiveAssignments = myAssignments.length > 0 || acceptedAssignments.length > 0;
+      console.log("=== ACTIVE ASSIGNMENTS CHECK ===");
+      console.log("My assignments count:", myAssignments.length);
+      console.log("Accepted assignments count:", acceptedAssignments.length);
+      console.log("Has active assignments:", hasActiveAssignments);
+      
+      // Объединяем задания: если есть активные, то только их, иначе добавляем предложения
+      const allAssignments = hasActiveAssignments 
+        ? [...myAssignments, ...acceptedAssignments] // Только активные задания
+        : [...filteredOfferedAssignments, ...myAssignments, ...acceptedAssignments]; // Все задания
+      
       console.log("=== COMBINED ASSIGNMENTS ===");
       console.log("All assignments:", allAssignments);
       console.log("Total count:", allAssignments.length);
+      console.log("Included offered assignments:", !hasActiveAssignments);
       
       setAssignments(allAssignments);
       setRetryCount(0);
@@ -236,7 +247,9 @@ export function useAssignments() {
       console.log("AssignmentsApi.acceptAssignment completed successfully:", result);
       
       console.log("Assignment status should now be 'accepted' (2) in DB");
-      console.log("Skipping fetchAssignments to avoid intermediate 'No offers' state");
+      console.log("Fetching updated assignments after acceptance...");
+      await fetchAssignments();
+      console.log("fetchAssignments completed after acceptAssignment");
     } catch (err) {
       console.log("Error in acceptAssignment:", err);
       console.log("Error type:", typeof err);

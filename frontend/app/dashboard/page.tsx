@@ -45,16 +45,31 @@ function DashboardContent() {
   const [hotelLoading, setHotelLoading] = useState<Record<string, boolean>>({});
   const [currentAssignmentIndex, setCurrentAssignmentIndex] = useState(0);
   const [reports, setReports] = useState<Report[]>([]);
+  const [selectedListingType, setSelectedListingType] = useState<string>('');
 
-  // Показываем активные задания (pending или offered)
-  const displayAssignments = assignments.filter(assignment =>
-    assignment.status.slug === 'pending' || assignment.status.slug === 'offered'
-  );
+  // Обработчик изменения типа объекта
+  const handleListingTypeChange = (type: string) => {
+    setSelectedListingType(type);
+    setCurrentAssignmentIndex(0); // Сбрасываем индекс при смене фильтра
+  };
 
   // Показываем принятые задания для продолжения заполнения
   const acceptedAssignments = assignments.filter(assignment =>
     assignment.status.slug === 'accepted'
   );
+
+  // Показываем взятые задания (pending) - взятые пользователем, но еще не принятые
+  const takenAssignments = assignments.filter(assignment =>
+    assignment.status.slug === 'pending' && assignment.reporter?.id === user?.id
+  );
+
+  // Показываем предложения (offered) - теперь useAssignments уже фильтрует их
+  const displayAssignments = assignments.filter(assignment =>
+    assignment.status.slug === 'offered'
+  );
+
+  // Проверяем, есть ли активные задания
+  const hasActiveAssignments = acceptedAssignments.length > 0 || takenAssignments.length > 0;
 
   // Логируем для отладки
   console.log("=== DASHBOARD DEBUG ===");
@@ -65,6 +80,8 @@ function DashboardContent() {
   console.log("All assignments count:", assignments.length);
   console.log("Display assignments:", displayAssignments);
   console.log("Accepted assignments:", acceptedAssignments);
+  console.log("Taken assignments:", takenAssignments);
+  console.log("Has active assignments:", hasActiveAssignments);
   console.log("Assignments details:", assignments.map(a => ({
     id: a.id,
     status: a.status.slug,
@@ -370,6 +387,9 @@ function DashboardContent() {
       console.log("Assignment ID:", assignmentId);
       await acceptAssignment(assignmentId);
       console.log("acceptAssignment completed successfully");
+      
+      // Обновляем список заданий после принятия
+      await fetchAssignments();
 
       toast.success("Задание принято! Переходим к заполнению отчета...");
 
@@ -610,6 +630,9 @@ function DashboardContent() {
                   hotelDetails={hotelDetails}
                   hotelLoading={hotelLoading}
                   currentUserId={user?.id}
+                  hasActiveAssignments={hasActiveAssignments}
+                  selectedListingType={selectedListingType}
+                  onListingTypeChange={handleListingTypeChange}
                 />
               )}
 
@@ -648,6 +671,7 @@ function DashboardContent() {
                       <ContinueReportCard
                         key={assignment.id}
                         assignment={assignment}
+                        report={report}
                         reportId={report?.id}
                         progress={progress}
                         isStartCard={isStartCard}
@@ -669,8 +693,38 @@ function DashboardContent() {
                 </div>
               )}
 
+              {/* Taken Assignments (pending) */}
+              {takenAssignments.length > 0 && (
+                <div className="space-y-4">
+                  {takenAssignments.map((assignment) => (
+                    <div key={assignment.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2">{assignment.listing.title}</h3>
+                          <p className="text-gray-600 text-sm mb-2">{assignment.listing.address}</p>
+                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                            <span>📅 {assignment.checkin_date && assignment.checkout_date ? `${new Date(assignment.checkin_date).toLocaleDateString('ru-RU')} - ${new Date(assignment.checkout_date).toLocaleDateString('ru-RU')}` : 'Даты не указаны'}</span>
+                            <span>🏨 {assignment.listing.listing_type?.name || 'Тип не указан'}</span>
+                          </div>
+                        </div>
+                        <div className="ml-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                            Взято
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <p className="text-yellow-800 text-sm">
+                          <strong>Задание взято!</strong> Принять его можно будет за 24 часа до заселения.
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* No Tasks Message */}
-              {!assignmentsLoading && displayAssignments.length === 0 && acceptedAssignments.length === 0 && !showInstructions && !acceptedAssignment && !storedHotelName && (
+              {!assignmentsLoading && displayAssignments.length === 0 && acceptedAssignments.length === 0 && takenAssignments.length === 0 && !showInstructions && !acceptedAssignment && !storedHotelName && (
                 <NoAssignmentsCard />
               )}
             </div>

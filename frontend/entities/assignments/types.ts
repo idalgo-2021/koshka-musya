@@ -1,6 +1,7 @@
 export type Assignment = {
   id: string;
   code: string;
+  booking_number?: string;
   title?: string;
   purpose: string;
   pricing?: {
@@ -17,6 +18,12 @@ export type Assignment = {
   };
   checkin_date?: string;
   checkout_date?: string;
+  // Новые поля для дат и резервации
+  dates?: {
+    checkin?: string;
+    checkout?: string;
+  };
+  reservation_id?: string;
   listing: {
     id: string;
     title: string;

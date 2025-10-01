@@ -1,4 +1,4 @@
-import {useState} from "react";
+import React, {useState} from "react";
 import {Assignment} from "@/entities/assignments/types";
 import {HotelDetails} from "@/entities/assignments/api";
 import {Button} from "@/components/ui/button";
@@ -8,46 +8,7 @@ import AssignmentActionButtons from "./AssignmentActionButtons";
 import { formatDate } from "@/lib/date";
 
 
-// Функция для получения вознаграждения из данных задания
-const getRewardInfo = (assignment: Assignment): string => {
-  // Если есть данные о стоимости из pricing, используем их
-  if (assignment.pricing?.total) {
-    const currency = assignment.pricing.currency || 'RUB';
-    const total = assignment.pricing.total;
-    
-    // Рассчитываем вознаграждение как процент от стоимости (например, 20%)
-    const reward = Math.round(total * 0.2);
-    
-    if (currency === 'RUB') {
-      return `${reward} ₽`;
-    } else {
-      return `${reward} ${currency}`;
-    }
-  }
-  
-  // Fallback на базовые суммы по типу отеля
-  const listingType = assignment.listing.listing_type?.slug || 'hotel';
-  const rewards: Record<string, string> = {
-    'hotel': '5000 ₽',
-    'apartment': '3000 ₽', 
-    'hostel': '2000 ₽',
-    'guest_house': '2500 ₽'
-  };
-  
-  return rewards[listingType.toLowerCase()] || '3000 ₽';
-};
 
-// Функция для проверки, можно ли принять задание (в течение 24 часов до заселения)
-const canAcceptAssignment = (assignment: Assignment): boolean => {
-  if (!assignment.expires_at) return true;
-  
-  const expiresAt = new Date(assignment.expires_at);
-  const now = new Date();
-  const timeDiff = expiresAt.getTime() - now.getTime();
-  const hoursDiff = timeDiff / (1000 * 60 * 60);
-  
-  return hoursDiff <= 24 && hoursDiff > 0;
-};
 
 interface AssignmentCarouselProps {
   assignments: Assignment[];
@@ -59,6 +20,10 @@ interface AssignmentCarouselProps {
   hotelDetails: Record<string, HotelDetails>;
   hotelLoading: Record<string, boolean>;
   currentUserId?: string;
+  hasActiveAssignments?: boolean;
+  // Фильтрация по типу объекта
+  selectedListingType?: string;
+  onListingTypeChange?: (type: string) => void;
 }
 
 export default function AssignmentCarousel({
@@ -70,12 +35,35 @@ export default function AssignmentCarousel({
   onStartReport,
   hotelDetails,
   hotelLoading,
-  currentUserId
+  currentUserId,
+  hasActiveAssignments = false,
+  selectedListingType,
+  onListingTypeChange
 } : AssignmentCarouselProps) {
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const currentAssignment = assignments[currentIndex];
-  const hasNext = currentIndex < assignments.length - 1;
+
+  // Получаем уникальные типы объектов
+  const listingTypes = React.useMemo(() => {
+    const types = new Set<string>();
+    assignments.forEach(assignment => {
+      if (assignment.listing.listing_type?.slug) {
+        types.add(assignment.listing.listing_type.slug);
+      }
+    });
+    return Array.from(types).sort();
+  }, [assignments]);
+
+  // Фильтруем задания по выбранному типу
+  const filteredAssignments = React.useMemo(() => {
+    if (!selectedListingType) return assignments;
+    return assignments.filter(assignment => 
+      assignment.listing.listing_type?.slug === selectedListingType
+    );
+  }, [assignments, selectedListingType]);
+
+  const currentAssignment = filteredAssignments[currentIndex];
+  const hasNext = currentIndex < filteredAssignments.length - 1;
   const hasPrev = currentIndex > 0;
 
   const handleNext = () => {
@@ -98,62 +86,73 @@ export default function AssignmentCarousel({
     }
   };
 
-  if (assignments.length === 0) {
+  if (filteredAssignments.length === 0 || !currentAssignment) {
     return null;
   }
 
   return (
     <div className="relative">
       {/* Navigation Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-accenttext/70">
-            Предложение {currentIndex + 1} из {assignments.length}
+      <div className="flex items-center justify-between mb-6 p-4 bg-white/80 backdrop-blur-sm rounded-2xl border border-accenttext/10 shadow-sm">
+        <div className="flex items-center space-x-4">
+          <span className="text-sm font-medium text-accenttext/80">
+            Предложение {currentIndex + 1} из {filteredAssignments.length}
           </span>
-          {assignments.length > 1 && (
-            <div className="flex space-x-1">
-              {assignments.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                    index === currentIndex ? 'bg-accenttext' : 'bg-accenttext/30'
-                  }`}
-                />
-              ))}
-            </div>
-          )}
         </div>
 
-        {assignments.length > 1 && (
-          <div className="flex space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrev}
-              disabled={!hasPrev || isTransitioning}
-              className="border-accenttext/30 text-accenttext hover:bg-accenttext/10"
+        <div className="flex items-center space-x-4">
+          {/* Кнопки навигации */}
+          {filteredAssignments.length > 1 && (
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrev}
+                disabled={!hasPrev || isTransitioning}
+                className="border-accenttext/20 text-accenttext hover:bg-accenttext/10 hover:border-accenttext/40 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd"
+                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                        clipRule="evenodd"/>
+                </svg>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNext}
+                disabled={!hasNext || isTransitioning}
+                className="border-accenttext/20 text-accenttext hover:bg-accenttext/10 hover:border-accenttext/40 bg-white/90 backdrop-blur-sm rounded-xl shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clipRule="evenodd"/>
+                </svg>
+              </Button>
+            </div>
+          )}
+
+          {/* Фильтр по типу объекта */}
+          {listingTypes.length > 1 && onListingTypeChange && (
+            <select
+              value={selectedListingType || ''}
+              onChange={(e) => onListingTypeChange(e.target.value)}
+              className="text-sm border border-accenttext/20 rounded-lg px-3 py-1.5 bg-white text-accenttext focus:outline-none focus:ring-2 focus:ring-accenttext/20 focus:border-accenttext/40 transition-all duration-200 min-w-[120px]"
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd"
-                      d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                      clipRule="evenodd"/>
-              </svg>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleNext}
-              disabled={!hasNext || isTransitioning}
-              className="border-accenttext/30 text-accenttext hover:bg-accenttext/10"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd"
-                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                      clipRule="evenodd"/>
-              </svg>
-            </Button>
-          </div>
-        )}
+              <option value="">Все типы</option>
+              {listingTypes.map(type => {
+                const assignment = assignments.find(a => a.listing.listing_type?.slug === type);
+                const typeName = assignment?.listing.listing_type?.name || type;
+                return (
+                  <option key={type} value={type}>
+                    {typeName}
+                  </option>
+                );
+              })}
+            </select>
+          )}
+        </div>
       </div>
 
       {/* Assignment Card */}
@@ -170,8 +169,10 @@ export default function AssignmentCarousel({
           hotelDetails={hotelDetails}
           hotelLoading={hotelLoading}
           currentUserId={currentUserId}
+          hasActiveAssignments={hasActiveAssignments}
         />
       </AnimatedCard>
+
     </div>
   );
 }
@@ -183,7 +184,8 @@ function AssignmentCard({
   onStartReport,
   hotelDetails,
   hotelLoading,
-  currentUserId
+  currentUserId,
+  hasActiveAssignments = false
 } : {
   assignment: Assignment;
   onAccept: (id: string) => Promise<void>;
@@ -192,6 +194,7 @@ function AssignmentCard({
   hotelDetails: Record<string, HotelDetails>;
   hotelLoading: Record<string, boolean>;
   currentUserId?: string;
+  hasActiveAssignments?: boolean;
 }) {
   return (
     <div
@@ -256,28 +259,89 @@ function AssignmentCard({
               </div>
             </div>
 
-            {/* Информация о вознаграждении */}
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd"/>
+            {/* Стоимость */}
+            {assignment.pricing && assignment.pricing.total && assignment.pricing.currency && (
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 mb-1">Стоимость</p>
+                  <p className="text-sm text-green-600 font-semibold">
+                    {assignment.pricing.total.toLocaleString('ru-RU')} {assignment.pricing.currency}
+                    {assignment.pricing.breakdown && assignment.pricing.breakdown.per_night && assignment.pricing.breakdown.nights && (
+                      <span className="block text-xs text-gray-500 mt-1">
+                        {assignment.pricing.breakdown.per_night.toLocaleString('ru-RU')} {assignment.pricing.currency} × {assignment.pricing.breakdown.nights} ноч{assignment.pricing.breakdown.nights === 1 ? 'ь' : assignment.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Временный блок для отладки стоимости */}
+            <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900 mb-1">Вознаграждение</p>
-                <p className="text-sm text-gray-600 font-semibold text-green-600">
-                  {getRewardInfo(assignment)}
-                </p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 mb-1">Отладка стоимости</p>
+                <div className="text-xs text-gray-600 space-y-1">
+                  <p>pricing: {assignment.pricing ? JSON.stringify(assignment.pricing) : 'нет'}</p>
+                  <p>pricing.total: {assignment.pricing?.total || 'нет'}</p>
+                  <p>pricing.currency: {assignment.pricing?.currency || 'нет'}</p>
+                  <p>Все поля: {Object.keys(assignment).join(', ')}</p>
+                </div>
               </div>
             </div>
 
+            {/* Даты заезда и выезда */}
+            {assignment.dates && (
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 mb-1">Даты проживания</p>
+                  <div className="space-y-1">
+                    {assignment.dates.checkin && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Заезд:</span> {(() => {
+                          try {
+                            return new Date(assignment.dates.checkin).toLocaleDateString('ru-RU');
+                          } catch {
+                            return assignment.dates.checkin;
+                          }
+                        })()}
+                      </p>
+                    )}
+                    {assignment.dates.checkout && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Выезд:</span> {(() => {
+                          try {
+                            return new Date(assignment.dates.checkout).toLocaleDateString('ru-RU');
+                          } catch {
+                            return assignment.dates.checkout;
+                          }
+                        })()}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
 
             {(hotelDetails[assignment.listing.id] || hotelLoading[assignment.listing.id]) && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd"
                           d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
                           clipRule="evenodd"/>
@@ -334,6 +398,7 @@ function AssignmentCard({
             onDecline={onDecline}
             onStartReport={onStartReport}
             currentUserId={currentUserId}
+            hasActiveAssignments={hasActiveAssignments}
           />
         </div>
       </div>

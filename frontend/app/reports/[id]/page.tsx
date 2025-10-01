@@ -281,6 +281,7 @@ export default function ReportPage() {
                 restoredChecks[key] = ok;
               } else if (item.answer_types.slug.startsWith('rating_')) {
                 restoredRatings[key] = parseInt(item.answer.result);
+                restoredComments[key] = item.answer.comment || '';
               } else if (item.answer_types.slug === 'text') {
                 // Для текстового типа result - это основной ответ
                 restoredComments[key] = item.answer.result;
@@ -429,9 +430,22 @@ export default function ReportPage() {
   }, [checks, ratings, comments]);
 
   const parseCommentValue = React.useCallback((it: any, resultValue: string | undefined, key: string) => {
-    // Комментарии нужны не для всех типов
+    // Комментарии нужны для всех типов ответов
     const isBool = it.answer_types.slug === 'boolean';
-    return isBool ? comments[key] : undefined;
+    const isRating = it.answer_types.slug.startsWith('rating_');
+    const isText = it.answer_types.slug === 'text';
+    
+    // Для текстового типа комментарий - это основной ответ
+    if (isText) {
+      return comments[key] || resultValue;
+    }
+    
+    // Для boolean и rating типов возвращаем комментарий
+    if (isBool || isRating) {
+      return comments[key];
+    }
+    
+    return undefined;
   }, [comments]);
 
 // Debounce autosave

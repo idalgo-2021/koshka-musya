@@ -154,26 +154,40 @@ export default function ChecklistItem({
         const {size: buttonSize, textSize} = getRatingButtonSize(max);
 
         return (
-          <div className="flex items-center gap-1 sm:gap-2">
-            <span className="text-xs sm:text-sm text-gray-600">
-              Оценка ({min}-{max}):
-            </span>
-            {ratingRange.map(n => (
-              <button
-                key={n}
-                type="button"
-                className={`${buttonSize} rounded-full border-2 transition-all duration-200 ${textSize} ${
-                  rating >= n
-                    ? 'bg-blue-500 border-blue-500 text-white'
-                    : 'bg-white border-gray-300 text-gray-400 hover:border-blue-300'
-                }`}
-                onClick={() => onRatingChange(key, n)}
-                disabled={disabled}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <span className="text-xs sm:text-sm text-gray-600">
+                Оценка ({min}-{max}):
+              </span>
+              {ratingRange.map(n => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`${buttonSize} rounded-full border-2 transition-all duration-200 ${textSize} ${
+                    rating >= n
+                      ? 'bg-blue-500 border-blue-500 text-white'
+                      : 'bg-white border-gray-300 text-gray-400 hover:border-blue-300'
+                  }`}
+                  onClick={() => onRatingChange(key, n)}
+                  disabled={disabled}
+                >
+                  {n}
+                </button>
+              ))}
+            </div>
+            {rating > 0 && (
+              <div>
+                <textarea
+                  value={comment}
+                  onChange={(e) => onCommentChange(key, e.target.value)}
+                  placeholder="Комментарий к оценке..."
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+                  disabled={disabled}
+                />
+              </div>
+            )}
+          </>
         );
       })()}
 
