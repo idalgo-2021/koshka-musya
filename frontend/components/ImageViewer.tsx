@@ -11,7 +11,6 @@ import {
   Download,
   Image as ImageIcon
 } from 'lucide-react'
-import Image from 'next/image';
 
 export function ImageViewer() {
   const {
@@ -148,7 +147,7 @@ export function ImageViewer() {
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
       >
-        <Image
+        <img
           src={state.imageUrl}
           alt={state.imageTitle || 'Image'}
           className="max-w-full max-h-full object-contain select-none"
