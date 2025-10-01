@@ -43,7 +43,6 @@ INSERT INTO ota_sg_reservation_statuses (id, slug, name) VALUES
     (2, 'hold', 'Захолдировано'),
     (3, 'booked', 'Забронировано'),
     (4, 'no-show', 'Не обрабатывать');
-   
 
 
 --- =========== СОЗДАНИЕ ТЕСТОВЫХ ПОЛЬЗОВАТЕЛЕЙ ===========
@@ -134,7 +133,7 @@ VALUES
   ((SELECT id FROM users WHERE username = 'epsilon'),  2, 1, 0, '2025-09-13 06:46:45.268'),
   ((SELECT id FROM users WHERE username = 'zetta'),    7, 0, 0, '2025-09-20 06:46:45.268'),
   ((SELECT id FROM users WHERE username = 'hetta'),    0, 0, 0, '2025-09-21 06:46:45.268')
-ON CONFLICT (user_id) DO NOTHING; 
+ON CONFLICT (user_id) DO NOTHING;
 
 
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ listings (ОБЪЕКТЫ РАЗМЕЩЕНИЯ) ===========
@@ -236,15 +235,15 @@ INSERT INTO checklist_items (listing_type_id, section_id, answer_type_id, media_
 
 -- =========== ЗАПОЛНЕНИЕ ТАБЛИЦЫ ota_sg_reservations (БРОНИРОВАНИЯ ОТА) ===========
 
--- Бронирование 1: 
+-- Бронирование 1:
 INSERT INTO ota_sg_reservations (created_at,
-                                ota_id, 
-                                booking_number, 
-                                listing_id, 
-                                checkin_date, 
+                                ota_id,
+                                booking_number,
+                                listing_id,
+                                checkin_date,
                                 checkout_date,
-                                pricing, 
-                                status_id, 
+                                pricing,
+                                status_id,
                                 source_msg)
 VALUES (
      NOW(),
@@ -301,7 +300,7 @@ INSERT INTO ota_sg_reservations (
     'f7b1c8f4-23ab-4c32-87a1-7810e7a3e9b1',
     'TG-20251001-A001',
     (SELECT id FROM listings WHERE code = 'b9ec4c3d-5db2-47bc-9fb4-f0d67d33f1d0'),
-    '2025-10-05T15:00:00Z',
+    '2025-10-02T15:00:00Z',
     '2025-10-10T12:00:00Z',
     '{"pricing":{"currency":"USD","total":25000,"breakdown":{"per_night":5000,"nights":5}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
@@ -329,7 +328,7 @@ INSERT INTO ota_sg_reservations (
     'a1b2c3d4-5678-9101-1121-314151617181',
     'TG-20251001-A002',
     (SELECT id FROM listings WHERE code = 'da5811d2-36e4-4d19-9b23-1234567890ab'),
-    '2025-10-08T14:00:00Z',
+    '2025-10-02T14:00:00Z',
     '2025-10-12T11:00:00Z',
     '{"pricing":{"currency":"BYN","total":18000,"breakdown":{"per_night":4500,"nights":4}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
@@ -357,7 +356,7 @@ INSERT INTO ota_sg_reservations (
     'f9e8d7c6-b5a4-3210-9f8e-7d6c5b4a3e2f',
     'TG-20251001-A003',
     (SELECT id FROM listings WHERE code = '1fe9eba4-d884-22e0-891f-15920d90be7e'),
-    '2025-10-03T16:00:00Z',
+    '2025-10-02T16:00:00Z',
     '2025-10-07T11:00:00Z',
     '{"pricing":{"currency":"KZT","total":22000,"breakdown":{"per_night":5500,"nights":4}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
@@ -385,7 +384,7 @@ INSERT INTO ota_sg_reservations (
     '123e4567-e89b-12d3-a456-426614174000',
     'TG-20251001-A004',
     (SELECT id FROM listings WHERE code = 'c681b19c-8d17-548d-22f3-80e7266ecc36'),
-    '2025-10-10T15:00:00Z',
+    '2025-10-02T15:00:00Z',
     '2025-10-15T12:00:00Z',
     '{"pricing":{"currency":"EUR","total":27000,"breakdown":{"per_night":5400,"nights":5}}}'::jsonb,
     (SELECT id FROM ota_sg_reservation_statuses WHERE slug = 'new'),
