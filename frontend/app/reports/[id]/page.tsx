@@ -204,20 +204,21 @@ export default function ReportPage() {
   const loadReport = React.useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
       console.log("=== LOADING REPORT ===");
       console.log("Report ID:", reportId);
       console.log("Retry count:", retryCount);
-      
+
       // Сначала проверим, есть ли отчет в списке моих отчетов
       console.log("Checking if report exists in my reports list...");
       try {
-        const myReports = await ReportsApi.getMyReports(1, 50);
-        const reportExists = myReports.reports.some(r => r.id === reportId);
+        const reportExists = await ReportsApi.getMyReportById(reportId);
+        // const reportExists = myReports.reports.some(r => r.id === reportId);
         console.log("Report exists in my reports:", reportExists);
         if (reportExists) {
-          const reportInfo = myReports.reports.find(r => r.id === reportId);
+          const reportInfo = reportExists;
+          // const reportInfo = myReports.reports.find(r => r.id === reportId);
           console.log("Report info from list:", {
             id: reportInfo?.id,
             status: reportInfo?.status,
@@ -229,7 +230,7 @@ export default function ReportPage() {
             updated_at: reportInfo?.updated_at,
             submitted_at: reportInfo?.submitted_at
           });
-          
+
           // Проверяем, может ли отчет быть загружен (generating и draft считаем рабочими статусами)
           if (reportInfo?.status?.slug === 'draft' || reportInfo?.status?.slug === 'generating') {
             console.log("Report is in working status (draft/generating) - should be loadable");
@@ -243,7 +244,7 @@ export default function ReportPage() {
       } catch (listError) {
         console.log("Failed to check my reports list:", listError);
       }
-      
+
       console.log("Making API call to getMyReportById...");
       const r = await ReportsApi.getMyReportById(reportId);
       console.log("Report loaded successfully:", r);
@@ -313,11 +314,11 @@ export default function ReportPage() {
             if (updatedReport.checklist_schema && updatedReport.checklist_schema.sections && updatedReport.checklist_schema.sections.length > 0) {
               console.log('Updated report with schema:', updatedReport);
               console.log('Schema sections count:', updatedReport.checklist_schema.sections?.length);
-              
+
               // Обновляем весь отчет, а не только схему
               setReport(updatedReport);
               setChecklistSchema(updatedReport.checklist_schema);
-              
+
               // Восстанавливаем состояние из обновленной схемы
               const restoredChecks: Record<string, boolean | undefined> = {};
               const restoredRatings: Record<string, number> = {};
@@ -367,7 +368,7 @@ export default function ReportPage() {
       console.error('Error message:', err?.message || String(err));
       console.error('Error status:', err?.status);
       console.error('=== END ERROR LOADING REPORT ===');
-      
+
       if (err?.status === 404) {
         setError('Отчет не найден');
         toast.error('Отчет не найден');
@@ -434,17 +435,17 @@ export default function ReportPage() {
     const isBool = it.answer_types.slug === 'boolean';
     const isRating = it.answer_types.slug.startsWith('rating_');
     const isText = it.answer_types.slug === 'text';
-    
+
     // Для текстового типа комментарий - это основной ответ
     if (isText) {
       return comments[key] || resultValue;
     }
-    
+
     // Для boolean и rating типов возвращаем комментарий
     if (isBool || isRating) {
       return comments[key];
     }
-    
+
     return undefined;
   }, [comments]);
 
@@ -469,7 +470,7 @@ export default function ReportPage() {
               // Сохраняем существующие данные answer, обновляем только измененные поля
               const existingAnswer = it.answer || {};
               const newMedia = (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type }));
-              
+
               return {
                 ...it,
                 answer: {
@@ -487,9 +488,17 @@ export default function ReportPage() {
           checklist_schema: updatedSchema
         };
 
-        const updated = await ReportsApi.saveDraft(reportId, payload);
+        await ReportsApi.saveDraft(reportId, payload);
         // Обновляем отчет, но сохраняем информацию о задании отдельно
-        setReport(updated);
+        // debugger;
+        if (report) {
+          // @ts-ignore
+          setReport(prev => ({
+            ...prev,
+            checklist_schema: updatedSchema,
+          }));
+        }
+        // setReport(updated);
         setError(null);
       } catch (err) {
         console.error('Error saving draft:', err);
@@ -577,7 +586,7 @@ export default function ReportPage() {
             // Сохраняем существующие данные answer, обновляем только измененные поля
             const existingAnswer = it.answer || {};
             const newMedia = (itemMedia[key] || []).map((m) => ({ id: crypto.randomUUID(), url: m.url, media_type: m.media_type }));
-            
+
             return {
               ...it,
               answer: {
@@ -631,15 +640,16 @@ export default function ReportPage() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Assignment Info with Progress */}
           <ReportHeader
+            report={report}
             assignmentInfo={assignmentInfo}
             progress={progress}
             checklistSchema={checklistSchema}
           />
 
         {/* Error State */}
-          <ErrorState 
-            error={error} 
-            onRetry={handleRetry} 
+          <ErrorState
+            error={error}
+            onRetry={handleRetry}
             onBackToDashboard={() => router.push('/dashboard')}
           />
 
