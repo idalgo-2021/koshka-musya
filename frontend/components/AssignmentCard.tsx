@@ -40,7 +40,7 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                 href={`/admin/assignments/${assignment.id}`}
                 className="text-sm font-medium text-primary hover:underline line-clamp-2"
               >
-                Задание в {assignment.listing?.title}
+                Задание в {assignment?.listing?.title}
               </Link>
             </div>
 
@@ -64,18 +64,18 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
             )}
 
             {/* Listing Info */}
-            {assignment.listing && (
+            {assignment?.listing && (
               <div className="text-sm">
                 <div className="text-muted-foreground">Объект:</div>
-                {assignment.listing.id ? (
+                {assignment?.listing.id ? (
                   <Link
-                    href={`/admin/listings/${assignment.listing.id}`}
+                    href={`/admin/listings/${assignment?.listing?.id}`}
                     className="font-medium text-primary hover:underline line-clamp-2"
                   >
-                    {assignment.listing.city + ' ' + assignment.listing.address}
+                    {assignment?.listing?.city + ' ' + assignment?.listing?.address}
                   </Link>
                 ) : (
-                  <div className="font-medium">{assignment.listing.city + ' ' + assignment.listing.address}</div>
+                  <div className="font-medium">{assignment?.listing?.city + ' ' + assignment?.listing?.address}</div>
                 )}
               </div>
             )}

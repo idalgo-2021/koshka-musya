@@ -228,7 +228,7 @@ export default function ReportPage() {
 
       setReport(r);
       // Сохраняем информацию о задании отдельно
-      if (r.listing) {
+      if (r?.listing) {
         setAssignmentInfo({
           title: r.listing.title,
           address: r.listing.address,

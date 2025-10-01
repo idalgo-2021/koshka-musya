@@ -212,10 +212,10 @@ function AssignmentCard({
       <div className="relative">
         {/* Hotel Image with Overlay */}
         <div className="h-48 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-          {assignment.listing?.main_picture && (
+          {assignment?.listing?.main_picture && (
             <HotelImage
-              src={assignment.listing?.main_picture || ''}
-              alt={assignment.listing.title}
+              src={assignment?.listing?.main_picture || ''}
+              alt={assignment?.listing?.title}
               width={400}
               height={192}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -227,10 +227,10 @@ function AssignmentCard({
           {/* Hotel name overlay on image */}
           <div className="absolute bottom-0 left-0 right-0 p-5">
             <h3 className="text-lg font-bold text-white mb-1 drop-shadow-2xl shadow-black/50">
-              {assignment.listing.title}
+              {assignment?.listing?.title}
             </h3>
             <p className="text-white text-sm leading-relaxed drop-shadow-xl shadow-black/50 font-medium">
-              {assignment.listing.description}
+              {assignment?.listing?.description}
             </p>
           </div>
         </div>
@@ -239,7 +239,7 @@ function AssignmentCard({
           <div className="space-y-3">
             <h2 className="text-2xl font-bold text-gray-900">Предложение</h2>
             <p
-              className="text-lg font-medium text-gray-900 mb-1">{`Тип` + (assignment.listing.listing_type ? `: ${assignment.listing.listing_type.name}` : '')}</p>
+              className="text-lg font-medium text-gray-900 mb-1">{`Тип` + (assignment?.listing?.listing_type ? `: ${assignment?.listing?.listing_type.name}` : '')}</p>
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
@@ -371,7 +371,7 @@ function AssignmentCard({
             )}
 
 
-            {(assignment.listing.city) && (
+            {(assignment?.listing.city) && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -382,27 +382,27 @@ function AssignmentCard({
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900 mb-1">Адрес</p>
-                  {hotelLoading[assignment.listing.id] ? (
+                  {hotelLoading[assignment?.listing?.id] ? (
                     <p className="text-sm text-gray-500">Загружаем адрес…</p>
                   ) : (
                     <div className="space-y-1">
                       <p>
-                        {(assignment.listing?.city || assignment.listing?.country) && (
+                        {(assignment?.listing?.city || assignment?.listing?.country) && (
                           <span className="text-sm text-gray-500">
-                          {assignment.listing?.city}
-                            {assignment.listing?.city && assignment.listing?.country ? ", " : ""}
-                            {assignment.listing?.country}
+                          {assignment?.listing?.city}
+                            {assignment?.listing?.city && assignment?.listing?.country ? ", " : ""}
+                            {assignment?.listing?.country}
                         </span>
                         )}
-                        {assignment.listing?.address && (
+                        {assignment?.listing?.address && (
                           <span
-                            className="text-sm text-gray-600">, {assignment.listing?.address}</span>
+                            className="text-sm text-gray-600">, {assignment?.listing?.address}</span>
                         )}
                       </p>
-                      {(assignment.listing?.latitude !== undefined && assignment.listing?.longitude !== undefined) && (
+                      {(assignment?.listing?.latitude !== undefined && assignment?.listing?.longitude !== undefined) && (
                         <a
                           className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
-                          href={`https://yandex.ru/maps/?pt=${assignment.listing?.longitude},${assignment.listing?.latitude}&z=16&l=map`}
+                          href={`https://yandex.ru/maps/?pt=${assignment?.listing?.longitude},${assignment?.listing?.latitude}&z=16&l=map`}
                           target="_blank"
                           rel="noreferrer"
                         >
