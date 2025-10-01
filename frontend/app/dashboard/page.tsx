@@ -621,7 +621,7 @@ function DashboardContent() {
             )}
 
             {/* Assignments from DB */}
-            {!assignmentsLoading && displayAssignments.length >= 0 && (
+            {!assignmentsLoading && displayAssignments.length >= 0 && acceptedAssignments.length === 0 && (
               <AssignmentCarousel
                 assignments={displayAssignments}
                 currentIndex={currentAssignmentIndex}
