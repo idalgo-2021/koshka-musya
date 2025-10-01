@@ -214,14 +214,14 @@ export default function ContinueReportCard({ assignment, report, onContinue, onS
                   <p className="text-sm text-green-600 font-semibold">
                     {(() => {
                       const pricing = report?.booking_details?.pricing || assignment.pricing;
-                      if (!pricing) return 'Не указана';
-                      return `${pricing.total.toLocaleString('ru-RU')} ${pricing.currency}`;
+                      if (!pricing || !pricing.total) return 'Не указана';
+                      return `${pricing.total.toLocaleString('ru-RU')} ${pricing.currency || 'руб.'}`;
                     })()}
                     {(() => {
                       const pricing = report?.booking_details?.pricing || assignment.pricing;
-                      return pricing?.breakdown ? (
+                      return pricing?.breakdown && pricing.breakdown.per_night ? (
                         <span className="block text-xs text-gray-500 mt-1">
-                          {pricing.breakdown.per_night.toLocaleString('ru-RU')} {pricing.currency} × {pricing.breakdown.nights} ноч{pricing.breakdown.nights === 1 ? 'ь' : pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                          {pricing.breakdown.per_night.toLocaleString('ru-RU')} {pricing.currency || 'руб.'} × {pricing.breakdown.nights} ноч{pricing.breakdown.nights === 1 ? 'ь' : pricing.breakdown.nights < 5 ? 'и' : 'ей'}
                         </span>
                       ) : null;
                     })()}

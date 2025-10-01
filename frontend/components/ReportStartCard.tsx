@@ -175,10 +175,10 @@ export default function ReportStartCard({ report, onStartFilling, onBackToFAQ }:
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 mb-1">Стоимость</p>
                   <p className="text-sm text-green-600 font-semibold">
-                    {report.booking_details.pricing.total.toLocaleString('ru-RU')} {report.booking_details.pricing.currency}
-                    {report.booking_details.pricing.breakdown && (
+                    {report.booking_details.pricing.total ? report.booking_details.pricing.total.toLocaleString('ru-RU') : 'Не указана'} {report.booking_details.pricing.currency || 'руб.'}
+                    {report.booking_details.pricing.breakdown && report.booking_details.pricing.breakdown.per_night && (
                       <span className="block text-xs text-gray-500 mt-1">
-                        {report.booking_details.pricing.breakdown.per_night.toLocaleString('ru-RU')} {report.booking_details.pricing.currency} × {report.booking_details.pricing.breakdown.nights} ноч{report.booking_details.pricing.breakdown.nights === 1 ? 'ь' : report.booking_details.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                        {report.booking_details.pricing.breakdown.per_night.toLocaleString('ru-RU')} {report.booking_details.pricing.currency || 'руб.'} × {report.booking_details.pricing.breakdown.nights} ноч{report.booking_details.pricing.breakdown.nights === 1 ? 'ь' : report.booking_details.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
                       </span>
                     )}
                   </p>

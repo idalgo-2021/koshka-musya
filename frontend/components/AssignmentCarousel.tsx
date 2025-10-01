@@ -16,6 +16,7 @@ interface AssignmentCarouselProps {
   onIndexChange: (index: number) => void;
   onAccept: (id: string) => Promise<void>;
   onDecline: (id: string) => Promise<void>;
+  onTake?: (id: string) => Promise<void>; // Взятие предложения
   onStartReport?: (assignmentId: string) => void;
   hotelDetails: Record<string, HotelDetails>;
   hotelLoading: Record<string, boolean>;
@@ -32,6 +33,7 @@ export default function AssignmentCarousel({
   onIndexChange,
   onAccept,
   onDecline,
+  onTake,
   onStartReport,
   hotelDetails,
   hotelLoading,
@@ -165,6 +167,7 @@ export default function AssignmentCarousel({
           assignment={currentAssignment}
           onAccept={onAccept}
           onDecline={onDecline}
+          onTake={onTake}
           onStartReport={onStartReport}
           hotelDetails={hotelDetails}
           hotelLoading={hotelLoading}
@@ -181,6 +184,7 @@ function AssignmentCard({
   assignment,
   onAccept,
   onDecline,
+  onTake,
   onStartReport,
   hotelDetails,
   hotelLoading,
@@ -190,12 +194,14 @@ function AssignmentCard({
   assignment: Assignment;
   onAccept: (id: string) => Promise<void>;
   onDecline: (id: string) => Promise<void>;
+  onTake?: (id: string) => Promise<void>;
   onStartReport?: (assignmentId: string) => void;
   hotelDetails: Record<string, HotelDetails>;
   hotelLoading: Record<string, boolean>;
   currentUserId?: string;
   hasActiveAssignments?: boolean;
 }) {
+
   return (
     <div
       className="bg-white rounded-3xl shadow-2xl border-0 overflow-hidden hover:shadow-3xl transition-all duration-300 hover:scale-[1.02] group">
@@ -243,6 +249,32 @@ function AssignmentCard({
               </div>
             </div>
 
+            {/* Стоимость */}
+            {assignment.pricing && ((assignment.pricing as any).pricing?.total > 0 || (assignment.pricing as any).pricing?.currency) && (
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 mb-1">Стоимость</p>
+                  <div className="space-y-1">
+                    {(assignment.pricing as any)?.pricing?.total && (assignment.pricing as any).pricing.total > 0 && (
+                      <p className="text-sm text-green-600 font-semibold">
+                        <span className="font-medium">{(assignment.pricing as any).pricing.total.toLocaleString('ru-RU')}</span> {(assignment.pricing as any).pricing.currency || 'руб.'}
+                      </p>
+                    )}
+                    {(assignment.pricing as any)?.pricing?.breakdown && (assignment.pricing as any).pricing.breakdown.per_night && (assignment.pricing as any).pricing.breakdown.nights && (
+                      <p className="text-sm text-gray-500">
+                        {(assignment.pricing as any).pricing.breakdown.per_night.toLocaleString('ru-RU')} {(assignment.pricing as any).pricing.currency || 'руб.'} × {(assignment.pricing as any).pricing.breakdown.nights} ноч{(assignment.pricing as any).pricing.breakdown.nights === 1 ? 'ь' : (assignment.pricing as any).pricing.breakdown.nights < 5 ? 'и' : 'ей'}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                 <svg className="w-4 h-4 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
@@ -259,28 +291,31 @@ function AssignmentCard({
               </div>
             </div>
 
-            {/* Стоимость */}
-            {assignment.pricing && assignment.pricing.total && assignment.pricing.currency && (
+            {/* Гости */}
+            {assignment.guests && (assignment.guests.adults > 0 || assignment.guests.children > 0) && (
               <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 mb-1">Стоимость</p>
-                  <p className="text-sm text-green-600 font-semibold">
-                    {assignment.pricing.total.toLocaleString('ru-RU')} {assignment.pricing.currency}
-                    {assignment.pricing.breakdown && assignment.pricing.breakdown.per_night && assignment.pricing.breakdown.nights && (
-                      <span className="block text-xs text-gray-500 mt-1">
-                        {assignment.pricing.breakdown.per_night.toLocaleString('ru-RU')} {assignment.pricing.currency} × {assignment.pricing.breakdown.nights} ноч{assignment.pricing.breakdown.nights === 1 ? 'ь' : assignment.pricing.breakdown.nights < 5 ? 'и' : 'ей'}
-                      </span>
+                  <p className="text-sm font-medium text-gray-900 mb-1">Гости</p>
+                  <div className="space-y-1">
+                    {assignment.guests.adults > 0 && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">{assignment.guests.adults}</span> {assignment.guests.adults === 1 ? 'взрослый' : assignment.guests.adults < 5 ? 'взрослых' : 'взрослых'}
+                      </p>
                     )}
-                  </p>
+                    {assignment.guests.children > 0 && (
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">{assignment.guests.children}</span> {assignment.guests.children === 1 ? 'ребенок' : assignment.guests.children < 5 ? 'ребенка' : 'детей'}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
-
 
             {/* Даты заезда и выезда */}
             {assignment.dates && (
@@ -379,6 +414,7 @@ function AssignmentCard({
             assignment={assignment}
             onAccept={onAccept}
             onDecline={onDecline}
+            onTake={onTake}
             onStartReport={onStartReport}
             currentUserId={currentUserId}
             hasActiveAssignments={hasActiveAssignments}

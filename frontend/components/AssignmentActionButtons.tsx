@@ -39,10 +39,11 @@ const getTimeUntilCheckin = (assignment: Assignment, currentTime: Date): string 
   }
 };
 
-interface AssignmentActionButtonsProps {
+export interface AssignmentActionButtonsProps {
   assignment: Assignment;
   onAccept: (id: string) => Promise<void>;
   onDecline: (id: string) => Promise<void>;
+  onTake?: (id: string) => Promise<void>; // Взятие предложения (для offered заданий)
   onStartReport?: (assignmentId: string) => void;
   currentUserId?: string; // ID текущего пользователя для проверки, предложено ли задание ему
   hasActiveAssignments?: boolean; // Есть ли у пользователя активные задания
@@ -52,6 +53,7 @@ export default function AssignmentActionButtons({
   assignment,
   onAccept,
   onDecline,
+  onTake,
   onStartReport,
   currentUserId,
   hasActiveAssignments = false
@@ -126,6 +128,19 @@ export default function AssignmentActionButtons({
       setIsLoading(false);
     }
   };
+
+  const handleTake = async () => {
+    if (isLoading || status !== 'offered') return;
+    
+    setIsLoading(true);
+    try {
+      if (onTake) {
+        await onTake(assignment.id);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   const handleStartReport = () => {
     if (onStartReport) {
@@ -152,7 +167,7 @@ export default function AssignmentActionButtons({
       <div className="flex gap-3">
         <Button 
           className="flex-1 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
-          onClick={handleAccept}
+          onClick={handleTake}
           disabled={isLoading}
         >
           {isLoading ? (

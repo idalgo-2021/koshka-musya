@@ -343,6 +343,21 @@ function DashboardContent() {
     }
   };
 
+  const handleTakeAssignment = async (assignmentId: string) => {
+    console.log("=== HANDLE TAKE ASSIGNMENT ===");
+    console.log("Assignment ID:", assignmentId);
+    
+    try {
+      // Используем API для взятия предложения
+      await AssignmentsApi.takeFreeAssignment(assignmentId);
+      toast.success("Предложение успешно взято!");
+      await fetchAssignments();
+    } catch (error) {
+      console.error('Error taking assignment:', error);
+      toast.error('Ошибка при взятии предложения');
+    }
+  };
+
   const handleConfirmAcceptance = async (assignmentId: string) => {
     console.log("Starting handleConfirmAcceptance for assignment:", assignmentId);
 
@@ -623,6 +638,7 @@ function DashboardContent() {
                   onIndexChange={setCurrentAssignmentIndex}
                   onAccept={handleAcceptAssignment}
                   onDecline={handleDeclineAssignment}
+                  onTake={handleTakeAssignment}
                   onStartReport={(assignmentId) => {
                     // Логика для перехода к отчету
                     router.push(`/reports?assignment=${assignmentId}`);
