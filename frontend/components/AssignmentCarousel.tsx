@@ -91,7 +91,6 @@ export default function AssignmentCarousel({
   // }
 
   const isOne = assignments.length === 1 && assignments[0]?.taked_at !== undefined;
-  console.log('assignments2', {assignments})
   return (
     <div className="relative">
       {/* Navigation Header */}

@@ -40,7 +40,6 @@ interface ReportHeaderProps {
 export default function ReportHeader({ report, assignmentInfo, progress, checklistSchema, children }: ReportHeaderProps) {
   if (!assignmentInfo) return null;
 
-  console.log('report', report);
   return (
     <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-100">
       <div className="flex items-start gap-3 mb-4">

@@ -58,7 +58,7 @@ export default function ReportStaffDetailPage() {
     try {
       const result = await approveMutation.mutateAsync();
     } catch (error) {
-      console.log(error);
+      // Error handling is done by the mutation
     }
   }, [approveMutation]);
 

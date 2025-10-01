@@ -87,32 +87,21 @@ export default function AssignmentActionButtons({
                                  assignment.reporter.id === currentUserId;
   
   const handleAccept = async () => {
-    console.log("=== HANDLE ACCEPT CLICKED ===");
-    console.log("Assignment ID:", assignment.id);
-    console.log("isLoading:", isLoading);
-    console.log("canAccept:", canAccept);
-    console.log("status:", status);
-    console.log("isAssignedToCurrentUser:", isAssignedToCurrentUser);
-    console.log("onAccept function:", onAccept);
     
     if (isLoading || (status !== 'pending' && status !== 'offered')) {
-      console.log("Early return - conditions not met");
       return;
     }
     
     // Проверяем время для принятия
     if (!canAccept) {
-      console.log("Cannot accept - time restriction");
       // Показываем уведомление об ошибке
       toast.error('Задание можно принять за 24 часа до заселения или после начала заселения. Пожалуйста, подождите.');
       return;
     }
     
-    console.log("Calling onAccept...");
     setIsLoading(true);
     try {
       await onAccept(assignment.id);
-      console.log("onAccept called successfully");
     } finally {
       setIsLoading(false);
     }
@@ -154,14 +143,6 @@ export default function AssignmentActionButtons({
   // Если задание в общем пуле (не предложено пользователю) - показываем кнопки "Взять" и "Отказаться"
   // НО если у пользователя есть активные задания, то не показываем кнопки для любых offered заданий
   if (!isAssignedToCurrentUser && status === 'offered' && !hasActiveAssignments) {
-    console.log("=== ASSIGNMENT ACTION BUTTONS ===");
-    console.log("Rendering TAKE and DECLINE buttons");
-    console.log("Assignment ID:", assignment.id);
-    console.log("Current user ID:", currentUserId);
-    console.log("Assignment reporter ID:", assignment.reporter?.id);
-    console.log("Is assigned to current user:", isAssignedToCurrentUser);
-    console.log("Status:", status);
-    console.log("=== END ASSIGNMENT ACTION BUTTONS ===");
     
     return (
       <div className="flex gap-3">

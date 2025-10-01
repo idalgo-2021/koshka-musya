@@ -50,7 +50,6 @@ export default function ProfileSettingsPage() {
   };
 
   const handleSavePersonal = () => {
-    console.log("Saving personal settings:", formData);
     setIsEditingPersonal(false);
     // TODO: Отправить данные на сервер
   };
@@ -82,7 +81,6 @@ export default function ProfileSettingsPage() {
 
   const handleSavePassword = () => {
     // Здесь будет логика сохранения пароля
-    console.log("Saving password...");
     setShowChangePassword(false);
     setPasswordForm({
       currentPassword: "",

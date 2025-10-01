@@ -199,8 +199,6 @@ function DashboardContent() {
   };
 
   const handleSubmitReport = async (assignmentId: string) => {
-    console.log("=== HANDLE SUBMIT REPORT ===");
-    console.log("Submitting report for assignment ID:", assignmentId);
 
     try {
       // Ищем отчет для этого задания
@@ -299,7 +297,6 @@ function DashboardContent() {
         if (!existingReport.checklist_schema || Object.keys(existingReport.checklist_schema).length === 0) {
           router.push(`/reports/${existingReport.id}/start`);
         } else {
-          console.log('Existing report with schema, using main page');
           router.push(`/reports/${existingReport.id}`);
         }
         return;
@@ -377,7 +374,6 @@ function DashboardContent() {
           const existingReport = my.reports.find(r => r.assignment_id === assignmentId);
 
           if (existingReport) {
-            console.log("Found existing report, redirecting to:", existingReport.id);
             toast.success("Переходим к заполнению отчета...");
             // Сбрасываем состояние перед переходом
             setAcceptedAssignment(null);
@@ -562,14 +558,6 @@ function DashboardContent() {
             {/* Accepted Assignments - Continue Reports */}
             {(() => {
               const shouldShow = !assignmentsLoading && acceptedAssignments.length > 0 && displayAssignments.length === 0 && !showInstructions && !acceptedAssignment;
-              console.log("=== CONTINUE CARD CONDITIONS ===");
-              console.log("assignmentsLoading:", assignmentsLoading);
-              console.log("acceptedAssignments.length:", acceptedAssignments.length);
-              console.log("displayAssignments.length:", displayAssignments.length);
-              console.log("showInstructions:", showInstructions);
-              console.log("acceptedAssignment:", acceptedAssignment);
-              console.log("shouldShow:", shouldShow);
-              console.log("=== END CONTINUE CARD CONDITIONS ===");
               return shouldShow;
             })() && (
               <div className="space-y-4">

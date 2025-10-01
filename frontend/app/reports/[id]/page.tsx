@@ -206,48 +206,26 @@ export default function ReportPage() {
     setError(null);
 
     try {
-      console.log("=== LOADING REPORT ===");
-      console.log("Report ID:", reportId);
-      console.log("Retry count:", retryCount);
-
       // Сначала проверим, есть ли отчет в списке моих отчетов
-      console.log("Checking if report exists in my reports list...");
       try {
         const reportExists = await ReportsApi.getMyReportById(reportId);
         // const reportExists = myReports.reports.some(r => r.id === reportId);
-        console.log("Report exists in my reports:", reportExists);
         if (reportExists) {
           const reportInfo = reportExists;
           // const reportInfo = myReports.reports.find(r => r.id === reportId);
-          console.log("Report info from list:", {
-            id: reportInfo?.id,
-            status: reportInfo?.status,
-            status_slug: reportInfo?.status?.slug,
-            status_id: reportInfo?.status?.id,
-            status_name: reportInfo?.status?.name,
-            assignment_id: reportInfo?.assignment_id,
-            created_at: reportInfo?.created_at,
-            updated_at: reportInfo?.updated_at,
-            submitted_at: reportInfo?.submitted_at
-          });
 
           // Проверяем, может ли отчет быть загружен (generating и draft считаем рабочими статусами)
           if (reportInfo?.status?.slug === 'draft' || reportInfo?.status?.slug === 'generating') {
-            console.log("Report is in working status (draft/generating) - should be loadable");
+            // Report is in working status
           } else {
-            console.log("Report is NOT in working status - this might be the issue");
-            console.log("Current status:", reportInfo?.status?.slug);
+            // Report is NOT in working status
           }
-        } else {
-          console.log("Report NOT found in my reports list - this is unexpected");
         }
       } catch (listError) {
-        console.log("Failed to check my reports list:", listError);
+        // Failed to check my reports list
       }
 
-      console.log("Making API call to getMyReportById...");
       const r = await ReportsApi.getMyReportById(reportId);
-      console.log("Report loaded successfully:", r);
 
       setReport(r);
       // Сохраняем информацию о задании отдельно
@@ -305,15 +283,10 @@ export default function ReportPage() {
         setItemMedia(restoredMedia);
       } else {
         // Если схема еще не сгенерирована или пустая, ждем и перезагружаем
-        console.log('Checklist schema not ready or empty, waiting...');
-        console.log('Current checklist schema:', r.checklist_schema);
-        console.log('Schema sections count:', r.checklist_schema?.sections?.length || 0);
         setTimeout(() => {
           // Перезагружаем отчет через 2 секунды
           ReportsApi.getMyReportById(reportId).then((updatedReport) => {
             if (updatedReport.checklist_schema && updatedReport.checklist_schema.sections && updatedReport.checklist_schema.sections.length > 0) {
-              console.log('Updated report with schema:', updatedReport);
-              console.log('Schema sections count:', updatedReport.checklist_schema.sections?.length);
 
               // Обновляем весь отчет, а не только схему
               setReport(updatedReport);
@@ -524,12 +497,10 @@ export default function ReportPage() {
       return await ReportsApi.rejectReportByUser(reportId);
     },
     onError: (error) => {
-      console.log(error);
       toast.error(error instanceof Error ? error.message : 'Не удалось отказаться от отчета');
       closeModal();
     },
     onSuccess: () => {
-      console.log('success refuse report');
       toast.success('Успешно отказались от отчета');
       router.push('/dashboard');
     }
@@ -640,7 +611,7 @@ export default function ReportPage() {
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Assignment Info with Progress */}
           <ReportHeader
-            report={report}
+            report={report || undefined}
             assignmentInfo={assignmentInfo}
             progress={progress}
             checklistSchema={checklistSchema}

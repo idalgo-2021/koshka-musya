@@ -20,34 +20,6 @@ interface ContinueReportCardProps {
 }
 
 export default function ContinueReportCard({ assignment, report, onContinue, onSubmit, reportId, progress = 0, isStartCard = false, onShowFAQ }: ContinueReportCardProps) {
-  // Логируем данные задания и отчета для отладки
-  console.log("ContinueReportCard - assignment data:", {
-    id: assignment.id,
-    title: assignment.listing.title,
-    main_picture: assignment.listing.main_picture,
-    hasImage: !!assignment.listing.main_picture,
-    listing: assignment.listing,
-    booking_number: assignment.booking_number,
-    code: assignment.code,
-    hasBookingNumber: !!assignment.booking_number,
-    pricing: assignment.pricing,
-    hasPricing: !!assignment.pricing,
-    guests: assignment.guests,
-    hasGuests: !!assignment.guests,
-    checkin_date: assignment.checkin_date,
-    checkout_date: assignment.checkout_date
-  });
-
-  console.log("ContinueReportCard - report data:", {
-    reportId: report?.id,
-    hasReport: !!report,
-    booking_details: report?.booking_details,
-    checkin_date_from_report: report?.booking_details?.checkin_date,
-    checkout_date_from_report: report?.booking_details?.checkout_date,
-    guests_from_report: report?.booking_details?.guests,
-    pricing_from_report: report?.booking_details?.pricing
-  });
-
   return (
     <div className="bg-white rounded-3xl shadow-2xl border-0 overflow-hidden hover:shadow-3xl transition-all duration-300 hover:scale-[1.02] group">
       <div className="relative">

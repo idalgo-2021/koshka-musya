@@ -106,7 +106,7 @@ export default function MediaUpload({
           const response = await fetch(presigned.upload_url, { method: 'POST', body: form });
           const uploadResult = await response.json();
 
-          console.log('Upload result:', uploadResult);
+          // Upload completed
 
           // ImageKit возвращает информацию о загруженном файле в ответе
           if (uploadResult.url) {

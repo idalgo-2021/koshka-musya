@@ -316,12 +316,10 @@ export default function ChecklistEditorPage() {
 
   const handleStartEdit = React.useCallback((sectionId: number, itemId: number) => {
     // Item editing is now handled in ChecklistSectionCard
-    console.log(sectionId, itemId);
   }, [])
 
   const handleStartAddItem = React.useCallback((sectionId: number) => {
     // Item editing is now handled in ChecklistSectionCard
-    console.log(sectionId);
   }, [])
 
   // Reorder functionality
@@ -351,14 +349,13 @@ export default function ChecklistEditorPage() {
   // Active item handler - now handled in ChecklistSectionCard
   const handleItemClick = React.useCallback((itemId: number) => {
     // Item editing is now handled in ChecklistSectionCard
-    console.log(itemId);
   }, [])
 
   // Set up mutation queue callbacks
   React.useEffect(() => {
     setCallbacks({
       onStart: (item) => {
-        console.log(`Starting reorder operation for section ${item.sectionId}`)
+        // Starting reorder operation
       },
       onSuccess: (item) => {
         // Invalidate and refetch items to get updated order
@@ -371,7 +368,7 @@ export default function ChecklistEditorPage() {
         toast.error(`Failed to reorder items in section ${item.sectionId}`)
       },
       onComplete: (status) => {
-        console.log('Mutation queue completed:', status)
+        // Mutation queue completed
       }
     })
   }, [setCallbacks, queryClient])
@@ -380,7 +377,6 @@ export default function ChecklistEditorPage() {
   const handleReorderItems = React.useCallback((sectionId: number, reorderedItems: ChecklistItemFull[], originalItems?: ChecklistItemFull[]) => {
     // Add operation to queue instead of executing immediately
     const operationId = addReorderOperation(sectionId, reorderedItems, originalItems)
-    console.log(`Added reorder operation ${operationId} to queue`)
   }, [addReorderOperation])
 
   const loading = sectionsQuery.isLoading || itemsQuery.isLoading || listingTypesQuery.isLoading
