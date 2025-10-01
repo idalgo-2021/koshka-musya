@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/entities/auth/useAuth";
 import { useAssignments } from "@/entities/assignments/useAssignments";
-import { AssignmentsApi, type HotelDetails } from "@/entities/assignments/api";
+import { AssignmentsApi } from "@/entities/assignments/api";
 import { ReportsApi } from "@/entities/reports/api";
 import type { Report } from "@/entities/reports/types";
 
@@ -20,7 +20,6 @@ import DashboardHeader from "@/components/DashboardHeader";
 import MainHeading from "@/components/MainHeading";
 
 import { calculateReportProgress } from "@/lib/report-progress";
-import {tree} from "next/dist/build/templates/app-page";
 import {AssignmentsResponse} from "@/entities/assignments/types";
 
 
@@ -43,11 +42,10 @@ function DashboardContent() {
   const [reportSearchLoading, setReportSearchLoading] = useState(false);
   const [fromReportCard, setFromReportCard] = useState<boolean>(false);
   const [reportId, setReportId] = useState<string | null>(null);
-  const [hotelDetails, setHotelDetails] = useState<Record<string, HotelDetails>>({});
   const [hotelLoading, setHotelLoading] = useState<Record<string, boolean>>({});
   const [currentAssignmentIndex, setCurrentAssignmentIndex] = useState(0);
   const [reports, setReports] = useState<Report[]>([]);
-  const [selectedListingType, setSelectedListingType] = useState<string>('');
+  const [selectedListingType, setSelectedListingType] = useState<number | undefined>(undefined);
 
   // Обработчик изменения типа объекта
   const handleListingTypeChange = async (newTypeId: number | undefined) => {
@@ -635,7 +633,6 @@ function DashboardContent() {
                   // Логика для перехода к отчету
                   router.push(`/reports?assignment=${assignmentId}`);
                 }}
-                hotelDetails={hotelDetails}
                 hotelLoading={hotelLoading}
                 currentUserId={user?.id}
                 hasActiveAssignments={hasActiveAssignments}

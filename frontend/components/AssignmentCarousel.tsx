@@ -1,6 +1,5 @@
 import React, {useState} from "react";
 import {Assignment} from "@/entities/assignments/types";
-import {HotelDetails} from "@/entities/assignments/api";
 import {Button} from "@/components/ui/button";
 import AnimatedCard from "./AnimatedCard";
 import HotelImage from "./HotelImage";
@@ -16,7 +15,6 @@ interface AssignmentCarouselProps {
   onDecline: (id: string) => Promise<void>;
   onTake?: (id: string) => Promise<void>; // Взятие предложения
   onStartReport?: (assignmentId: string) => void;
-  hotelDetails: Record<string, HotelDetails>;
   hotelLoading: Record<string, boolean>;
   currentUserId?: string;
   hasActiveAssignments?: boolean;
@@ -42,7 +40,6 @@ export default function AssignmentCarousel({
   onDecline,
   onTake,
   onStartReport,
-  hotelDetails,
   hotelLoading,
   currentUserId,
   hasActiveAssignments = false,
@@ -93,7 +90,7 @@ export default function AssignmentCarousel({
   //   return null;
   // }
 
-  const isOne = assignments.length === 1 && assignments[0]?.taked_at !== null;
+  const isOne = assignments.length === 1 && assignments[0]?.taked_at !== undefined;
   return (
     <div className="relative">
       {/* Navigation Header */}
@@ -104,7 +101,7 @@ export default function AssignmentCarousel({
               {filteredAssignments?.length > 0 ? `${currentIndex + 1} из ${filteredAssignments.length}` : "0 из 0"}
             </span>
           </div>
-          )}
+        )}
 
         <div className="flex items-center space-x-4">
           {/* Кнопки навигации */}
@@ -178,7 +175,6 @@ export default function AssignmentCarousel({
             onDecline={onDecline}
             onTake={onTake}
             onStartReport={onStartReport}
-            hotelDetails={hotelDetails}
             hotelLoading={hotelLoading}
             currentUserId={currentUserId}
             hasActiveAssignments={hasActiveAssignments}
@@ -196,7 +192,6 @@ function AssignmentCard({
   onDecline,
   onTake,
   onStartReport,
-  hotelDetails,
   hotelLoading,
   currentUserId,
   hasActiveAssignments = false
@@ -206,7 +201,6 @@ function AssignmentCard({
   onDecline: (id: string) => Promise<void>;
   onTake?: (id: string) => Promise<void>;
   onStartReport?: (assignmentId: string) => void;
-  hotelDetails: Record<string, HotelDetails>;
   hotelLoading: Record<string, boolean>;
   currentUserId?: string;
   hasActiveAssignments?: boolean;
@@ -218,9 +212,9 @@ function AssignmentCard({
       <div className="relative">
         {/* Hotel Image with Overlay */}
         <div className="h-48 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
-          {hotelDetails[assignment.listing.id]?.main_picture && (
+          {assignment.listing?.main_picture && (
             <HotelImage
-              src={hotelDetails[assignment.listing.id]?.main_picture || ''}
+              src={assignment.listing?.main_picture || ''}
               alt={assignment.listing.title}
               width={400}
               height={192}
@@ -377,7 +371,7 @@ function AssignmentCard({
             )}
 
 
-            {(hotelDetails[assignment.listing.id] || hotelLoading[assignment.listing.id]) && (
+            {(assignment.listing.city) && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
@@ -393,22 +387,22 @@ function AssignmentCard({
                   ) : (
                     <div className="space-y-1">
                       <p>
-                        {(hotelDetails[assignment.listing.id]?.city || hotelDetails[assignment.listing.id]?.country) && (
+                        {(assignment.listing?.city || assignment.listing?.country) && (
                           <span className="text-sm text-gray-500">
-                          {hotelDetails[assignment.listing.id]?.city}
-                            {hotelDetails[assignment.listing.id]?.city && hotelDetails[assignment.listing.id]?.country ? ", " : ""}
-                            {hotelDetails[assignment.listing.id]?.country}
+                          {assignment.listing?.city}
+                            {assignment.listing?.city && assignment.listing?.country ? ", " : ""}
+                            {assignment.listing?.country}
                         </span>
                         )}
-                        {hotelDetails[assignment.listing.id]?.address && (
+                        {assignment.listing?.address && (
                           <span
-                            className="text-sm text-gray-600">, {hotelDetails[assignment.listing.id]?.address}</span>
+                            className="text-sm text-gray-600">, {assignment.listing?.address}</span>
                         )}
                       </p>
-                      {(hotelDetails[assignment.listing.id]?.latitude !== undefined && hotelDetails[assignment.listing.id]?.longitude !== undefined) && (
+                      {(assignment.listing?.latitude !== undefined && assignment.listing?.longitude !== undefined) && (
                         <a
                           className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
-                          href={`https://yandex.ru/maps/?pt=${hotelDetails[assignment.listing.id]?.longitude},${hotelDetails[assignment.listing.id]?.latitude}&z=16&l=map`}
+                          href={`https://yandex.ru/maps/?pt=${assignment.listing?.longitude},${assignment.listing?.latitude}&z=16&l=map`}
                           target="_blank"
                           rel="noreferrer"
                         >
