@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useRef } from 'react'
-import { 
-  AdminEventType, 
-  AdminEventPayload, 
+import {
+  AdminEventType,
+  AdminEventPayload,
   subscribeToAdminEvent,
-  subscribeToMultipleAdminEvents 
-} from '@/utils/eventBus'
+  subscribeToMultipleAdminEvents
+} from '@/lib/eventBus'
 
 // Hook for subscribing to a single admin event
 export function useAdminEventBus(
@@ -15,7 +15,7 @@ export function useAdminEventBus(
   enabled: boolean = true
 ) {
   const callbackRef = useRef(callback)
-  
+
   // Update callback ref when callback changes
   useEffect(() => {
     callbackRef.current = callback
@@ -39,7 +39,7 @@ export function useMultipleAdminEvents(
   enabled: boolean = true
 ) {
   const callbackRef = useRef(callback)
-  
+
   // Update callback ref when callback changes
   useEffect(() => {
     callbackRef.current = callback
