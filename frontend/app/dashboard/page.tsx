@@ -85,17 +85,17 @@ function DashboardContent() {
 
   // Показываем принятые задания для продолжения заполнения
   const acceptedAssignments = assignments.filter(assignment =>
-    assignment.status.slug === 'accepted'
+    assignment?.status?.slug === 'accepted'
   );
 
   // Показываем взятые задания (pending) - взятые пользователем, но еще не принятые
   const takenAssignments = assignments.filter(assignment =>
-    assignment.status.slug === 'pending' && assignment.reporter?.id === user?.id
+    assignment?.status?.slug === 'pending' && assignment.reporter?.id === user?.id
   );
 
   // Показываем предложения (offered) - теперь useAssignments уже фильтрует их
   const displayAssignments = assignments.filter(assignment =>
-    assignment.status.slug === 'offered'
+    assignment?.status?.slug === 'offered'
   );
 
   // Проверяем, есть ли активные задания
@@ -185,6 +185,7 @@ function DashboardContent() {
   };
 
   const handleContinueReport = async (assignmentId: string) => {
+    if (!assignmentId) return;
     try {
       // Ищем отчет для этого задания
       const my = await ReportsApi.getMyReports();
@@ -218,7 +219,7 @@ function DashboardContent() {
   };
 
   const handleSubmitReport = async (assignmentId: string) => {
-
+    if (!assignmentId) return;
     try {
       // Ищем отчет для этого задания
       const my = await ReportsApi.getMyReports();
@@ -611,7 +612,7 @@ function DashboardContent() {
               <div className="space-y-4">
                 {acceptedAssignments.map((assignment) => {
                   // Находим соответствующий отчет для этого задания
-                  const report = reports?.find(r => r.assignment_id === assignment.id);
+                  const report = reports?.find(r => r?.assignment_id === assignment?.id);
                   // Рассчитываем прогресс заполнения отчета
                   const progress = calculateReportProgress(report?.checklist_schema);
                   // Определяем, является ли это новым заданием
@@ -620,14 +621,14 @@ function DashboardContent() {
                   const isStartCard = !report;
                   return (
                     <ContinueReportCard
-                      key={assignment.id}
+                      key={assignment?.id}
                       assignment={assignment}
                       report={report}
                       reportId={report?.id}
                       progress={progress}
                       isStartCard={isStartCard}
-                      onContinue={() => handleContinueReport(assignment.id)}
-                      onSubmit={() => handleSubmitReport(assignment.id)}
+                      onContinue={() => handleContinueReport(assignment?.id)}
+                      onSubmit={() => handleSubmitReport(assignment?.id)}
                       onShowFAQ={() => {
                         // Показываем FAQ без перезагрузки страницы
                         setShowInstructions(true);
@@ -648,13 +649,13 @@ function DashboardContent() {
             {takenAssignments.length > 0 && (
               <div className="space-y-4">
                 {takenAssignments.map((assignment) => (
-                  <div key={assignment.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
+                  <div key={assignment?.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex-1">
                         <h3 className="text-xl font-bold text-gray-800 mb-2">{assignment?.listing?.title}</h3>
                         <p className="text-gray-600 text-sm mb-2">{assignment?.listing?.address}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>📅 {assignment.checkin_date && assignment.checkout_date ? `${new Date(assignment.checkin_date).toLocaleDateString('ru-RU')} - ${new Date(assignment.checkout_date).toLocaleDateString('ru-RU')}` : 'Даты не указаны'}</span>
+                          <span>📅 {(assignment?.checkin_date && assignment?.checkout_date) ? `${new Date(assignment?.checkin_date).toLocaleDateString('ru-RU')} - ${new Date(assignment?.checkout_date).toLocaleDateString('ru-RU')}` : 'Даты не указаны'}</span>
                           <span>🏨 {assignment?.listing?.listing_type?.name || 'Тип не указан'}</span>
                         </div>
                       </div>

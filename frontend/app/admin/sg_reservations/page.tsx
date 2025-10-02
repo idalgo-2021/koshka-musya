@@ -167,66 +167,70 @@ export default function SgReservationsPage() {
               </thead>
               <tbody>
                 {data.reservations.map((reservation) => (
-                  <tr key={reservation.id} className="border-t">
-                    <td className="px-3 py-2">
-                      <div>
-                        <div className="font-medium">{reservation.BookingNumber}</div>
-                        <Link
-                          href={`/admin/listings/${reservation.ListingID}`}
-                          className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                        >
-                          <span>ID: {reservation.ListingID}</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="text-xs">
-                        <div>{new Date(reservation.CheckinDate).toLocaleDateString('ru-RU')}</div>
-                        <div>{new Date(reservation.CheckoutDate).toLocaleDateString('ru-RU')}</div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="text-xs">
-                        {reservation.guests ?
-                          (typeof reservation.guests === 'object' && reservation.guests.adults ?
-                            `${reservation.guests.adults} взр.${reservation.guests.children > 0 ? `, ${reservation.guests.children} дет.` : ''}` :
-                            'N/A') : 'N/A'}
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="text-xs">
-                        <div>{reservation.pricing?.pricing?.total?.toLocaleString()} {reservation.pricing?.pricing?.currency}</div>
-                        <div className="text-gray-500">
-                          {reservation.pricing?.pricing?.total &&
-                            Math.round(reservation.pricing.pricing.total / calculateDays(reservation.CheckinDate, reservation.CheckoutDate)).toLocaleString()} {reservation.pricing?.pricing?.currency}/день
+                  <>
+                  {reservation && (
+                    <tr key={reservation.id} className="border-t">
+                      <td className="px-3 py-2">
+                        <div>
+                          <div className="font-medium">{reservation.BookingNumber}</div>
+                          <Link
+                            href={`/admin/listings/${reservation.ListingID}`}
+                            className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                          >
+                            <span>ID: {reservation.ListingID}</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                        reservation.status.slug === 'new' ? 'bg-blue-100 text-blue-800' :
-                        reservation.status.slug === 'hold' ? 'bg-yellow-100 text-yellow-800' :
-                        reservation.status.slug === 'booked' ? 'bg-green-100 text-green-800' :
-                        'bg-red-100 text-red-800'
-                      }`}>
-                        {reservation.status.name}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2">
-                      {reservation.status.slug !== 'no-show' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleMarkAsNoShow(reservation.id)}
-                          disabled={markAsNoShowMutation.isPending}
-                          className="text-xs"
-                        >
-                          Не обрабатывать
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="text-xs">
+                          <div>{new Date(reservation.CheckinDate).toLocaleDateString('ru-RU')}</div>
+                          <div>{new Date(reservation.CheckoutDate).toLocaleDateString('ru-RU')}</div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="text-xs">
+                          {reservation.guests ?
+                            (typeof reservation.guests === 'object' && reservation.guests.adults ?
+                              `${reservation.guests.adults} взр.${reservation.guests.children > 0 ? `, ${reservation.guests.children} дет.` : ''}` :
+                              'N/A') : 'N/A'}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="text-xs">
+                          <div>{reservation.pricing?.pricing?.total?.toLocaleString()} {reservation.pricing?.pricing?.currency}</div>
+                          <div className="text-gray-500">
+                            {reservation.pricing?.pricing?.total &&
+                              Math.round(reservation.pricing.pricing.total / calculateDays(reservation.CheckinDate, reservation.CheckoutDate)).toLocaleString()} {reservation.pricing?.pricing?.currency}/день
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          reservation.status.slug === 'new' ? 'bg-blue-100 text-blue-800' :
+                          reservation.status.slug === 'hold' ? 'bg-yellow-100 text-yellow-800' :
+                          reservation.status.slug === 'booked' ? 'bg-green-100 text-green-800' :
+                          'bg-red-100 text-red-800'
+                        }`}>
+                          {reservation.status.name}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        {reservation.status.slug !== 'no-show' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleMarkAsNoShow(reservation.id)}
+                            disabled={markAsNoShowMutation.isPending}
+                            className="text-xs"
+                          >
+                            Не обрабатывать
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  )}
+                  </>
                 ))}
               </tbody>
             </table>
