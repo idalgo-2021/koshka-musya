@@ -61,7 +61,7 @@ function DashboardContent() {
 
   useEffect(() => {
     if (cityFilter !== undefined) {
-      fetchAssignments(1, 20, false, cityFilter);
+      fetchAssignments(1, 20, false, selectedListingType, cityFilter);
     }
   }, [cityFilter, fetchAssignments]);
 
@@ -71,7 +71,7 @@ function DashboardContent() {
       setSelectedListingType(newTypeId)
       setLoading(true)
       // debugger;
-      const offeredResponse: AssignmentsResponse = await AssignmentsApi.getAvailableAssignments(1, 20, newTypeId);
+      const offeredResponse: AssignmentsResponse = await AssignmentsApi.getAvailableAssignments(1, 20, newTypeId, cityInput);
       setAssignments(offeredResponse.assignments);
       // debugger;
       setLoading(false)
@@ -230,7 +230,7 @@ function DashboardContent() {
 
         toast.success('Отчет отправлен на проверку');
 
-        await fetchAssignments(1, 20, false, cityFilter);
+        await fetchAssignments(1, 20, false, selectedListingType, cityFilter);
       } else {
         toast.error('Отчет не найден');
       }
@@ -259,7 +259,7 @@ function DashboardContent() {
       try {
         await acceptAssignment(assignmentId);
         toast.success("Задание успешно взято!");
-        await fetchAssignments(1, 20, false, cityFilter);
+        await fetchAssignments(1, 20, false, selectedListingType, cityFilter);
       } catch (error) {
         console.error('Error taking assignment:', error);
         toast.error('Ошибка при взятии задания');

@@ -36,7 +36,7 @@ export function useAssignments() {
     }
   }, []);
 
-  const fetchAssignments = React.useCallback(async (page = 1, limit = 20, retry = false, city?: string) => {
+  const fetchAssignments = React.useCallback(async (page = 1, limit = 20, retry = false, listingType?: number, city?: string) => {
     if (!retry) {
       setLoading(true);
       setError(null);
@@ -47,7 +47,7 @@ export function useAssignments() {
       const token = localStorage.getItem('access_token');
 
       // Получаем свободные задания (offered) через /assignments (без фильтра по пользователю)
-      const offeredResponse = await AssignmentsApi.getAvailableAssignments(page, limit, undefined, city);
+      const offeredResponse = await AssignmentsApi.getAvailableAssignments(page, limit, listingType, city);
 
       // Фильтруем отклоненные задания из доступных
       const filteredOfferedAssignments = offeredResponse.assignments.filter(assignment =>
@@ -253,11 +253,6 @@ export function useAssignments() {
       }
     }
   }, []);
-
-
-  React.useEffect(() => {
-    fetchAssignments();
-  }, [fetchAssignments]);
 
 
   React.useEffect(() => {
