@@ -8,14 +8,14 @@ import { Button } from '@/components/ui/button'
 import { CopyToClipboard } from '@/components/CopyToClipboard'
 import type { Assignment } from '@/entities/assignments/types'
 import { formatDate } from "@/lib/date"
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  CreditCard, 
-  Clock, 
-  Building, 
-  User, 
+import {
+  Calendar,
+  MapPin,
+  Users,
+  CreditCard,
+  Clock,
+  Building,
+  User,
   Target,
   ExternalLink,
   Eye
@@ -83,7 +83,7 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute top-2 right-2">
-              <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(assignment.status?.id)}`}>
+              <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(assignment?.status?.id)}`}>
                 {assignment.status?.name || 'No Status'}
               </span>
             </div>
@@ -103,9 +103,9 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                 {assignment.listing?.title || 'Задание без названия'}
               </h3>
             </Link>
-            
+
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-             
+
               {assignment.reservation_id && assignment.booking_number && (
                 <Badge variant="outline" className="text-xs">
                   Бронь: <CopyToClipboard text={assignment.booking_number} showIcon={false} />
@@ -250,7 +250,7 @@ export default function AssignmentCard({ assignment }: AssignmentCardProps) {
                 Подробнее
               </Link>
             </Button>
-            
+
             {assignment.listing?.id && (
               <Button variant="outline" size="sm" asChild>
                 <Link href={`/admin/listings/${assignment.listing.id}`}>

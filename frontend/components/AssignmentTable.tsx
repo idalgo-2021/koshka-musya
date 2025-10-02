@@ -298,7 +298,7 @@ export function AssignmentTable({ assignments }: AssignmentTableProps) {
 
                     {/* Status */}
                     <td className="p-4 align-middle hidden md:table-cell">
-                      <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(assignment.status?.id)}`}>
+                      <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(assignment?.status?.id)}`}>
                         {assignment.status?.name || 'No Status'}
                       </span>
                     </td>

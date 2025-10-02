@@ -7,12 +7,12 @@ import { toast } from "sonner";
 // Функция для проверки, можно ли принять задание (в течение 24 часов до заселения или если заселение уже началось)
 const canAcceptAssignment = (assignment: Assignment): boolean => {
   if (!assignment?.expires_at) return true;
-  
+
   const expiresAt = new Date(assignment.expires_at);
   const now = new Date();
   const timeDiff = expiresAt.getTime() - now.getTime();
   const hoursDiff = timeDiff / (1000 * 60 * 60);
-  
+
   // Можно принять если: в течение 24 часов до заселения ИЛИ заселение уже началось
   return hoursDiff <= 24;
 };
@@ -20,16 +20,16 @@ const canAcceptAssignment = (assignment: Assignment): boolean => {
 // Функция для получения времени до заселения
 const getTimeUntilCheckin = (assignment: Assignment, currentTime: Date): string => {
   if (!assignment?.expires_at) return "Время не указано";
-  
+
   const checkinTime = new Date(assignment.expires_at);
   const timeDiff = checkinTime.getTime() - currentTime.getTime();
-  
+
   if (timeDiff <= 0) return "Заселение уже началось";
-  
+
   const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-  
+
   if (days > 0) {
     return `${days} дн. ${hours} ч. до заселения`;
   } else if (hours > 0) {
@@ -70,35 +70,35 @@ export default function AssignmentActionButtons({
 
     return () => clearInterval(interval);
   }, []);
-  
-  
+
+
   // Проверяем, можно ли принять задание по времени (в течение 24 часов до заселения)
   const canAccept = canAcceptAssignment(assignment);
-  
+
   // Определяем статус задания
-  const status = assignment.status.slug;
-  
+  const status = assignment?.status?.slug;
+
   // Проверяем, взято ли задание текущим пользователем
-  const isAssignedToCurrentUser = currentUserId && 
-                                 assignment.reporter?.id && 
-                                 assignment.reporter.id !== null && 
-                                 assignment.reporter.id !== undefined && 
+  const isAssignedToCurrentUser = currentUserId &&
+                                 assignment.reporter?.id &&
+                                 assignment.reporter.id !== null &&
+                                 assignment.reporter.id !== undefined &&
                                  assignment.reporter.id !== '00000000-0000-0000-0000-000000000000' &&
                                  assignment.reporter.id === currentUserId;
-  
+
   const handleAccept = async () => {
-    
+
     if (isLoading || (status !== 'pending' && status !== 'offered')) {
       return;
     }
-    
+
     // Проверяем время для принятия
     if (!canAccept) {
       // Показываем уведомление об ошибке
       toast.error('Задание можно принять за 24 часа до заселения или после начала заселения. Пожалуйста, подождите.');
       return;
     }
-    
+
     setIsLoading(true);
     try {
       await onAccept(assignment.id);
@@ -106,10 +106,10 @@ export default function AssignmentActionButtons({
       setIsLoading(false);
     }
   };
-  
+
   const handleDecline = async () => {
             if (isLoading || (status !== 'pending' && status !== 'offered')) return;
-    
+
     setIsLoading(true);
     try {
       await onDecline(assignment.id);
@@ -120,7 +120,7 @@ export default function AssignmentActionButtons({
 
   const handleTake = async () => {
     if (isLoading || status !== 'offered') return;
-    
+
     setIsLoading(true);
     try {
       if (onTake) {
@@ -130,7 +130,7 @@ export default function AssignmentActionButtons({
       setIsLoading(false);
     }
   };
-  
+
   const handleStartReport = () => {
     if (onStartReport) {
       onStartReport(assignment.id);
@@ -139,14 +139,14 @@ export default function AssignmentActionButtons({
       router.push(`/reports?assignment=${assignment.id}`);
     }
   };
-  
+
   // Если задание в общем пуле (не предложено пользователю) - показываем кнопки "Взять" и "Отказаться"
   // НО если у пользователя есть активные задания, то не показываем кнопки для любых offered заданий
   if (!isAssignedToCurrentUser && status === 'offered' && !hasActiveAssignments) {
-    
+
     return (
       <div className="flex gap-3">
-        <Button 
+        <Button
           className="flex-1 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           onClick={handleTake}
           disabled={isLoading}
@@ -179,9 +179,9 @@ export default function AssignmentActionButtons({
             </div>
           </div>
         </div>
-        
+
         <div className="flex gap-3">
-          <Button 
+          <Button
             className="flex-1 h-14 bg-gradient-to-r from-gray-400 to-gray-500 text-white font-semibold rounded-2xl shadow-lg cursor-not-allowed opacity-60"
             disabled={true}
           >
@@ -217,10 +217,10 @@ export default function AssignmentActionButtons({
             </div>
           </div>
         </div>
-        
+
         {/* Кнопки действий */}
         <div className="flex gap-3">
-          <Button 
+          <Button
             className="flex-1 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             onClick={handleAccept}
             disabled={isLoading}
@@ -230,7 +230,7 @@ export default function AssignmentActionButtons({
             ) : null}
             Принять
           </Button>
-          <Button 
+          <Button
             className="flex-1 h-14 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             onClick={handleDecline}
             disabled={isLoading}
@@ -244,12 +244,12 @@ export default function AssignmentActionButtons({
       </div>
     );
   }
-  
+
   // Если задание принято
   if (status === 'accepted') {
     return (
       <div className="flex gap-3">
-        <Button 
+        <Button
           className="flex-1 h-14 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           onClick={handleStartReport}
         >
@@ -267,7 +267,7 @@ export default function AssignmentActionButtons({
       </div>
     );
   }
-  
+
   // Если задание отклонено
   if (status === 'declined') {
     return (
@@ -287,7 +287,7 @@ export default function AssignmentActionButtons({
       </div>
     );
   }
-  
+
   // Если задание предложено пользователю и можно принять (pending или offered) - в течение 24 часов
   if (isAssignedToCurrentUser && canAccept && (status === 'pending' || status === 'offered')) {
     return (
@@ -313,10 +313,10 @@ export default function AssignmentActionButtons({
             </div>
           </div>
         </div>
-        
+
         {/* Кнопки действий */}
         <div className="flex gap-3">
-          <Button 
+          <Button
             className="flex-1 h-14 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             onClick={handleAccept}
             disabled={isLoading}
@@ -326,7 +326,7 @@ export default function AssignmentActionButtons({
             ) : null}
             Принять
           </Button>
-          <Button 
+          <Button
             className="flex-1 h-14 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
             onClick={handleDecline}
             disabled={isLoading}
@@ -345,7 +345,7 @@ export default function AssignmentActionButtons({
   if (status === 'accepted') {
     return (
       <div className="flex gap-3">
-        <Button 
+        <Button
           className="flex-1 h-14 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           onClick={handleStartReport}
         >

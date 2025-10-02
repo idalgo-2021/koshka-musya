@@ -351,8 +351,8 @@ export default function ReportPage() {
           const myReports = await ReportsApi.getMyReports(1, 50);
           const reportInfo = myReports.reports.find(r => r.id === reportId);
           if (reportInfo) {
-            if (reportInfo.status?.slug !== 'draft' && reportInfo.status?.slug !== 'generating') {
-              const statusName = reportInfo.status?.name || reportInfo.status?.slug || 'неизвестный';
+            if (reportInfo?.status?.slug !== 'draft' && reportInfo?.status?.slug !== 'generating') {
+              const statusName = reportInfo?.status?.name || reportInfo?.status?.slug || 'неизвестный';
               setError(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
               toast.error(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
               // Перенаправляем на дашборд через 3 секунды

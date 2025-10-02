@@ -193,7 +193,7 @@ function DashboardContent() {
 
       if (report) {
         // Проверяем статус отчета (generating и draft считаем рабочими статусами)
-        if (report.status?.slug === 'draft' || report.status?.slug === 'generating') {
+        if (report?.status?.slug === 'draft' || report?.status?.slug === 'generating') {
           // Для новых отчетов (без checklist_schema) используем start страницу
           if (!report.checklist_schema || Object.keys(report.checklist_schema).length === 0) {
             router.push(`/reports/${report.id}/start`);
@@ -201,7 +201,7 @@ function DashboardContent() {
             router.push(`/reports/${report.id}`);
           }
         } else {
-          const statusName = report.status?.name || report.status?.slug || 'неизвестный';
+          const statusName = report?.status?.name || report?.status?.slug || 'неизвестный';
           toast.error(`Отчет в статусе "${statusName}". Загрузка недоступна.`);
         }
       } else {

@@ -186,7 +186,7 @@ export function AssignmentDetailCard({ assignment }: AssignmentDetailCardProps) 
           <div className="flex items-start justify-between">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                {getStatusBadge(assignment.status)}
+                {getStatusBadge(assignment?.status)}
                 <Badge variant="outline" className="text-xs">
                   ID: <CopyToClipboard text={assignment.id} showIcon={false} />
                 </Badge>
@@ -233,7 +233,7 @@ export function AssignmentDetailCard({ assignment }: AssignmentDetailCardProps) 
 
               <div>
                 <div className="text-sm font-medium text-muted-foreground mb-1">Статус</div>
-                {getStatusBadge(assignment.status)}
+                {getStatusBadge(assignment?.status)}
               </div>
             </CardContent>
           </Card>

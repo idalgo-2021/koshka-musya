@@ -108,10 +108,10 @@ export default function SgReservationCard({
             <Badge
               className={cn(
                 "text-xs font-medium",
-                STATUS_COLORS[reservation.status.slug as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'
+                STATUS_COLORS[reservation?.status?.slug as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-800'
               )}
             >
-              {reservation.status.name}
+              {reservation?.status?.name}
             </Badge>
           </div>
         </CardHeader>
@@ -155,7 +155,7 @@ export default function SgReservationCard({
 
           {/* Actions */}
           <div className="flex gap-2 pt-2">
-            {reservation.status.slug !== 'no-show' && (
+            {reservation?.status?.slug !== 'no-show' && (
               <Button
                 variant="outline"
                 size="sm"
