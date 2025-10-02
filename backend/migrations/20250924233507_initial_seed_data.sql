@@ -281,7 +281,7 @@ SELECT
     (r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp AS checkout_date,
     r.listing_id,
     'Проверка объекта по бронированию от OTA' AS purpose,
-    ((r.source_msg -> 'reservation' -> 'dates' ->> 'checkout')::timestamp + interval '1 day') AS expires_at, -- например, истекает через 1 день после выезда
+    ((r.source_msg -> 'reservation' -> 'dates' ->> 'checkin')::timestamp + interval '1 day') AS expires_at, -- например, истекает через 1 день после выезда
     (SELECT id FROM assignment_statuses WHERE slug = 'offered') -- или задай конкретный статус
 FROM ota_sg_reservations r
 WHERE r.booking_number = 'TG-20250927-AB1234'
