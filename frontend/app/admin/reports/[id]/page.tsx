@@ -104,8 +104,9 @@ export default function ReportStaffDetailPage() {
         <div className="space-y-4 mt-7">
           <div className="flex flex-col md:flex-row justify-between">
             <ReportHeader
+              report={data}
               assignmentInfo={{
-                title: `Статус (${data.status.name})` || '',
+                title: data.listing.title || 'Отчет о проверке',
                 address: data.listing.address || '',
                 city: data.listing.city || '',
                 country: data.listing.country || '',
@@ -113,15 +114,7 @@ export default function ReportStaffDetailPage() {
               }}
               progress={0}
               checklistSchema={null}
-            >
-              <span className="block">Создан: {data.created_at}</span>
-              {data.updated_at && (
-                <span className="block">Обновлено: {formatDate(data.updated_at)}</span>
-              )}
-              {data.reporter && (
-                <span className="block">Автор: {data.reporter?.username}</span>
-              )}
-            </ReportHeader>
+            />
 
             {data.listing && (
               <Link href={`/admin/listings/${data.listing.id}`}>
