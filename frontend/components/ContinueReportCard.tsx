@@ -91,7 +91,7 @@ export default function ContinueReportCard({ assignment, report, onContinue, onS
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 mb-1">Срок действия до</p>
                 <p className="text-sm text-gray-600">
-                  {assignment.expires_at ? new Date(assignment.expires_at)?.toLocaleString('ru-RU', {
+                  {assignment?.expires_at ? new Date(assignment.expires_at)?.toLocaleString('ru-RU', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit',

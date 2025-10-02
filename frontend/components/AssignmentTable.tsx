@@ -102,8 +102,8 @@ export function AssignmentTable({ assignments }: AssignmentTableProps) {
           bValue = b.status?.name || ''
           break
         case 'expires_at':
-          aValue = a.expires_at ? new Date(a.expires_at).getTime() : 0
-          bValue = b.expires_at ? new Date(b.expires_at).getTime() : 0
+          aValue = a?.expires_at ? new Date(a?.expires_at).getTime() : 0
+          bValue = b?.expires_at ? new Date(b?.expires_at).getTime() : 0
           break
         case 'listing':
           aValue = a.listing?.title || ''
@@ -306,14 +306,14 @@ export function AssignmentTable({ assignments }: AssignmentTableProps) {
                     {/* Expires At */}
                     <td className="p-4 align-middle text-sm hidden lg:table-cell">
                       <div className="space-y-1">
-                        {assignment.expires_at && (
+                        {assignment?.expires_at && (
                           <div className="font-medium">
-                            {formatDate(assignment.expires_at)}
+                            {formatDate(assignment?.expires_at)}
                           </div>
                         )}
-                        {assignment.deadline && (
+                        {assignment?.deadline && (
                           <div className="text-xs text-orange-600">
-                            Дедлайн: {formatDate(assignment.deadline)}
+                            Дедлайн: {formatDate(assignment?.deadline)}
                           </div>
                         )}
                       </div>

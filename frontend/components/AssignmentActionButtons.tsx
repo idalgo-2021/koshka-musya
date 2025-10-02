@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 // Функция для проверки, можно ли принять задание (в течение 24 часов до заселения или если заселение уже началось)
 const canAcceptAssignment = (assignment: Assignment): boolean => {
-  if (!assignment.expires_at) return true;
+  if (!assignment?.expires_at) return true;
   
   const expiresAt = new Date(assignment.expires_at);
   const now = new Date();
@@ -19,7 +19,7 @@ const canAcceptAssignment = (assignment: Assignment): boolean => {
 
 // Функция для получения времени до заселения
 const getTimeUntilCheckin = (assignment: Assignment, currentTime: Date): string => {
-  if (!assignment.expires_at) return "Время не указано";
+  if (!assignment?.expires_at) return "Время не указано";
   
   const checkinTime = new Date(assignment.expires_at);
   const timeDiff = checkinTime.getTime() - currentTime.getTime();

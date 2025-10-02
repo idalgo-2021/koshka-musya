@@ -199,7 +199,7 @@ export function AssignmentDetailCard({ assignment }: AssignmentDetailCardProps) 
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Срок действия</div>
               <div className="font-medium text-orange-600">
-                {formatDate(assignment.expires_at)}
+                {formatDate(assignment?.expires_at)}
               </div>
             </div>
           </div>
