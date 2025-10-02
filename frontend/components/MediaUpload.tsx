@@ -3,6 +3,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import { UploadsApi } from '@/entities/uploads/api';
+import { useImageViewer } from '@/hooks/useImageViewer';
 
 interface MediaItem {
   name: string;
@@ -33,6 +34,7 @@ export default function MediaUpload({
   uploadProgress,
   onUploadProgressChange
 }: MediaUploadProps) {
+  const { openImages } = useImageViewer();
   // Функция сжатия изображений
   const compressImage = async (inputFile: File): Promise<Blob> => {
     try {
@@ -159,8 +161,8 @@ export default function MediaUpload({
   };
 
   const removeMedia = (index: number) => {
-    const newMedia = media.filter((_, i) => i !== index);
-    onMediaChange(itemKey, newMedia);
+    const newMedia = media?.filter((_, i) => i !== index);
+    onMediaChange?.(itemKey, newMedia);
   };
 
   if (mediaRequirement === 'none') return null;
@@ -199,7 +201,7 @@ export default function MediaUpload({
       )}
 
       {/* Upload Progress Indicator */}
-      {uploadProgress && Object.keys(uploadProgress).length > 0 && (
+      {uploadProgress && Object.keys(uploadProgress)?.length > 0 && (
         <div className="mt-4 space-y-2">
           {Object.entries(uploadProgress).map(([key, progress]) => (
             <div key={key} className="w-full bg-gray-200 rounded-full h-2">
@@ -213,10 +215,10 @@ export default function MediaUpload({
       )}
 
       {/* Media Preview */}
-      {media.length > 0 && (
+      {media?.length > 0 && (
         <div className="grid grid-cols-3 gap-2 mt-3">
           {media.map((mediaItem, idx) => (
-            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border">
+            <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border group">
               {mediaItem.media_type === 'video' ? (
                 <video
                   src={mediaItem.url}
@@ -225,26 +227,53 @@ export default function MediaUpload({
                   preload="metadata"
                 />
               ) : (
-                <Image
-                  src={mediaItem.url}
-                  alt={mediaItem.name}
-                  fill
-                  sizes="(max-width: 768px) 150px, 200px"
-                  className="object-cover"
-                  quality={95}
-                  priority={idx < 2}
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
-                  onError={() => {
-                    console.error('Image load error:', mediaItem.url);
-                  }}
-                />
+                <button
+                  onClick={() => openImages(
+                    media
+                      .filter(item => item.media_type === 'image')
+                      .map(item => ({
+                        url: item.url,
+                        title: item.name,
+                        id: item.name
+                      })),
+                    media.filter(item => item.media_type === 'image').findIndex(item => item.url === mediaItem.url)
+                  )}
+                  className="w-full h-full relative focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg"
+                >
+                  <Image
+                    src={mediaItem.url}
+                    alt={mediaItem.name}
+                    fill
+                    sizes="(max-width: 768px) 150px, 200px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-200"
+                    quality={95}
+                    priority={idx < 2}
+                    placeholder="blur"
+                    blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
+                    onError={() => {
+                      console.error('Image load error:', mediaItem.url);
+                    }}
+                  />
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </button>
               )}
               {!disabled && (
                 <button
                   type="button"
-                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors duration-200"
-                  onClick={() => removeMedia(idx)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors duration-200 z-10"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeMedia(idx);
+                  }}
                 >
                   ×
                 </button>
