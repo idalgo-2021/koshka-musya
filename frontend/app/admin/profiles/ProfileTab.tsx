@@ -13,6 +13,7 @@ import * as React from "react"
 const ITEMS_PER_PAGE = 10
 
 const formatDate = (dateString: string) => {
+  if (!dateString) return ''
   return new Date(dateString).toLocaleDateString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
@@ -23,6 +24,7 @@ const formatDate = (dateString: string) => {
 }
 
 const getActivityStatus = (lastActiveAt: string) => {
+  if (!lastActiveAt) return { label: 'Неизвестно', color: 'bg-gray-100 text-gray-800' }
   const lastActive = new Date(lastActiveAt)
   const now = new Date()
   const diffHours = (now.getTime() - lastActive.getTime()) / (1000 * 60 * 60)

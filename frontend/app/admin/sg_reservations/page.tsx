@@ -17,6 +17,7 @@ import SelectRow from "@/components/ui/select-row";
 const ITEMS_PER_PAGE = 10
 
 const calculateDays = (checkin: string, checkout: string) => {
+  if (!checkin || !checkout) return 0
   const checkinDate = new Date(checkin)
   const checkoutDate = new Date(checkout)
   const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime())

@@ -37,6 +37,7 @@ export default function ProfileHistoryPage() {
     return filtered.sort((a, b) => {
       switch (sortBy) {
         case 'date':
+          if (!a?.created_at || !b?.created_at) return 0;
           return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'status':
           const statusOrder = { 'approved': 3, 'pending': 2, 'rejected': 1 };

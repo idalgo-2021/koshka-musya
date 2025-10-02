@@ -19,6 +19,7 @@ interface SgReservationCardProps {
 }
 
 const calculateDays = (checkin: string, checkout: string) => {
+  if (!checkin || !checkout) return 0
   const checkinDate = new Date(checkin)
   const checkoutDate = new Date(checkout)
   const diffTime = Math.abs(checkoutDate.getTime() - checkinDate.getTime())
