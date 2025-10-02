@@ -126,47 +126,171 @@ export default function ReportStaffDetailPage() {
           </div>
 
           {/* Checklist (read-only reuse) */}
-          <Card>
-            <CardContent className="p-4 space-y-3">
-              <h2 className="text-lg font-semibold">Checklist</h2>
+          <div className="overflow-hidden border-0 shadow-none py-0 my-0">
+            {/* <CardContent className="p-0 px-0 py-0 my-0 mx-0"> */}
+              {/* Checklist Header */}
+              <div className="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900">Ответы</h2>
+                    <p className="text-sm text-gray-600">Детали проверки и ответы</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
               {!checklistSchema ? (
-                <div>Empty checklist</div>
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Checklist пуст</h3>
+                  <p className="text-gray-600">Нет данных для отображения</p>
+                </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {checklistSchema.sections.map((sec) => (
-                    <details key={String(sec.id)} className="space-y-2" open>
-                      <summary className="font-semibold cursor-pointer list-none">{sec.title}</summary>
-                      {sec.items.map((it) => (
-                        <div key={String(it.id)} className="rounded-md border p-3 space-y-1">
-                          <div className="font-medium">{it.title}</div>
-                          <div className="text-sm text-muted-foreground">Answer Type: {it.answer_types?.name}</div>
-                          {it.answer?.result && (
-                            <div className="text-sm"><span
-                              className="text-muted-foreground">Result:</span> {it.answer.result}</div>
-                          )}
-                          {it.answer?.comment && (
-                            <div className="text-sm"><span
-                              className="text-muted-foreground">Comment:</span> {it.answer.comment}</div>
-                          )}
-                          {it.answer?.media && it.answer.media.length > 0 && (
-                            <div className="text-sm space-y-1">
-                              <div className="text-muted-foreground">Media:</div>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                                {it.answer.media.map(m => (
-                                  <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="block">
-                                    <Image
-                                      src={m.url}
-                                      width={300} height={300}
-                                      alt="media"
-                                      className="w-full h-auto rounded-md border object-cover"/>
-                                  </a>
-                                ))}
+                    <div key={String(sec.id)} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                      {/* Section Header */}
+                      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900">{sec.title}</h3>
+                        </div>
+                      </div>
+
+                      {/* Section Items */}
+                      <div className="p-6 space-y-4">
+                        {sec.items.map((it) => (
+                          <div key={String(it.id)} className="bg-gray-50/50 rounded-lg border border-gray-100 p-4 hover:shadow-sm transition-shadow duration-200">
+                            {/* Item Header */}
+                            <div className="flex items-start justify-between gap-4 mb-3">
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-900 mb-1">{it.title}</h4>
+                                {it.description && (
+                                  <p className="text-sm text-gray-600 mb-2">{it.description}</p>
+                                )}
+                                <div className="flex items-center gap-2">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {it.answer_types?.name}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </details>
+
+                            {/* Answer Content */}
+                            <div className="space-y-3">
+                              {/* Result */}
+                              {it.answer?.result && (
+                                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center">
+                                      <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-700">Результат</span>
+                                  </div>
+                                  <p className="text-sm text-gray-900 font-medium">{it.answer.result}</p>
+                                </div>
+                              )}
+
+                              {/* Comment */}
+                              {it.answer?.comment && (
+                                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                                      <svg className="w-3 h-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-700">Комментарий</span>
+                                  </div>
+                                  <p className="text-sm text-gray-900 leading-relaxed">{it.answer.comment}</p>
+                                </div>
+                              )}
+
+                              {/* Media */}
+                              {it.answer?.media && it.answer.media.length > 0 && (
+                                <div className="bg-white rounded-lg border border-gray-200 p-3">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
+                                      <svg className="w-3 h-3 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                      </svg>
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-700">Медиа файлы</span>
+                                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                                      {it.answer.media.length}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                    {it.answer.media.map(m => (
+                                      <a 
+                                        key={m.id} 
+                                        href={m.url} 
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="group block relative overflow-hidden rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md"
+                                      >
+                                        <div className="aspect-square relative">
+                                          <Image
+                                            src={m.url}
+                                            width={300} 
+                                            height={300}
+                                            alt="media"
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                          />
+                                          {/* Overlay */}
+                                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                              <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                                                <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        {/* Media type badge */}
+                                        <div className="absolute top-2 right-2">
+                                          <span className="text-xs bg-black/70 text-white px-2 py-1 rounded-full">
+                                            {m.media_type}
+                                          </span>
+                                        </div>
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* No Answer State */}
+                              {!it.answer?.result && !it.answer?.comment && (!it.answer?.media || it.answer.media.length === 0) && (
+                                <div className="bg-gray-50 rounded-lg border border-gray-200 p-4 text-center">
+                                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-2">
+                                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                  </div>
+                                  <p className="text-sm text-gray-500">Ответ не предоставлен</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                   {/*{checklistSchema.sections.map((section, index: number) => {*/}
                   {/*  const isExpanded = true;*/}
@@ -197,8 +321,9 @@ export default function ReportStaffDetailPage() {
                 </div>
 
               )}
-            </CardContent>
-          </Card>
+              </div>
+            {/* </CardContent> */}
+          </div>
         </div>
       )}
     </div>
@@ -210,6 +335,7 @@ function ListingCard({
                      }: {
   report: Report;
 }) {
+  if (!report) return null;
   return (
     <div
       className="bg-white rounded-3xl border-0 overflow-hidden transition-all duration-300 hover:scale-[1.02] group">
@@ -278,7 +404,7 @@ function ListingCard({
             </div>
 
             {/* Address */}
-            {(report.listing.address) && (
+            {(report?.listing?.address) && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
