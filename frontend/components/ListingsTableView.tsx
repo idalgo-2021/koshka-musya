@@ -3,7 +3,6 @@
 import * as React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useImageViewer } from '@/hooks/useImageViewer'
@@ -44,19 +43,8 @@ type SortDirection = 'asc' | 'desc' | null
 
 export function ListingsTableView({ listings }: ListingsTableViewProps) {
   const { openImage } = useImageViewer()
-  const [expandedRows, setExpandedRows] = React.useState<Set<string>>(new Set())
   const [sortField, setSortField] = React.useState<SortField | null>(null)
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(null)
-
-  const toggleRow = (id: string) => {
-    const newExpanded = new Set(expandedRows)
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id)
-    } else {
-      newExpanded.add(id)
-    }
-    setExpandedRows(newExpanded)
-  }
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -208,7 +196,6 @@ export function ListingsTableView({ listings }: ListingsTableViewProps) {
           </thead>
           <tbody>
             {sortedListings.map((listing) => {
-              const isExpanded = expandedRows.has(listing.id)
 
               return (
                 <React.Fragment key={listing.id}>
@@ -295,54 +282,6 @@ export function ListingsTableView({ listings }: ListingsTableViewProps) {
                       </div>
                     </td>
                   </tr>
-
-                  {/* Expanded Row Details */}
-                  {isExpanded && (
-                    <tr className="bg-gradient-to-r from-muted/20 to-muted/10 border-b border-border/30">
-                      <td colSpan={6} className="p-4">
-                        <Card className="bg-card/50 border-border/50 shadow-sm">
-                          <CardContent className="p-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                              {/* Description */}
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <Building className="w-4 h-4" />
-                                  <span>Описание</span>
-                                </div>
-                                <p className="text-foreground leading-relaxed">{listing.description}</p>
-                              </div>
-
-                              {/* Address Details */}
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <MapPin className="w-4 h-4" />
-                                  <span>Полный адрес</span>
-                                </div>
-                                <p className="text-foreground">{listing.address}</p>
-                                <p className="text-muted-foreground">{listing.city}, {listing.country}</p>
-                              </div>
-
-                              {/* Coordinates */}
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-1 text-muted-foreground">
-                                  <Hash className="w-4 h-4" />
-                                  <span>Координаты</span>
-                                </div>
-                                <div className="space-y-1">
-                                  <div className="text-foreground">
-                                    <span className="text-muted-foreground">Широта:</span> {listing.latitude}
-                                  </div>
-                                  <div className="text-foreground">
-                                    <span className="text-muted-foreground">Долгота:</span> {listing.longitude}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </td>
-                    </tr>
-                  )}
                 </React.Fragment>
               )
             })}
