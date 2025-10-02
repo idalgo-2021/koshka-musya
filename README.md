@@ -70,7 +70,7 @@ make clean
 - `JWT_REFRESH_TOKEN_LIFETIME_SECONDS=604800`
 - `ASSIGNMENT_DEADLINE_HOURS=12`
 
-- `FRONTEND_URL=http://localhost:3000 # для CORS`
+- `FRONTEND_URL=* # для CORS`
 
 - `IMAGEKIT_PRIVATE_KEY=my_private_key`
 - `IMAGEKIT_PUBLIC_KEY=my_public_key`
