@@ -79,7 +79,7 @@ export default function AssignmentActionButtons({
   const status = assignment?.status?.slug;
 
   // Проверяем, взято ли задание текущим пользователем
-  const isAssignedToCurrentUser = currentUserId &&
+  const isAssignedToCurrentUser = assignment?.reporter && currentUserId &&
                                  assignment.reporter?.id &&
                                  assignment.reporter.id !== null &&
                                  assignment.reporter.id !== undefined &&
@@ -120,7 +120,9 @@ export default function AssignmentActionButtons({
 
   const handleTake = async () => {
     if (isLoading || status !== 'offered') return;
-
+    if (!assignment?.id) {
+      return;
+    }
     setIsLoading(true);
     try {
       if (onTake) {
@@ -132,11 +134,14 @@ export default function AssignmentActionButtons({
   };
 
   const handleStartReport = () => {
+    if (!assignment?.id) {
+      return;
+    }
     if (onStartReport) {
-      onStartReport(assignment.id);
+      onStartReport(assignment?.id);
     } else {
       // Fallback: попробуем найти отчет
-      router.push(`/reports?assignment=${assignment.id}`);
+      router.push(`/reports?assignment=${assignment?.id}`);
     }
   };
 
