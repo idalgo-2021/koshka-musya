@@ -22,7 +22,7 @@ export default function ReportStaffDetailPage() {
   const params = useParams<{ id: string }>()
   const id = String(params?.id ?? '')
   const router = useRouter()
-  const { openImage } = useImageViewer()
+  const { openImages } = useImageViewer()
 
   const {data, isLoading, isError} = useQuery<Report>({
     queryKey: ['report_staff', id],
@@ -237,10 +237,17 @@ export default function ReportStaffDetailPage() {
                                     </span>
                                   </div>
                                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                    {it.answer.media.map(m => (
+                                    {it.answer.media.map((m, index) => (
                                       <button
                                         key={m.id}
-                                        onClick={() => openImage(m.url, `${it.title} - ${m.media_type}`)}
+                                        onClick={() => openImages(
+                                          it.answer.media.map(media => ({
+                                            url: media.url,
+                                            title: `${it.title} - ${media.media_type}`,
+                                            id: media.id
+                                          })),
+                                          index
+                                        )}
                                         className="group block relative overflow-hidden rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                       >
                                         <div className="aspect-square relative">

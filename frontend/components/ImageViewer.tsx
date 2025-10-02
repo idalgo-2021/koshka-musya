@@ -9,13 +9,17 @@ import {
   ZoomOut,
   RotateCw,
   Download,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 
 export function ImageViewer() {
   const {
     state,
     closeViewer,
+    nextImage,
+    previousImage,
     setImageScale,
     setImageRotation,
     setImagePosition,
@@ -102,12 +106,20 @@ export function ImageViewer() {
           e.preventDefault()
           handleDownload()
           break
+        case 'ArrowLeft':
+          e.preventDefault()
+          if (state.images.length > 1) previousImage()
+          break
+        case 'ArrowRight':
+          e.preventDefault()
+          if (state.images.length > 1) nextImage()
+          break
       }
     }
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [state.isOpen, closeViewer, handleZoomIn, handleZoomOut, handleRotate, handleDownload])
+  }, [state.isOpen, state.images.length, closeViewer, handleZoomIn, handleZoomOut, handleRotate, handleDownload, previousImage, nextImage])
 
   if (!state.isOpen || !state.imageUrl) {
     return null
@@ -121,6 +133,11 @@ export function ImageViewer() {
           <div className="flex items-center gap-2 text-white">
             <ImageIcon className="w-5 h-5" />
             <span className="font-medium">{state.imageTitle || 'Image'}</span>
+            {state.images.length > 1 && (
+              <span className="text-sm text-white/70">
+                ({state.currentIndex + 1} / {state.images.length})
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -152,6 +169,28 @@ export function ImageViewer() {
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
       >
+        {/* Navigation Buttons */}
+        {state.images.length > 1 && (
+          <>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={previousImage}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 w-12 h-12 rounded-full"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={nextImage}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20 w-12 h-12 rounded-full"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Button>
+          </>
+        )}
+
         <img
           src={state.imageUrl}
           alt={state.imageTitle || 'Image'}
@@ -205,11 +244,16 @@ export function ImageViewer() {
 
         {/* Keyboard Shortcuts Help */}
         <div className="text-center text-white/60 text-xs mt-2">
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex items-center justify-center gap-4 flex-wrap">
             <span>ESC - закрыть</span>
             <span>+/- - масштаб</span>
             <span>R - поворот</span>
             <span>D - скачать</span>
+            {state.images.length > 1 && (
+              <>
+                <span>← → - навигация</span>
+              </>
+            )}
           </div>
         </div>
       </div>
