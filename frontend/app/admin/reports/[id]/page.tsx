@@ -10,9 +10,9 @@ import {toast} from 'sonner'
 import {StepBackIcon} from "lucide-react";
 
 import HotelImage from "@/components/HotelImage";
-import {Card, CardContent} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
 import ReportHeader from "@/components/ReportHeader";
+import { useImageViewer } from '@/hooks/useImageViewer';
 
 import type {ChecklistSchema, Report} from '@/entities/reports/types'
 import {ReportsApi} from '@/entities/reports/api'
@@ -22,6 +22,7 @@ export default function ReportStaffDetailPage() {
   const params = useParams<{ id: string }>()
   const id = String(params?.id ?? '')
   const router = useRouter()
+  const { openImage } = useImageViewer()
 
   const {data, isLoading, isError} = useQuery<Report>({
     queryKey: ['report_staff', id],
@@ -142,7 +143,7 @@ export default function ReportStaffDetailPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="p-6">
               {!checklistSchema ? (
                 <div className="text-center py-12">
@@ -222,7 +223,7 @@ export default function ReportStaffDetailPage() {
                               )}
 
                               {/* Media */}
-                              {it.answer?.media && it.answer.media.length > 0 && (
+                              {it.answer?.media && it.answer?.media?.length > 0 && (
                                 <div className="bg-white rounded-lg border border-gray-200 p-3">
                                   <div className="flex items-center gap-2 mb-3">
                                     <div className="w-5 h-5 bg-purple-100 rounded-full flex items-center justify-center">
@@ -237,17 +238,15 @@ export default function ReportStaffDetailPage() {
                                   </div>
                                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                                     {it.answer.media.map(m => (
-                                      <a 
-                                        key={m.id} 
-                                        href={m.url} 
-                                        target="_blank" 
-                                        rel="noreferrer" 
-                                        className="group block relative overflow-hidden rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md"
+                                      <button
+                                        key={m.id}
+                                        onClick={() => openImage(m.url, `${it.title} - ${m.media_type}`)}
+                                        className="group block relative overflow-hidden rounded-lg border border-gray-200 hover:border-blue-300 transition-all duration-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                       >
                                         <div className="aspect-square relative">
                                           <Image
                                             src={m.url}
-                                            width={300} 
+                                            width={300}
                                             height={300}
                                             alt="media"
                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
@@ -257,7 +256,7 @@ export default function ReportStaffDetailPage() {
                                             <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                               <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
                                                 <svg className="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                                                 </svg>
                                               </div>
                                             </div>
@@ -269,7 +268,13 @@ export default function ReportStaffDetailPage() {
                                             {m.media_type}
                                           </span>
                                         </div>
-                                      </a>
+                                        {/* Click hint */}
+                                        <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                          <span className="text-xs bg-white/90 text-gray-700 px-2 py-1 rounded-full font-medium">
+                                            Нажмите для просмотра
+                                          </span>
+                                        </div>
+                                      </button>
                                     ))}
                                   </div>
                                 </div>
