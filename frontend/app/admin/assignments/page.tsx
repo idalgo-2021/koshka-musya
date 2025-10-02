@@ -5,16 +5,17 @@ import { useQuery } from '@tanstack/react-query'
 import { AssignmentsApi } from '@/entities/assignments/api'
 import type { Assignment } from '@/entities/assignments/types'
 import { Input } from '@/components/ui/input'
-import Link from 'next/link'
 import {Button} from "@/components/ui/button";
 import Select from '@/components/ui/select'
 import SelectRowMulti from '@/components/ui/select-row-multi'
 import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
-import AssignmentCard, { getStatusBadgeClasses } from '@/components/AssignmentCard'
+import AssignmentCard from '@/components/AssignmentCard'
+import { AssignmentTable } from '@/components/AssignmentTable'
 import {ChevronFirstIcon, ChevronLastIcon, ChevronLeft, ChevronRight, Loader} from 'lucide-react'
 import {assignmentStatusOptions} from "@/entities/assignments/const";
 import { ListingsApi } from '@/entities/listings/api'
+
 
 export default function AssignmentsStaffPage() {
   const [page, setPage] = React.useState(1)
@@ -55,7 +56,7 @@ export default function AssignmentsStaffPage() {
   const canNext = page < totalPages
 
   return (
-    <div className="container max-w-6xl py-6 space-y-4">
+    <div className="container max-w-8xl py-6 space-y-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-md md:text-2xl font-semibold">Предложения на оценку</h1>
         <div className="flex items-center gap-3">
@@ -119,69 +120,10 @@ export default function AssignmentsStaffPage() {
         <div className="text-destructive">Failed to load</div>
       ) : (
         <>
-          {isShow ? (
-            // Table View
-            <div className="rounded-md border">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Код</th>
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden sm:table-cell">Репортер</th>
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">Статус</th>
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden lg:table-cell">Срок</th>
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground hidden xl:table-cell">Объект</th>
-                      <th className="h-12 px-2 md:px-4 text-left align-middle font-medium text-muted-foreground">Действия</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {assignments.map((a: Assignment) => (
-                      <tr key={a.id} className="border-b transition-colors hover:bg-muted/50">
-                        <td className="p-2 md:p-4 align-middle">
-                          <Link href={`/admin/assignments/${a.id}`} className="text-sm font-medium hover:underline break-all">
-                            {a.id}
-                          </Link>
-                        </td>
-                        <td className="p-2 md:p-4 align-middle text-sm">
-                          {a.code}
-                        </td>
-                        <td className="p-2 md:p-4 align-middle text-sm hidden sm:table-cell">
-                          <div>{a.reporter?.username}</div>
-                          <div className="text-xs text-muted-foreground">{a.reporter?.id}</div>
-                        </td>
-                        <td className="p-2 md:p-4 align-middle hidden md:table-cell">
-                          <span className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-medium ${getStatusBadgeClasses(a.status?.id)}`}>
-                            {a.status?.name}
-                          </span>
-                        </td>
-                        <td className="p-2 md:p-4 align-middle text-sm hidden lg:table-cell">
-                          {a.deadline ? new Date(a.deadline).toLocaleDateString('ru-RU') : '-'}
-                        </td>
-                        <td className="p-2 md:p-4 align-middle text-sm hidden xl:table-cell">
-                          {a.listing?.id ? (
-                            <Link href={`/admin/listings/${a.listing.id}`} className="hover:underline">
-                              {a.listing.title}
-                            </Link>
-                          ) : (
-                            <span className="text-muted-foreground">{a.listing?.title || '-'}</span>
-                          )}
-                        </td>
-                        <td className="p-2 md:p-4 align-middle">
-                          <Link href={`/admin/assignments/${a.id}`} className="text-sm text-primary hover:underline">
-                            View
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {assignments.length === 0 && (
-                <div className="p-8 text-center text-sm text-muted-foreground">No assignments found.</div>
-              )}
-            </div>
-          ) : (
+        {isShow ? (
+          // Table View
+          <AssignmentTable assignments={assignments} />
+        ) : (
             // Card View - Google Search Results Style
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {assignments.map((assignment: Assignment) => (

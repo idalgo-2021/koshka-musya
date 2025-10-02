@@ -7,3 +7,11 @@ export const reportStatusOptions = [
   { id: 5, slug: 'rejected', name: 'Отклонен' },
   { id: 6, slug: 'failed_generation', name: 'Ошибка генерации' }
 ]
+
+
+export const isValidReportId = (reporterId: string) => {
+  return (reporterId &&
+    reporterId !== null &&
+    reporterId !== undefined &&
+    reporterId !== '00000000-0000-0000-0000-000000000000');
+}

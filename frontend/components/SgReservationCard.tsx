@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import ConfirmationModal from '@/components/ConfirmationModal'
 import {useMemo, useState} from 'react'
 import Link from 'next/link'
+import {CopyToClipboard} from "@/components/CopyToClipboard";
 
 interface SgReservationCardProps {
   reservation: SgReservation
@@ -56,7 +57,7 @@ const formatGuests = (guests: any) => {
       return `${guests.count} гостей`
     }
     // If it's an object with guest details
-    const guestCount = Object.keys(guests).length
+    const guestCount = guests && Object.keys(guests).length
     return guestCount > 0 ? `${guestCount} гостей` : 'N/A'
   }
 
@@ -148,7 +149,7 @@ export default function SgReservationCard({
 
           {/* OTA ID */}
           <div className="text-sm text-gray-500">
-            OTA ID: {reservation.ota_id}
+            OTA ID: <CopyToClipboard text={reservation.ota_id} />
           </div>
 
           {/* Actions */}

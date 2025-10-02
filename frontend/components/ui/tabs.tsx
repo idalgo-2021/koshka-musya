@@ -37,7 +37,7 @@ export function Tabs({ items, defaultActiveTab, className, onTabChange }: TabsPr
               key={item.id}
               onClick={() => handleTabChange(item.id)}
               className={cn(
-                "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
+                "py-2 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer",
                 activeTab === item.id
                   ? "border-blue-500 text-blue-600"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"

@@ -6,6 +6,8 @@ import type * as React from 'react'
 import {Suspense} from "react";
 import { ModalProvider, useModal, ModalContent } from '@/entities/modals/ModalContext';
 import { Modal } from '@/components/ui/modal';
+import { ImageViewerProvider } from '@/contexts/ImageViewerContext';
+import { ImageViewer } from '@/components/ImageViewer';
 
 function ModalRenderer() {
   const { modalState, closeModal } = useModal();
@@ -37,12 +39,15 @@ export default function Providers({children}: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ModalProvider>
-        <Suspense>
-          {children}
-        </Suspense>
-        <ModalRenderer />
-      </ModalProvider>
+      <ImageViewerProvider>
+        <ModalProvider>
+          <Suspense>
+            {children}
+          </Suspense>
+          <ModalRenderer />
+          <ImageViewer />
+        </ModalProvider>
+      </ImageViewerProvider>
       {/*<ReactQueryDevtools />*/}
     </QueryClientProvider>
   )

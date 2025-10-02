@@ -14,9 +14,16 @@ import { ToggleButton } from '@/components/ToggleButton'
 import { useResponsiveToggle } from '@/hooks/useResponsiveToggle'
 import HotelImage from "@/components/HotelImage";
 import {reportStatusOptions} from "@/entities/reports/const";
-import {ChevronLeftIcon, ChevronRightIcon} from "lucide-react";
+import {ChevronLeftIcon, ChevronRightIcon, Eye} from "lucide-react";
 import {formatDate} from "@/lib/date";
 import { ReportStatusBadge } from '@/components/ReportStatusBadge';
+
+const isValidReportId = (reporterId: string) => {
+  return (reporterId &&
+    reporterId !== null &&
+    reporterId !== undefined &&
+    reporterId !== '00000000-0000-0000-0000-000000000000');
+}
 
 export default function ReportsStaffPage() {
   const [page, setPage] = React.useState(1)
@@ -71,8 +78,10 @@ export default function ReportsStaffPage() {
   const canNext = reports.length === limit || (total ? page * limit < total : true)
 
 
+
+
   return (
-    <div className="container max-w-6xl py-6 space-y-4">
+    <div className="container max-w-8xl py-6 space-y-4">
       <div className="flex items-center justify-between">
          <h1 className="text-md md:text-2xl font-semibold">Отчеты</h1>
         <div className="flex items-center gap-2">
@@ -116,11 +125,11 @@ export default function ReportsStaffPage() {
                 <tr>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground">ID</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground">Задание</th>
-                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden sm:table-cell">Reporter</th>
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden sm:table-cell">Автор отчета</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden md:table-cell">Статус</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden lg:table-cell">Создан</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden xl:table-cell">Обновлен</th>
-                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden 2xl:table-cell">Объект</th>
+                  <th className="p-3 text-left text-sm font-medium text-muted-foreground hidden xl:table-cell">Объект</th>
                   <th className="p-3 text-left text-sm font-medium text-muted-foreground">Действия</th>
                 </tr>
               </thead>
@@ -138,8 +147,13 @@ export default function ReportsStaffPage() {
                       </Link>
                     </td>
                     <td className="p-3 align-middle text-sm hidden sm:table-cell">
-                      <div>{r.reporter?.username}</div>
-                      <div className="text-xs text-muted-foreground">{r.reporter?.id}</div>
+                      {isValidReportId(r.reporter?.id) ? (
+                        <>
+                          <div>{r.reporter?.username}</div>
+                        </>
+                      ) : (
+                        <span>-</span>
+                      )}
                     </td>
                     <td className="p-3 align-middle hidden lg:table-cell">
                       {r.status && <ReportStatusBadge status={r.status} />}
@@ -176,7 +190,7 @@ export default function ReportsStaffPage() {
                               disabled={approveMutation.isPending}
                               onClick={() => approveMutation.mutate(r.id)}
                             >
-                              {approveMutation.isPending ? 'Approving…' : 'Approve'}
+                              {approveMutation.isPending ? 'Обработка…' : 'Принять'}
                             </Button>
                             <Button
                               size="sm"
@@ -184,12 +198,12 @@ export default function ReportsStaffPage() {
                               disabled={rejectMutation.isPending}
                               onClick={() => rejectMutation.mutate(r.id)}
                             >
-                              {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
+                              {rejectMutation.isPending ? 'Обработка…' : 'Принять'}
                             </Button>
                           </>
                         )}
                         <Link href={`/admin/reports/${r.id}`} className="text-sm text-primary hover:underline">
-                          View
+                          <Eye  className="w-4 h-4" />
                         </Link>
                       </div>
                     </td>
@@ -238,7 +252,7 @@ export default function ReportsStaffPage() {
                               approveMutation.mutate(r.id)
                             }}
                           >
-                            {approveMutation.isPending ? 'Approving…' : 'Approve'}
+                            {approveMutation.isPending ? 'Обработка…' : 'Принять'}
                           </Button>
                           <Button
                             size="sm"
@@ -249,7 +263,7 @@ export default function ReportsStaffPage() {
                               rejectMutation.mutate(r.id)
                             }}
                           >
-                            {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
+                            {rejectMutation.isPending ? 'Обработка…' : 'Отклонить'}
                           </Button>
                         </div>
                       )}
@@ -260,7 +274,7 @@ export default function ReportsStaffPage() {
             ))}
             {reports.length === 0 && (
               <div className="col-span-full text-center py-8 text-sm text-muted-foreground">
-                No reports found.
+                Отчеты не найдены
               </div>
             )}
           </div>

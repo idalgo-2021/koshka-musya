@@ -56,14 +56,14 @@ export default function MediaUpload({
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(loaded.width * ratio);
       canvas.height = Math.round(loaded.height * ratio);
-      
+
       const ctx = canvas.getContext('2d');
       if (!ctx) return inputFile;
-      
+
       // Включаем высокое качество сглаживания
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      
+
       ctx.drawImage(loaded, 0, 0, canvas.width, canvas.height);
       const blob: Blob | null = await new Promise((resolve) =>
         canvas.toBlob((b) => resolve(b), 'image/jpeg', 0.95)
@@ -191,7 +191,7 @@ export default function MediaUpload({
           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          {mediaAllowedTypes?.includes('video') 
+          {mediaAllowedTypes?.includes('video')
             ? `Добавить медиа (${media.length}/${mediaMaxFiles})`
             : `Добавить фото (${media.length}/${mediaMaxFiles})`
           }
@@ -199,13 +199,13 @@ export default function MediaUpload({
       )}
 
       {/* Upload Progress Indicator */}
-      {Object.keys(uploadProgress).length > 0 && (
+      {uploadProgress && Object.keys(uploadProgress).length > 0 && (
         <div className="mt-4 space-y-2">
           {Object.entries(uploadProgress).map(([key, progress]) => (
             <div key={key} className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
-                style={{ width: `${progress}%` }} 
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${progress}%` }}
               />
             </div>
           ))}

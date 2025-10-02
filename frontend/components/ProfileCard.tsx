@@ -69,12 +69,14 @@ export default function ProfileCard({ profile, className }: ProfileCardProps) {
         </div>
 
         {/* Last Active */}
-        <div className="flex items-center gap-2 text-sm">
-          <Activity className="w-4 h-4 text-gray-500" />
-          <span className="text-gray-600">
-            Последняя активность: {formatDate(profile.last_active_at)}
-          </span>
-        </div>
+        {profile.last_active_at && (
+          <div className="flex items-center gap-2 text-sm">
+            <Activity className="w-4 h-4 text-gray-500" />
+            <span className="text-gray-600">
+              Последняя активность: {formatDate(profile.last_active_at)}
+            </span>
+          </div>
+        )}
 
         {/* Statistics */}
         <div className="grid grid-cols-3 gap-4 pt-2">
@@ -110,7 +112,7 @@ export default function ProfileCard({ profile, className }: ProfileCardProps) {
         </div>
 
         {/* Additional Info */}
-        {Object.keys(profile.additional_info).length > 0 && (
+        {profile.additional_info && Object.keys(profile.additional_info).length > 0 && (
           <div className="pt-2 border-t">
             <div className="text-sm text-gray-600">
               <span className="font-medium">Доп. информация:</span>

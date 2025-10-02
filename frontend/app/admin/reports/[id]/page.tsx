@@ -80,7 +80,7 @@ export default function ReportStaffDetailPage() {
                   disabled={approveMutation.isPending}
                   onClick={onAprove}
                 >
-                  {approveMutation.isPending ? 'Approving…' : 'Принять'}
+                  {approveMutation.isPending ? 'Обработка…' : 'Принять'}
                 </Button>
                 <Button
                   size="sm"
@@ -88,7 +88,7 @@ export default function ReportStaffDetailPage() {
                   disabled={rejectMutation.isPending}
                   onClick={() => rejectMutation.mutate()}
                 >
-                  {rejectMutation.isPending ? 'Rejecting…' : 'Отклонить'}
+                  {rejectMutation.isPending ? 'Обработка…' : 'Отклонить'}
                 </Button>
               </>
             )}
