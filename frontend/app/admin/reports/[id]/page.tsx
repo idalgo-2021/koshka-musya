@@ -11,7 +11,7 @@ import {StepBackIcon} from "lucide-react";
 
 import HotelImage from "@/components/HotelImage";
 import {Button} from '@/components/ui/button'
-import ReportHeader from "@/components/ReportHeader";
+import ReportHeaderAdmin from "@/components/ReportHeaderAdmin";
 import { useImageViewer } from '@/hooks/useImageViewer';
 
 import type {ChecklistSchema, Report} from '@/entities/reports/types'
@@ -104,7 +104,7 @@ export default function ReportStaffDetailPage() {
       ) : (
         <div className="space-y-4 mt-7">
           <div className="flex flex-col md:flex-row justify-between">
-            <ReportHeader
+            <ReportHeaderAdmin
               report={data}
               assignmentInfo={{
                 title: data.listing.title || 'Отчет о проверке',

@@ -10,10 +10,10 @@ import type {ChecklistSchema, Report} from '@/entities/reports/types';
 import { useConfirmation } from '@/entities/modals/ModalContext';
 
 import DashboardHeader from '@/components/DashboardHeader';
-import ReportHeader from '@/components/ReportHeader';
 import { ErrorState } from '@/components/ErrorHandler';
 import ChecklistContainer from '@/components/ChecklistContainer';
 import ReportActions from '@/components/ReportActions';
+import ReportHeader from "@/components/ReportHeader";
 
 // Функция для парсинга meta данных answer_types
 const parseAnswerTypeMeta = (meta: unknown): { min: number; max: number } => {
