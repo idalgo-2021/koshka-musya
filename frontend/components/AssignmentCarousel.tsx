@@ -186,7 +186,7 @@ export default function AssignmentCarousel({
   );
 }
 
-function AssignmentCard({
+function AssignmentCardInner({
   assignment,
   onAccept,
   onDecline,
@@ -251,13 +251,13 @@ function AssignmentCard({
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900 mb-1">Цель проверки</p>
                 <p className="text-sm text-gray-600 leading-relaxed">
-                  {assignment.purpose}
+                  {assignment?.purpose}
                 </p>
               </div>
             </div>
 
             {/* Стоимость */}
-            {assignment.pricing && ((assignment.pricing as any).pricing?.total > 0 || (assignment.pricing as any).pricing?.currency) && (
+            {assignment?.pricing && ((assignment?.pricing as any).pricing?.total > 0 || (assignment.pricing as any).pricing?.currency) && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
@@ -296,13 +296,13 @@ function AssignmentCard({
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900 mb-1">Срок действия</p>
                 <p className="text-sm text-gray-600">
-                  До {formatDate(assignment.expires_at)}
+                  До {formatDate(assignment?.expires_at)}
                 </p>
               </div>
             </div>
 
             {/* Гости */}
-            {assignment.guests && (assignment.guests.adults > 0 || assignment.guests.children > 0) && (
+            {assignment?.guests && (assignment?.guests.adults > 0 || assignment.guests.children > 0) && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
@@ -331,7 +331,7 @@ function AssignmentCard({
             )}
 
             {/* Даты заезда и выезда */}
-            {assignment.dates && (
+            {assignment?.dates && (
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
@@ -442,3 +442,5 @@ function AssignmentCard({
     </div>
   );
 }
+
+const AssignmentCard = React.memo(AssignmentCardInner);

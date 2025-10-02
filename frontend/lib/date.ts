@@ -1,4 +1,5 @@
 export function formatDate(date: string) {
+  if (!date) return '';
   return new Date(date)?.toLocaleString('ru-RU', {
     year: 'numeric',
     month: '2-digit',
