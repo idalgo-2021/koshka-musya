@@ -2,6 +2,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { Search, X } from "lucide-react";
 
 import { useAuth } from "@/entities/auth/useAuth";
 import { useAssignments } from "@/entities/assignments/useAssignments";
@@ -11,6 +12,7 @@ import type { Report } from "@/entities/reports/types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import AssignmentProcess from "@/components/AssignmentProcess";
 import AssignmentCarousel from "@/components/AssignmentCarousel";
 import AssignmentSkeleton from "@/components/AssignmentSkeleton";
@@ -46,6 +48,22 @@ function DashboardContent() {
   const [currentAssignmentIndex, setCurrentAssignmentIndex] = useState(0);
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedListingType, setSelectedListingType] = useState<number | undefined>(undefined);
+  const [cityInput, setCityInput] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCityFilter(cityInput);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [cityInput]);
+
+  useEffect(() => {
+    if (cityFilter !== undefined) {
+      fetchAssignments(1, 20, false, cityFilter);
+    }
+  }, [cityFilter, fetchAssignments]);
 
   // Обработчик изменения типа объекта
   const handleListingTypeChange = async (newTypeId: number | undefined) => {
@@ -211,7 +229,7 @@ function DashboardContent() {
 
         toast.success('Отчет отправлен на проверку');
 
-        await fetchAssignments();
+        await fetchAssignments(1, 20, false, cityFilter);
       } else {
         toast.error('Отчет не найден');
       }
@@ -240,7 +258,7 @@ function DashboardContent() {
       try {
         await acceptAssignment(assignmentId);
         toast.success("Задание успешно взято!");
-        await fetchAssignments();
+        await fetchAssignments(1, 20, false, cityFilter);
       } catch (error) {
         console.error('Error taking assignment:', error);
         toast.error('Ошибка при взятии задания');
@@ -426,7 +444,7 @@ function DashboardContent() {
   if (!isAuthenticated) {
     return undefined;
   }
-
+  const isOne = displayAssignments.length === 1 && displayAssignments[0]?.taked_at !== undefined;
   return (
     <div className="min-h-screen bg-accentgreen">
       {/* Header */}
@@ -521,6 +539,35 @@ function DashboardContent() {
                   </Button>
                 </CardContent>
               </Card>
+            )}
+
+            {!isOne && displayAssignments.length >= 0 && acceptedAssignments.length === 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search
+                      className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground"/>
+                    <Input
+                      value={cityInput}
+                      onChange={(e) => setCityInput(e.target.value)}
+                      placeholder="Введите название города..."
+                      className="pl-10 pr-10 bg-white"
+                    />
+                    {cityInput.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCityInput('');
+                          setCityFilter('');
+                        }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground hover:text-foreground transition-colors duration-200 flex items-center justify-center rounded-full hover:bg-gray-100"
+                      >
+                        <X className="w-3 h-3"/>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Assignments from DB */}

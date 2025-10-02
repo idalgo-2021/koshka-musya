@@ -24,13 +24,16 @@ export type ListingDto = { listings: Assignment[]; page: number; total: number }
 
 export const AssignmentsApi = {
   // Get all available assignments (free assignments that can be taken)
-  async getAvailableAssignments(page = 1, limit = 50, listingTypeId?: number): Promise<AssignmentsResponse> {
+  async getAvailableAssignments(page = 1, limit = 50, listingTypeId?: number, city?: string): Promise<AssignmentsResponse> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
     if (listingTypeId) {
       params.append('listing_type_id', listingTypeId.toString())
+    }
+    if (city) {
+      params.append('city', city)
     }
     return api.get<AssignmentsResponse>(`/assignments?${params.toString()}`, true);
   },
