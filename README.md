@@ -44,8 +44,8 @@ make clean
 ## Зависимости и переменные окружения
 
 Рекомендованные ресурсы:
-- 16 CPU cores
-- 16GB RAM
+- 2 CPU cores
+- 2GB RAM
 
 - Postgres 16 (`16.1-alpine3.19`)
 
