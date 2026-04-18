@@ -11,7 +11,7 @@
   * [См. локальная копия](project_documentation/Задание.md)
 
 
-- ссылка на видео-скринкаст: https://disk.yandex.ru/d/HKB627xbb429LA
+- ссылка на видео-скринкаст: https://disk.yandex.ru/d/b-7genLsw4ToBA
 
 ## Быстрый старт
 
